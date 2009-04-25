@@ -197,6 +197,8 @@ module SourcesHelper
     page_size = p_size.nil? ? 10000 : p_size.to_i
     last_sync_time = Time.now
     objs_to_return = []
+    user_condition="= #{current_user.id}" if current_user and current_user.id
+    user_condition ||= "is NULL"
     
     # Setup the join conditions
     object_value_join_conditions = "from object_values ov left join client_maps cm on \
@@ -205,7 +207,7 @@ module SourcesHelper
     object_value_conditions = "#{object_value_join_conditions} \
                                where ov.update_type = 'query' and \
                                  ov.source_id = #{source.id} and \
-                                 (ov.user_id = #{current_user.id} or ov.user_id is NULL) and \
+                                 ov.user_id #{user_condition} and \
                                  cm.object_value_id is NULL order by ov.object limit #{page_size}"                  
     object_value_query = "select * #{object_value_conditions}"
     
@@ -222,7 +224,7 @@ module SourcesHelper
       logger.debug "[sources_helper] ack_token: #{ack_token.inspect}, using new token: #{token.inspect}"
       
       # mark acknowledged token so we don't send it again
-      ClientMap.mark_objs_by_ack_token(ack_token)
+      ClientMap.mark_objs_by_ack_token(ack_token) if ack_token and ack_token.length > 0
       
       # find delete records
       objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id) )
