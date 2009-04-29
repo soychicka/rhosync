@@ -82,6 +82,11 @@ class Source < ActiveRecord::Base
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
     end
+    # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
+    # put those together into a qparms hash
+    # qparms is nil or empty if there is no such hash
+    qparms=qparms_from_object(current_user.id)
+    # must do it before the create processing below!
     begin 
       process_update_type('create')
     rescue Exception=>e
@@ -105,9 +110,11 @@ class Source < ActiveRecord::Base
 
     begin  
       start=Time.new
-      source_adapter.query
+      # REENABLE ONCE QUERY PARMS ARE AVAILABLE: source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      source_adapter.query 
       tlog(start,"query",self.id)
     rescue Exception=>e
+      p "Failed to perform query"
       slog(e,"timed out on query",self.id)
     end
     start=Time.new

@@ -1,6 +1,6 @@
 module SourcesHelper
   
-  def slog(e,msg,source_id,operation=nil,timing=nil)
+  def slog(e,msg,source_id=self.id,operation=nil,timing=nil)
     begin
       l=SourceLog.new
       l.source_id=source_id
@@ -135,7 +135,7 @@ module SourcesHelper
     
   def process_update_type(utype)
     start=Time.new  # start timing the operation
-    objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     objs.each do |x|
       if x.object  
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
@@ -145,7 +145,7 @@ module SourcesHelper
         objvals.each do |y|
           attrvalues[y.attrib]=y.value
         end
-        # now attrvalues has the attribute values needed for the createcall
+        # now attrvalues has the attribute values needed for the create,update,delete call
         nvlist=make_name_value_list(attrvalues)
         if source_adapter
           name_value_list=eval(nvlist)
@@ -158,6 +158,7 @@ module SourcesHelper
         logger.info msg
       end
     end
+
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
   end
   
@@ -169,6 +170,23 @@ module SourcesHelper
         y.destroy
       end
     end   
+  end
+  
+  # grab out all ObjectValues of updatetype="Create" with object named "qparms" 
+  # for a specific user (user_id) and source (id)
+  # put those together into a hash where each attrib is the key and each value is the value
+  # return nil if there are no such objects
+  def qparms_from_object(user_id)
+    qparms=nil
+    attrs=ObjectValue.find_by_sql("select attrib,value from object_values where object='qparms' and update_type='create'and source_id="+id.to_s+" and user_id="+user_id.to_s)
+    if attrs
+      qparms={}
+      attrs.each do |x|
+        qparms[x.attrib]=x.value
+        x.destroy
+      end
+    end
+    qparms
   end
   
   def setup_client(client_id)
