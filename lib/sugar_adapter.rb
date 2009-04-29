@@ -68,7 +68,7 @@ class SugarAdapter < SourceAdapter
     puts "@count =#{@count}"
     
     @result = @client.get_entry_list(@session_id,@module_name,@query_filter,@order_by,offset,@select_fields,max_results,deleted);
-    p "Result is "+@result.inspect.to_s
+    #p "Result is "+@result.inspect.to_s
   
   end
   
