@@ -82,6 +82,7 @@ class Source < ActiveRecord::Base
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
     end
+    
     # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
     # put those together into a qparms hash
     # qparms is nil or empty if there is no such hash
@@ -89,22 +90,27 @@ class Source < ActiveRecord::Base
     # must do it before the create processing below!
     begin 
       process_update_type('create')
+      cleanup_update_type('create')
     rescue Exception=>e
-      slog(e, "Failed to create",self.id)
+      slog(e, "Failed to create",self.id,"create")
+      raise e
     end 
-    cleanup_update_type('create')
+
     begin
       process_update_type('update')
+      cleanup_update_type('update')
     rescue Exception=>e
-      slog(e, "Failed to update",self.id)
+      slog(e, "Failed to update",self.id,"update")
+      raise e
     end
-    cleanup_update_type('create')
+    
     begin
       process_update_type('delete')
+      cleanup_update_type('delete')
     rescue Exception=>e
-      slog(e, "Failed to delete",self.id)
+      slog(e, "Failed to delete",self.id,"delete")
+      raise e
     end
-    cleanup_update_type('delete')
         
     clear_pending_records(@credential)
 

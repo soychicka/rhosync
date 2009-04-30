@@ -171,7 +171,7 @@ module SourcesHelper
           y.destroy
         end
       else
-        msg="Undefined nil object in cleanup of " + utype
+        msg="Undefined or nil object in cleanup of " + utype
         p msg
         slog(nil,msg)
       end 
