@@ -116,7 +116,7 @@ class Source < ActiveRecord::Base
 
     begin  
       start=Time.new
-      # REENABLE ONCE QUERY PARMS ARE AVAILABLE: source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
       source_adapter.query 
       tlog(start,"query",self.id)
     rescue Exception=>e

@@ -1,6 +1,6 @@
 class SourceAdapter
   attr_accessor :client
-  attr :qparms
+  attr_accessor :qparms
   
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
