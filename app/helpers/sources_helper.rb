@@ -165,10 +165,16 @@ module SourcesHelper
   def cleanup_update_type(utype)
     objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     objs.each do |x| 
-      objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
-      objvals.each do |y|
-        y.destroy
-      end
+      if defined?(x.object) and x.object
+        objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
+        objvals.each do |y|
+          y.destroy
+        end
+      else
+        msg="Undefined nil object in cleanup of " + utype
+        p msg
+        slog(nil,msg)
+      end 
     end   
   end
   
