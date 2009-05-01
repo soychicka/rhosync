@@ -91,3 +91,4 @@ ActionMailer::Base.smtp_settings = {
   :authentication => :plain                 # :plain, :login or :cram_md5
 }
 =end
+

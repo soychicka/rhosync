@@ -12,6 +12,7 @@
     </p>
     <p>
         <%= f.label "Poll Interval (seconds)"%><%= f.text_field :pollinterval, :size=>10 %>&nbsp;
+        <%= f.label "Limit (# objects)"%><%= f.text_field :limit, :size=>6, :value=>100 %>&nbsp;
         <%= f.label :priority%><%=f.text_field :priority, :size=>10%>&nbsp;
         <%= f.label :incremental%>(adds to records continuously)<%=f.check_box :incremental%>&nbsp;      
     </p>

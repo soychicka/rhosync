@@ -31,7 +31,13 @@ class Source < ActiveRecord::Base
       raise msg
     end
     if not self.adapter.blank? 
-      @source_adapter=(Object.const_get(self.adapter)).new(self,credential)
+      begin
+        @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
+      rescue
+        msg="No such adapter class provided!"
+        p msg
+        slog(nil,msg)
+      end
     else # if source_adapter is nil it will
       @source_adapter=nil
     end

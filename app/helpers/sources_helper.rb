@@ -11,7 +11,7 @@ module SourcesHelper
       l.timing=timing
       l.save
     rescue Exception=>e
-      p "Failed to save source log message: " + e
+      logger.debug "Failed to save source log message: " + e
     end
   end
   
@@ -23,7 +23,7 @@ module SourcesHelper
   # determines if the logged in users is a subscriber of the current app or 
   # admin of the current app
   def check_access(app)
-    p "checking access for user "+@current_user.login
+    logger.debug "Checking access for user "+@current_user.login
     matches_login=app.users.select{ |u| u.login==@current_user.login}
     matches_login << app.administrations.select { |a| a.user.login==@current_user.login } # let the administrators of the app in as well
     if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
@@ -135,9 +135,10 @@ module SourcesHelper
     
   def process_update_type(utype)
     start=Time.new  # start timing the operation
-    objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     if objs # check that we got some object values back
       objs.each do |x|
+        #logger.debug "Object returned is: " + x.inspect.to_s
         if x.object  
           objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
           attrvalues={}
@@ -154,21 +155,19 @@ module SourcesHelper
             eval("source_adapter." +utype +params)
           end
         else
-          msg="Missing an object property on the objectvalue: " + x.id.to_s
-          raise msg
+          msg="Missing object property on object value: " + x.inspect.to_s
           logger.info msg
         end
       end
     else # got no object values back
       msg "Failed to retrieve object values for " + utype
-      p msg
       slog(nil,msg)
     end
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
   end
   
   def cleanup_update_type(utype)
-    objs=ObjectValue.find_by_sql("select distinct(object) from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    objs=ObjectValue.find_by_sql("select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     objs.each do |x| 
       if x.object
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
@@ -176,7 +175,7 @@ module SourcesHelper
           y.destroy
         end
       else
-        msg="Undefined or nil object in cleanup of " + utype
+        msg="Missing object property on object value: " + x.inspect.to_s
         p msg
         slog(nil,msg)
       end 
