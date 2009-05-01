@@ -138,7 +138,7 @@ module SourcesHelper
     objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     if objs # check that we got some object values back
       objs.each do |x|
-        if defined?(x.object) and x.object  
+        if x.object  
           objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
           attrvalues={}
           attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
@@ -170,7 +170,7 @@ module SourcesHelper
   def cleanup_update_type(utype)
     objs=ObjectValue.find_by_sql("select distinct(object) from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     objs.each do |x| 
-      if defined?(x.object) and x.object
+      if x.object
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
         objvals.each do |y|
           y.destroy
