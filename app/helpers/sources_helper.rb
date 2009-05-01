@@ -136,34 +136,39 @@ module SourcesHelper
   def process_update_type(utype)
     start=Time.new  # start timing the operation
     objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
-    objs.each do |x|
-      if x.object  
-        objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
-        attrvalues={}
-        attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
-        blob_file=x.blob_file_name
-        objvals.each do |y|
-          attrvalues[y.attrib]=y.value
+    if objs # check that we got some object values back
+      objs.each do |x|
+        if defined?(x.object) and x.object  
+          objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
+          attrvalues={}
+          attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
+          blob_file=x.blob_file_name
+          objvals.each do |y|
+            attrvalues[y.attrib]=y.value
+          end
+          # now attrvalues has the attribute values needed for the create,update,delete call
+          nvlist=make_name_value_list(attrvalues)
+          if source_adapter
+            name_value_list=eval(nvlist)
+            params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
+            eval("source_adapter." +utype +params)
+          end
+        else
+          msg="Missing an object property on the objectvalue: " + x.id.to_s
+          raise msg
+          logger.info msg
         end
-        # now attrvalues has the attribute values needed for the create,update,delete call
-        nvlist=make_name_value_list(attrvalues)
-        if source_adapter
-          name_value_list=eval(nvlist)
-          params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
-          eval("source_adapter." +utype +params)
-        end
-      else
-        msg="Missing an object property on the objectvalue: " + x.id.to_s
-        raise msg
-        logger.info msg
       end
+    else # got no object values back
+      msg "Failed to retrieve object values for " + utype
+      p msg
+      slog(nil,msg)
     end
-
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
   end
   
   def cleanup_update_type(utype)
-    objs=ObjectValue.find_by_sql("select distinct(object),blob_file_name from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    objs=ObjectValue.find_by_sql("select distinct(object) from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     objs.each do |x| 
       if defined?(x.object) and x.object
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
