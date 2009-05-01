@@ -138,7 +138,7 @@ module SourcesHelper
     objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     if objs # check that we got some object values back
       objs.each do |x|
-        #logger.debug "Object returned is: " + x.inspect.to_s
+        logger.debug "Object returned is: " + x.inspect.to_s
         if x.object  
           objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
           attrvalues={}
