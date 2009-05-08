@@ -89,12 +89,11 @@ ActiveRecord::Schema.define(:version => 20090501210034) do
   create_table "source_logs", :force => true do |t|
     t.string   "error"
     t.string   "message"
-    t.integer  "time"
+    t.float    "timing"
     t.string   "operation"
     t.integer  "source_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.float    "timing"
   end
 
   create_table "sources", :force => true do |t|

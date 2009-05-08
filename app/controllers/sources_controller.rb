@@ -62,9 +62,8 @@ class SourcesController < ApplicationController
           @resend_token=@client.last_sync_token
           if @resend_token.nil?
             @first_request=true
+            logger.debug "[sources_controller] First request for source"
           end
-          logger.debug "[sources_controller] Didn't receive ack_token,
-                          token: #{@token.inspect}, first_request: #{@first_request.inspect}, ack_token: #{@ack_token.inspect}"
         end 
         
         # generate new token for the next set of data
