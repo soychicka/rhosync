@@ -91,6 +91,10 @@ class Wikipedia < SourceAdapter
     # what is passed in when following a link will be encoded
     search = CGI::unescape(search)
     
+    # looks like the encoding we are receiving is not the same as what wikipedia will take in some cases 
+    # so we decode and then re-encode this so it goes to wikipedia correctly
+    search = CGI::escape(search) unless search == "::Home"
+
     path = "/wiki/#{search}"
     puts "path = #{path}"
  
@@ -113,6 +117,8 @@ class Wikipedia < SourceAdapter
     mobile_wikipedia_server_url = @source.url
     mobile_wikipedia_server_url.gsub!('http://', '')
     
+    # should be http://en.m.wikipedia.org
+    puts "mobile_wikipedia_server_url = #{mobile_wikipedia_server_url}"
     http = Net::HTTP.new(mobile_wikipedia_server_url)
     http.set_debug_output $stderr
     
