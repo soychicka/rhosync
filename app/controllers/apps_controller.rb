@@ -111,6 +111,7 @@ class AppsController < ApplicationController
   # subscribe specified subscriber to specified app ID
   def subscribe
     @app=App.find_by_permalink(params[:app_id]) 
+    @app||=App.find(params[:id]) 
     user=@current_user
     if params[:subscriber]
       @current_user=User.find_by_login params[:subscriber] 

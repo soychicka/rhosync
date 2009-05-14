@@ -62,9 +62,17 @@ You have no subscribed apps.
 <h3>Subscribe to an App</h3>
 <form action='<%=url_for(:controller=>"apps",:id=>1,:action=>"subscribe")%>'/>
 <select id="app_id" name="app_id">
-<%@allapps.each do |app|%>
-<option value="<%=app.id%>"><%=app.name%></option>
+<%
+first=true
+@allapps.each do |app|%>
+<option value="<%=app.id%>"
+<%if first%>
+selected
 <%end%>
+><%=app.name%></option>
+<%
+  first=nil
+end%>
 </select>
 <% if @current_user.login=="anonymous"%>
 Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp;<input name="email"/>
