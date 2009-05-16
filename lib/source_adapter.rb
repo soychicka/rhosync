@@ -29,7 +29,7 @@ class SourceAdapter
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
         count=0
         @result.each do |x|   
-          if @source.limit.blank? or count < @source.limit               
+          if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
             x.keys.each do |key|
               unless key.blank? or x[key].blank?   
                 x[key]=x[key].gsub(/\'/,"''") 
@@ -47,7 +47,7 @@ class SourceAdapter
         p "Sync for SQLite and other databases"
         count=0
         @result.each do |x|
-          if @source.limit.blank? or count < @source.limit     
+          if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
             x.keys.each do |key|
               unless key.blank? or x[key].blank?  
                 x[key]=x[key].gsub(/\'/,"''")        
