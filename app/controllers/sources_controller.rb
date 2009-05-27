@@ -405,16 +405,20 @@ class SourcesController < ApplicationController
   # POST /sources.xml
   def create
     @source = Source.new(params[:source])
-    @source.name=@source.adapter
-    @app=App.find_by_permalink params["source"]["app_id"]
-    @source.app=@app
-    
+    error=nil
+    if Source.find_by_name @source.name
+      error="Source already exists. Please try a different name."
+    else
+      @app=App.find_by_permalink params["source"]["app_id"]
+      @source.app=@app
+    end
     respond_to do |format|
-      if @source.save
+      if !error and @source.save
         flash[:notice] = 'Source was successfully created.'
         format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.id) }
         format.xml  { render :xml => @source, :status => :created, :location => @source }
       else
+        flash[:notice]=error
         format.html { render :action => "new" }
         format.xml  { render :xml => @source.errors, :status => :unprocessable_entity }
       end
@@ -425,21 +429,30 @@ class SourcesController < ApplicationController
   # PUT /sources/1.xml
   def update
     @app=App.find_by_permalink params["source"]["app_id"]
-    @source.name=@source.adapter
+    error=nil
+    if Source.find_by_name @source.name
+      error="Source name already exists. Please try a different name."
+    else
+      @app=App.find_by_permalink params["source"]["app_id"]
+      @source.app=@app
+    end
     respond_to do |format|
       begin
-        if @source.update_attributes(params[:source])
+        if !error and@source.update_attributes(params[:source])
           flash[:notice] = 'Source was successfully updated.'
           format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.id) }
           format.xml  { head :ok }
         else
-          begin  # call underlying save! so we can get some exceptions back to report
-            # (update_attributes just calls save
-            @source.save!
-          rescue Exception
-            flash[:notice] = $!
+          if error 
+            flash[:notice]=error
+          else 
+            begin  # call underlying save! so we can get some exceptions back to report
+              # (update_attributes just calls save
+              @source.save!
+            rescue Exception
+              flash[:notice] = $!
+            end
           end
-
           format.html { render :action => "edit",:id=>@app.id }
           format.xml  { render :xml => @source.errors, :status => :unprocessable_entity }
         end

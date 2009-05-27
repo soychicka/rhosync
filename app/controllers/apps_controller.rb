@@ -165,19 +165,24 @@ class AppsController < ApplicationController
   # POST /apps
   # POST /apps.xml
   def create
+    error=nil
     @app = App.new(params[:app])
-    @app.save
-    admin=Administration.new
-    admin.user_id=@current_user.id
-    admin.app_id=@app.id
-    admin.save
-    
+    if App.find_by_name @app.name
+      error="App already exists. Please try a different name."
+    else 
+      @app.save
+      admin=Administration.new
+      admin.user_id=@current_user.id
+      admin.app_id=@app.id
+      admin.save
+    end
     respond_to do |format|
-      if @app.save
+      if not error and @app.save
         flash[:notice] = 'App was successfully created.'
         format.html { redirect_to(apps_url) }
         format.xml  { render :xml => @app, :status => :created, :location => @app }
       else
+        flash[:notice]=error
         format.html { render :action => "new" }
         format.xml  { render :xml => @app.errors, :status => :unprocessable_entity }
       end
