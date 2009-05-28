@@ -430,8 +430,9 @@ class SourcesController < ApplicationController
   def update
     @app=App.find_by_permalink params["source"]["app_id"]
     error=nil
-    if Source.find_by_name @source.name
-      error="Source name already exists. Please try a different name."
+    src=Source.find_by_name params["source"]["name"]
+    if src!=@source
+      error="Source name already exists. Please try a different name." 
     else
       @app=App.find_by_permalink params["source"]["app_id"]
       @source.app=@app
