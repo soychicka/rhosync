@@ -8,6 +8,7 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
+  before_filter :get_device, :except => :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -33,6 +34,8 @@ class SourcesController < ApplicationController
     if params["id"] == "rho_credential"
       render :text => "[]" and return
     end
+    (logger.debug "Device ID: " +  @device.id.to_s) if @device and @device.id
+    (logger.debug "Device Type: " + @device.type.to_s) if @device and @device.type
     
     @app=@source.app
     if !check_access(@app)  
@@ -477,7 +480,28 @@ protected
   def get_new_token
     ((Time.now.to_f - Time.mktime(2009,"jan",1,0,0,0,0).to_f) * 10**6).to_i
   end
+  
   def find_source
     @source=Source.find_by_permalink(params[:id]) if params[:id]
+  end
+  
+  def get_device
+    if @current_user and not params["device_id"].blank?
+      logger.debug "Device ID: " + params["device_id"]
+      @device=Device.find_by_id params["device_id"].to_i
+      if @device.nil?
+        @device=Device.new 
+        @device.id=params["device_id"].to_i
+        @device.user_id=@current_user.id
+        @device.type=params["device_type"] if params["device_type"]
+        begin
+          @device.save
+        rescue
+          p "Error saving: " + $!
+        end
+      end
+    else
+      @device=nil
+    end
   end
 end

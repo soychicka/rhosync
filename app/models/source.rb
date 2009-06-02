@@ -69,7 +69,18 @@ class Source < ActiveRecord::Base
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
-    synctask.delete  # take this task out of the queye
+    source.notify_users  # wake up the Rhodes clients to tell them to sync!
+    synctask.delete  # take this task out of the queue
+  end
+  
+  def notify_users
+
+    ovs=ObjectValue.find(:all, :select=>"distinct(user_id) as user_id",:conditions=>{:source_id=>id})
+    ovs.each do |ov|
+      logger.debug "Notifying user: " + ov.user_id.to_s
+      user=User.find ov.user_id
+      user.notify # ping the user (Rhodes client) to tell them to sync
+    end
   end
 
   def dosync(current_user)

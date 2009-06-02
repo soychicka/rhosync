@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090501210034) do
+ActiveRecord::Schema.define(:version => 20090602224921) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -62,6 +62,17 @@ ActiveRecord::Schema.define(:version => 20090501210034) do
     t.string   "url"
   end
 
+  create_table "devices", :force => true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "type"
+    t.string   "carrier"
+    t.string   "manufacturer"
+    t.string   "model"
+    t.integer  "user_id"
+    t.integer  "device_id"
+  end
+
   create_table "memberships", :force => true do |t|
     t.integer  "app_id"
     t.integer  "user_id"
@@ -89,11 +100,12 @@ ActiveRecord::Schema.define(:version => 20090501210034) do
   create_table "source_logs", :force => true do |t|
     t.string   "error"
     t.string   "message"
-    t.float    "timing"
+    t.integer  "time"
     t.string   "operation"
     t.integer  "source_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.float    "timing"
   end
 
   create_table "sources", :force => true do |t|
@@ -130,6 +142,7 @@ ActiveRecord::Schema.define(:version => 20090501210034) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
+    t.integer  "device_id"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

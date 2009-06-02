@@ -8,6 +8,7 @@ class User < ActiveRecord::Base
   has_many :clients
   has_many :synctasks
   has_many :users
+  has_many :devices
 
   include Authentication
   
@@ -45,6 +46,12 @@ class User < ActiveRecord::Base
 
   def email=(value)
     write_attribute :email, (value ? value.downcase : nil)
+  end
+  
+  def notify # find user's devices and ping them
+    devices.each do |d|
+      d.notify  # push a notify out to the user's device
+    end
   end
 
   protected
