@@ -5,7 +5,7 @@ require 'open-uri'
 class Blackberry < Device
   
   def set_ports    
-    self.host=APP_CONFIG['bbserver']  # make sure to set APP_CONFIG['bbserver']
+    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver]
     self.host||="192.168.10.77"  # this is our BES server and shouldn't be hit. Change if you dont want to set APP_CONFIG
     self.serverport=8080
     self.deviceport=100
