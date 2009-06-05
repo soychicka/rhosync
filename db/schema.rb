@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090602224921) do
+ActiveRecord::Schema.define(:version => 20090605012314) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -70,7 +70,11 @@ ActiveRecord::Schema.define(:version => 20090602224921) do
     t.string   "manufacturer"
     t.string   "model"
     t.integer  "user_id"
-    t.integer  "device_id"
+    t.string   "pin"
+    t.integer  "source_id"
+    t.string   "host",         :limit => 30
+    t.string   "deviceport",   :limit => 30
+    t.string   "serverport",   :limit => 30
   end
 
   create_table "memberships", :force => true do |t|
@@ -142,7 +146,7 @@ ActiveRecord::Schema.define(:version => 20090602224921) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.integer  "device_id"
+    t.integer  "source_id"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

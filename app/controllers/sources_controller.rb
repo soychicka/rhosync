@@ -8,7 +8,7 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  before_filter :get_device, :except => :clientcreate
+  before_filter :check_device, :except => :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -485,23 +485,26 @@ protected
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
   
-  def get_device
-    if @current_user and not params["device_id"].blank?
-      logger.debug "Device ID: " + params["device_id"]
-      @device=Device.find_by_id params["device_id"].to_i
-      if @device.nil?
-        @device=Device.new 
-        @device.id=params["device_id"].to_i
-        @device.user_id=@current_user.id
+  def register_device
+    logger.debug "Current user queued for device update: "+@current_user.login
+    if @current_user and not params["device_pin"].blank?
+      logger.debug "Device PIN: " + params["device_pin"]
+      @device=Device.find_or_create_by_pin params["device_pin"]
+      if @device.type==nil
+        @device.user=@current_user
         @device.type=params["device_type"] if params["device_type"]
-        begin
-          @device.save
-        rescue
-          p "Error saving: " + $!
-        end
+        @device.save
       end
-    else
-      @device=nil
+      existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # throw away all but the existing device
+      @current_user.devices << @device if existing.size==0  # if there is no existing device add it
+
+      existing=@source.users.reject { |user| user.id!=@current_user.id}  # check for existing users
+      @source.users<< @current_user if existing.size==0
     end
+  end
+  
+  def check_device
+    find_source if @source.nil?
+    register_device if @source and @source.queuesync
   end
 end

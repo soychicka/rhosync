@@ -66,15 +66,14 @@ class SugarAdapter < SourceAdapter
   end
   
   def sugar_to_generic_results(sugar_result)
-    p "Converting SugarCRM results to generic results"
-    generic_results=[]
+    p "Converting SugarCRM results to HASH OF HASHES generic results"
+    generic_results={}
     sugar_result.entry_list.each do |entry|
       result={}
-      result['id']=entry['id']
       entry.name_value_list.each do |nv|
         result[nv["name"]]=nv["value"]
       end
-      generic_results << result
+      generic_results[entry['id']] = result
     end
     generic_results
   end

@@ -2,18 +2,23 @@ development:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
+  bbserver: "192.168.10.77"
 
 staging:
     domain: mail.rhomobile.com
     sender: admin@rhomobile.com
     name: Admin
+    bbserver: "192.168.10.77"
 
 test:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
+  bbserver: "192.168.10.77"
 
 production:
     domain: mail.rhomobile.com
     sender: admin@rhomobile.com
     name: Admin
+    bbserver: "192.168.10.77"
+    

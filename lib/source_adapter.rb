@@ -13,8 +13,9 @@ class SourceAdapter
   def query
   end
   
-  # this base class sync method now expects a "generic results" structure.
-  # specifically "generic results" is an array of hashes
+  # this base class sync method now expects a (NEW IN 1.2) "Hash of Hashes generic results" structure.
+  # specifically "generic results" is a hash of hashes.  The outer hash is the set of objects (keyed by the ID)
+  # the inner hash is the set of attributes
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
     if @result.size>0 
@@ -28,14 +29,15 @@ class SourceAdapter
         p "MySQL optimized sync"
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
         count=0
-        @result.each do |x|   
+        @result.keys.each do |objkey|
+          obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
-            x.keys.each do |key|
-              unless key.blank? or x[key].blank?   
-                x[key]=x[key].gsub(/\'/,"''") 
-                ovid=ObjectValue.hash_from_data(key,x['id'],nil,@source.id,user_id,x[key],rand)
-                pending_id = ObjectValue.hash_from_data(key,x['id'],nil,@source.id,user_id,x[key])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + x['id'] + "','" + key + "','" + x[key] + "'," + user_id.to_s + "),"
+            obj.keys.each do |attrkey|
+              unless attrkey.blank? or obj[attrkey].blank?   
+                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
+                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
+                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + "),"
               end
             end
             count+=1
@@ -46,15 +48,16 @@ class SourceAdapter
       else  # sqlite and others dont support multiple row inserts from one SQL statement
         p "Sync for SQLite and other databases"
         count=0
-        @result.each do |x|
+        @result.keys.each do |objkey|
+          obj=@result[objkey]
           if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
-            x.keys.each do |key|
-              unless key.blank? or x[key].blank?  
-                x[key]=x[key].gsub(/\'/,"''")        
+            obj.keys.each do |attrkey|
+              unless attrkey.blank? or obj[attrkey].blank?  
+                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
                 sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
-                ovid=ObjectValue.hash_from_data(key,x['id'],nil,@source.id,user_id,x[key],rand)
-                pending_id = ObjectValue.hash_from_data(key,x['id'],nil,@source.id,user_id,x[key])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + x['id'] + "','" + key + "','" + x[key] + "'," + user_id.to_s + ")"
+                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
+                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[atrrkey])          
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
             end # for all keys in hash

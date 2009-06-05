@@ -123,12 +123,13 @@ class AppsController < ApplicationController
       end
     end
     add_user_to_app(user.login,@app)
-    redirect_to :action=>:index,:id=>@app.id
+    redirect_to :action=>:edit,:id=>@app.id
   end
 
   # unsubscribe subscriber to specified app ID 
   def unsubscribe
     @app=App.find_by_permalink(params[:app_id]) 
+    @app||=App.find(params[:id])     
     user=@current_user
     if params[:subscriber]
       @current_user=User.find_by_login params[:subscriber] 
@@ -140,7 +141,7 @@ class AppsController < ApplicationController
       end
     end 
     @app.users.delete user
-    redirect_to :action=>:index
+    redirect_to :action=>:edit,:id=>@app.id
   end
   
   # add specified user as administrator

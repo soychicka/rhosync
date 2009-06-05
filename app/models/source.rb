@@ -2,6 +2,9 @@ class Source < ActiveRecord::Base
   include SourcesHelper
   has_many :object_values
   has_many :source_logs
+  # DON'T NEED THIS NOW. JUST SAY THAT SOURCES HAVE USERS WHICH HAVE DEVICES has_many :devices
+  has_many :source_notifies
+  has_many :users, :through => :source_notifies
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
@@ -69,17 +72,17 @@ class Source < ActiveRecord::Base
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
-    source.notify_users  # wake up the Rhodes clients to tell them to sync!
+    
+    source.ping  # ping the devices queued up on this source to tell them to sync!
+    
     synctask.delete  # take this task out of the queue
   end
   
-  def notify_users
-
-    ovs=ObjectValue.find(:all, :select=>"distinct(user_id) as user_id",:conditions=>{:source_id=>id})
-    ovs.each do |ov|
-      logger.debug "Notifying user: " + ov.user_id.to_s
-      user=User.find ov.user_id
-      user.notify # ping the user (Rhodes client) to tell them to sync
+  def ping
+    logger.debug "Pinging users for source"
+    users.each do |user|
+      user.ping
+      user.delete
     end
   end
 

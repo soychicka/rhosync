@@ -9,7 +9,9 @@ class User < ActiveRecord::Base
   has_many :synctasks
   has_many :users
   has_many :devices
-
+  has_many :sourcenotifies
+  has_many :sources, :through => :sourcenotifies
+  
   include Authentication
   
   include Authentication::ByPassword
@@ -48,11 +50,12 @@ class User < ActiveRecord::Base
     write_attribute :email, (value ? value.downcase : nil)
   end
   
-  def notify # find user's devices and ping them
-    devices.each do |d|
-      d.notify  # push a notify out to the user's device
+  def ping
+    logger.debug "Pinging user: " + login
+    devices.each do |device|
+      device.ping
     end
-  end
+  end 
 
   protected
     
