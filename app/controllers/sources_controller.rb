@@ -8,7 +8,6 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  before_filter :check_device, :except => :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -16,27 +15,21 @@ class SourcesController < ApplicationController
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
   
-  def noaccess
+  # this notifies all users and their devices that have "registered" interest 
+  # in an queued sync completion or backend
+  #  via a PAP push (BlackBerry BES, iPhone APN push, or SMS (Windows Mobile)
+  def ping
+    @source.ping
   end
   
-  def test_createobjects
-    respond_to do |format|
-      format.html
-    end
-  end
-  
-  def viewlog
-    @logs=SourceLog.find :all, :conditions=>{:source_id=>@source.id},:order=>"updated_at desc"
-  end
-
-  # ONLY SUBSCRIBERS MAY ACCESS THIS!
+  # PUSH CAPABILITY: 
+  # IF you wish to have device pinged when the queued sync is complete 
+  # THEN supply params["device_pin"] and params["device_type"] 
   def show
     if params["id"] == "rho_credential"
       render :text => "[]" and return
     end
-    (logger.debug "Device ID: " +  @device.id.to_s) if @device and @device.id
-    (logger.debug "Device Type: " + @device.type.to_s) if @device and @device.type
-    
+   
     @app=@source.app
     if !check_access(@app)  
       render :action=>"noaccess"
@@ -475,6 +468,19 @@ class SourcesController < ApplicationController
       format.xml  { head :ok }
     end
   end
+  
+  def noaccess
+  end
+  
+  def test_createobjects
+    respond_to do |format|
+      format.html
+    end
+  end
+  
+  def viewlog
+    @logs=SourceLog.find :all, :conditions=>{:source_id=>@source.id},:order=>"updated_at desc"
+  end
 
 protected
   def get_new_token
@@ -485,26 +491,5 @@ protected
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
   
-  def register_device
-    logger.debug "Current user queued for device update: "+@current_user.login
-    if @current_user and not params["device_pin"].blank?
-      logger.debug "Device PIN: " + params["device_pin"]
-      @device=Device.find_or_create_by_pin params["device_pin"]
-      if @device.type==nil
-        @device.user=@current_user
-        @device.type=params["device_type"] if params["device_type"]
-        @device.save
-      end
-      existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # throw away all but the existing device
-      @current_user.devices << @device if existing.size==0  # if there is no existing device add it
 
-      existing=@source.users.reject { |user| user.id!=@current_user.id}  # check for existing users
-      @source.users<< @current_user if existing.size==0
-    end
-  end
-  
-  def check_device
-    find_source if @source.nil?
-    register_device if @source and @source.queuesync
-  end
 end

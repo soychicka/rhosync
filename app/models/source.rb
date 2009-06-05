@@ -2,29 +2,11 @@ class Source < ActiveRecord::Base
   include SourcesHelper
   has_many :object_values
   has_many :source_logs
-  # DON'T NEED THIS NOW. JUST SAY THAT SOURCES HAVE USERS WHICH HAVE DEVICES has_many :devices
   has_many :source_notifies
   has_many :users, :through => :source_notifies
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
-
-  def before_validate
-    self.initadapter
-  end
-
-  def before_save
-    self.pollinterval||=300
-    self.priority||=3
-  end
-  
-  def to_param
-    name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
-  end
-  
-  def self.find_by_permalink(link)
-    Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
-  end
   
   def initadapter(credential)
     #create a source adapter with methods on it if there is a source adapter class identified
@@ -67,22 +49,42 @@ class Source < ActiveRecord::Base
     end
   end
   
+  # push/ping related functions
+  
+  # register this particular device and associated user as interested in queued sync
+  def register_device
+    if @current_user and not params["device_pin"].blank?
+      logger.debug "Device ping register for user: "+@current_user.login + "to Device PIN: " + params["device_pin"]
+      @device=Device.find_or_create_by_pin params["device_pin"]
+      if @device.user==nil   # device was not already register
+        @device.user=@current_user
+        @device.type=params["device_type"] if params["device_type"]   
+        @device.save
+      end
+      existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # @current_user.devices has list of queued up devices for user
+      @current_user.devices << @device if existing.size==0  # if there is no existing device with same pin add this new one
+
+      existing=@source.users.reject { |user| user.id!=@current_user.id}  # @source.users has list of users queued up for pings
+      @source.users<< @current_user if existing.size==0  # if not already in list 
+    end
+  end
+  
+  # this does the asynchronous synchronization as invoke by script/job_runner
   def self.doqueuedsync
     synctask=Synctask.find :first,:order=>:created_at
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
-    
-    source.ping  # ping the devices queued up on this source to tell them to sync!
-    
+    # notify all of the source's users' devices to call back to request the data that is now there.
+    source.ping  # ping the devices queued up on this source to tell them to sync!   
     synctask.delete  # take this task out of the queue
   end
   
   def ping
-    logger.debug "Pinging users for source"
+    logger.debug "Pinging all users queued up for update for source"
     users.each do |user|
-      user.ping
-      user.delete
+      user.ping  # this will ping all devices owned by that user
+      user.delete   # remove the user from the list that need to be notified
     end
   end
 
@@ -151,6 +153,23 @@ class Source < ActiveRecord::Base
     tlog(start,"finalize",self.id)
     source_adapter.logoff
     save
+  end
+  
+  def before_validate
+    self.initadapter
+  end
+
+  def before_save
+    self.pollinterval||=300
+    self.priority||=3
+  end
+  
+  def to_param
+    name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
+  end
+  
+  def self.find_by_permalink(link)
+    Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
   end
 
 end
