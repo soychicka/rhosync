@@ -9,8 +9,8 @@ class User < ActiveRecord::Base
   has_many :synctasks
   has_many :users
   has_many :devices
-  has_many :sourcenotifies
-  has_many :sources, :through => :sourcenotifies
+  has_many :source_notifies
+  has_many :sources, :through => :source_notifies
   
   include Authentication
   
@@ -50,10 +50,9 @@ class User < ActiveRecord::Base
     write_attribute :email, (value ? value.downcase : nil)
   end
   
-  def ping
-    logger.debug "Pinging user: " + login
+  def ping(callback_url)
     devices.each do |device|
-      device.ping
+      device.ping(callback_url)
     end
   end 
 

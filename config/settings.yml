@@ -3,22 +3,29 @@ development:
   sender: admin@rhomobile.com
   name: Admin
   bbserver: 192.168.10.77
+  sync_popup: New synchronized data
+  sync_vibrate: 1000
 
 staging:
     domain: mail.rhomobile.com
     sender: admin@rhomobile.com
     name: Admin
     bbserver: 192.168.10.77
-
+    sync_popup: New synchronized data
+    sync_vibrate: 1000
+    
 test:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
   bbserver: 192.168.10.77
-
+  sync_popup: New synchronized data
+  sync_vibrate: 1000
+  
 production:
     domain: mail.rhomobile.com
     sender: admin@rhomobile.com
     name: Admin
     bbserver: 192.168.10.77
-    
+    sync_popup: New synchronized data
+    sync_vibrate: 1000

@@ -20,12 +20,19 @@ module SourcesHelper
     slog(nil,"Timing: "+diff.to_s+" seconds",source_id,operation,diff)
   end
 
+  # given any source controller action, this has the path back to source ID
+  def source_callback_url
+    logger.debug "Current URL is: " + request.path
+    callback_url=request.path[0...rindex(request.path,'/')-1]  # this is the path just to the source ID
+    logger.debug "Source callback is: " + callback_url
+  end
+
   # determines if the logged in users is a subscriber of the current app or 
   # admin of the current app
   def check_access(app)
     logger.debug "Checking access for user "+@current_user.login
     matches_login=app.users.select{ |u| u.login==@current_user.login}
-    matches_login << app.administrations.select { |a| a.user.login==@current_user.login } # let the administrators of the app in as well
+    matches_login << app.administrations.select { |a| a and a.user and a.user.login==@current_user.login } # let the administrators of the app in as well
     if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
       logger.info  "App is not anonymous and user was not found in subscriber list"
       logger.info "User: " + current_user.login + " not allowed access."

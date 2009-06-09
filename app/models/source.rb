@@ -50,41 +50,26 @@ class Source < ActiveRecord::Base
   end
   
   # push/ping related functions
-  
-  # register this particular device and associated user as interested in queued sync
-  def register_device
-    if @current_user and not params["device_pin"].blank?
-      logger.debug "Device ping register for user: "+@current_user.login + "to Device PIN: " + params["device_pin"]
-      @device=Device.find_or_create_by_pin params["device_pin"]
-      if @device.user==nil   # device was not already register
-        @device.user=@current_user
-        @device.type=params["device_type"] if params["device_type"]   
-        @device.save
-      end
-      existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # @current_user.devices has list of queued up devices for user
-      @current_user.devices << @device if existing.size==0  # if there is no existing device with same pin add this new one
 
-      existing=@source.users.reject { |user| user.id!=@current_user.id}  # @source.users has list of users queued up for pings
-      @source.users<< @current_user if existing.size==0  # if not already in list 
-    end
-  end
   
   # this does the asynchronous synchronization as invoke by script/job_runner
-  def self.doqueuedsync
+  def self.doqueuedsync(callback_url)
+    p "Starting queued sync"
     synctask=Synctask.find :first,:order=>:created_at
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
     # notify all of the source's users' devices to call back to request the data that is now there.
-    source.ping  # ping the devices queued up on this source to tell them to sync!   
+    source.ping(callback_url)  # ping the devices queued up on this source to tell them to sync!   
     synctask.delete  # take this task out of the queue
   end
+
   
-  def ping
-    logger.debug "Pinging all users queued up for update for source"
+  def ping(callback_url)
+    # this is the URL for the show method
     users.each do |user|
-      user.ping  # this will ping all devices owned by that user
-      user.delete   # remove the user from the list that need to be notified
+      user.ping(callback_url) # this will ping all devices owned by that user
+      user.delete # remove user from queue for notification
     end
   end
 

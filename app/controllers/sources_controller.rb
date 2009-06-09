@@ -8,6 +8,7 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
+  before_filter :check_device, :except=> :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -15,11 +16,12 @@ class SourcesController < ApplicationController
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
   
+  
   # this notifies all users and their devices that have "registered" interest 
   # in an queued sync completion or backend
   #  via a PAP push (BlackBerry BES, iPhone APN push, or SMS (Windows Mobile)
   def ping
-    @source.ping
+    @source.ping(source_callback_url)
   end
   
   # PUSH CAPABILITY: 

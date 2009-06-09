@@ -7,10 +7,6 @@ class SessionsController < ApplicationController
   # TODO: Only do this for json requests!
   protect_from_forgery :except => :client_login
 
-  def check_device   # check to see if this is a queued sync request, in which case register the device for the update
-    @source=Source.find_by_permalink params[:id] if params[:id]
-    register_device if @source and @source.queuesync 
-  end
   
   # render new.rhtml
   def new

@@ -29,7 +29,9 @@ Daemons.run_proc('delayed_jobs_demon', {
       else
         p "Executing queued sync job"
         $stdout.flush
-        Source.doqueuedsync
+        callback_url="http://localhost/3000/apps/SugarCRM/sources/1"
+        Source.doqueuedsync(callback_url)
+        p "Done queued sync"
       end
     end
   rescue => e
