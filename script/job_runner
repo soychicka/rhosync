@@ -4,7 +4,7 @@ require 'rubygems'
 require 'daemons'
 
 ENV["RAILS_ENV"] = ARGV[1] || "development"
-
+CALLBACK_URL="http://localhost/3000/apps/SugarCRM/sources/1"
 RAILS_ROOT = File.expand_path(File.dirname(__FILE__) + '/..')
 require File.join(RAILS_ROOT, "config/environment")
 
@@ -29,8 +29,7 @@ Daemons.run_proc('delayed_jobs_demon', {
       else
         p "Executing queued sync job"
         $stdout.flush
-        callback_url="http://localhost/3000/apps/SugarCRM/sources/1"
-        Source.doqueuedsync(callback_url)
+        Source.doqueuedsync
         p "Done queued sync"
       end
     end

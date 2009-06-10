@@ -21,7 +21,14 @@ class SourcesController < ApplicationController
   # in an queued sync completion or backend
   #  via a PAP push (BlackBerry BES, iPhone APN push, or SMS (Windows Mobile)
   def ping
-    @source.ping(source_callback_url)
+    lastslash=request.url.rindex('/')
+    @source.callback_url=request.url[0...lastslash-1] if lastslash
+    @source.ping
+  end
+  
+  # this pings JUST the specified user with the given message
+  def ping_user(login,message=nil,vibrate=nil)
+    
   end
   
   # PUSH CAPABILITY: 

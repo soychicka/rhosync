@@ -20,12 +20,6 @@ module SourcesHelper
     slog(nil,"Timing: "+diff.to_s+" seconds",source_id,operation,diff)
   end
 
-  # given any source controller action, this has the path back to source ID
-  def source_callback_url
-    logger.debug "Current URL is: " + request.path
-    callback_url=request.path[0...rindex(request.path,'/')-1]  # this is the path just to the source ID
-    logger.debug "Source callback is: " + callback_url
-  end
 
   # determines if the logged in users is a subscriber of the current app or 
   # admin of the current app

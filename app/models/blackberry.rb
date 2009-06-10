@@ -24,9 +24,7 @@ class Blackberry < Device
       vibrate=APP_CONFIG[:sync_vibrate]
       (data = data + "&vibrate="+vibrate.to_s) if vibrate
       headers={"X-RIM-PUSH-ID"=>push_id,"X-RIM-Push-NotifyURL"=>callback_url,"X-RIM-Push-Reliability-Mode"=>"APPLICATION"}
-      p "Post data is: "+ data
-      p "URL is: "+ url
-      #res = Net::HTTP.post(url,data,headers)  - this would have worked in Rails 1.2
+      #res = Net::HTTP.post(url,data,headers)  - this would have worked in Rails 1.2!!  they shouldnt have gotten rid of this call!
       uri=URI.parse(url)
       response=Net::HTTP.start(uri.host) do |http|
         request = Net::HTTP::Post.new(uri.path,headers)

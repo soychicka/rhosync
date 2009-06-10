@@ -53,27 +53,28 @@ class Source < ActiveRecord::Base
 
   
   # this does the asynchronous synchronization as invoke by script/job_runner
-  def self.doqueuedsync(callback_url)
-    p "Starting queued sync"
+  def self.doqueuedsync
     synctask=Synctask.find :first,:order=>:created_at
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
     # notify all of the source's users' devices to call back to request the data that is now there.
-    source.ping(callback_url)  # ping the devices queued up on this source to tell them to sync!   
+    source.ping # ping the devices queued up on this source to tell them to sync!   
     synctask.delete  # take this task out of the queue
   end
 
-  
-  def ping(callback_url)
+  def ping
     # this is the URL for the show method
     users.each do |user|
       user.ping(callback_url) # this will ping all devices owned by that user
-      user.delete # remove user from queue for notification
     end
   end
 
   def dosync(current_user)
+    if source_adapter.nil?
+      logger.info "No source adapter supplied"
+      return
+    end
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
     
@@ -130,6 +131,7 @@ class Source < ActiveRecord::Base
       p "Failed to perform query"
       slog(e,"timed out on query",self.id)
     end
+
     start=Time.new
     source_adapter.sync
     tlog(start,"sync",self.id)
