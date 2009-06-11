@@ -30,7 +30,7 @@ class SourcesController < ApplicationController
   def ping_user(login,message=nil,vibrate=500)
     user=User.find_by_login login
     callback_url=request.url[0...lastslash-1] if lastslash
-    user.ping(callback_url,message,vibrate)
+    user.ping(callback_url, message,vibrate)
   end
   
   # PUSH CAPABILITY: 
@@ -438,7 +438,7 @@ class SourcesController < ApplicationController
     @app=App.find_by_permalink params["source"]["app_id"]
     error=nil
     src=Source.find_by_name params["source"]["name"]
-    if src!=@source
+    if src and src!=@source
       error="Source name already exists. Please try a different name." 
     else
       @app=App.find_by_permalink params["source"]["app_id"]
