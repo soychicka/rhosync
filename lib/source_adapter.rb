@@ -26,6 +26,7 @@ class SourceAdapter
       end
       config =Rails::Configuration.new
       if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
+        max_sql_statement=2048
         p "MySQL optimized sync"
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
         count=0
