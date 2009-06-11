@@ -89,12 +89,4 @@ SugarQuotes:
   adapter: SugarQuotes
   limit: 100
     
-SiebelServiceRequests:
-  id: 4
-  name: SiebelServiceRequests
-  url: secure-ausomxbha.crmondemand.com
-  login: RHOMOBILE/ADAM@RHOMOBILE.COM
-  password: password1
-  app_id: 2
-
 
