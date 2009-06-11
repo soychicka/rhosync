@@ -27,8 +27,10 @@ class SourcesController < ApplicationController
   end
   
   # this pings JUST the specified user with the given message
-  def ping_user(login,message=nil,vibrate=nil)
-    
+  def ping_user(login,message=nil,vibrate=500)
+    user=User.find_by_login login
+    callback_url=request.url[0...lastslash-1] if lastslash
+    user.ping(callback_url,message,vibrate)
   end
   
   # PUSH CAPABILITY: 

@@ -7,17 +7,17 @@ class Blackberry < Device
   
   def set_ports    
     self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
-    self.host||="192.168.10.77"  # this is our BES server and shouldn't be hit. Change if you dont want to set APP_CONFIG
-    self.serverport=8080
-    self.deviceport=100
+    self.host||="192.168.1.106"  # this is Lars' MDS server and shouldn't be hit. Change if you don't want to set APP_CONFIG[:bbserver]
+    self.serverport="8080"
   end
   
-  def ping(callback_url) # notify the BlackBerry device via the BES server 
+  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via the BES server 
     p "Pinging Blackberry device: " + pin 
     set_ports 
     begin
       data="do_sync="+callback_url
-      popup=APP_CONFIG[:sync_popup]
+      popup||=message # supplied message
+      popup||=APP_CONFIG[:sync_popup]
       popup||="You have new data"
       popup=URI.escape(popup)
       (data = data + "&popup="+ popup) if popup
@@ -43,7 +43,7 @@ class Blackberry < Device
   
   def url  # this is the logic for doing BES server PAP push.  Takes host, serverport, pin and deviceport
     if host and serverport and pin and deviceport
-      @url="http://"+ host + "\:" + serverport.to_s + "/push?DESTINATION="+ pin + "&PORT=" + deviceport.to_s + "&REQUESTURI=" + host
+      @url="http://"+ host + "\:" + serverport + "/push?DESTINATION="+ pin + "&PORT=" + deviceport + "&REQUESTURI=" + host
     else
       p "Do not have all values for URL"
       @url=nil

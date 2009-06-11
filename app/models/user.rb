@@ -50,9 +50,9 @@ class User < ActiveRecord::Base
     write_attribute :email, (value ? value.downcase : nil)
   end
   
-  def ping(callback_url)
+  def ping(callback_url,message=nil,vibrate=500)
     devices.each do |device|
-      device.ping(callback_url)
+      device.ping(callback_url,message,vibrate)
     end
   end 
 

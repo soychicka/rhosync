@@ -2,7 +2,7 @@ development:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
-  bbserver: 192.168.10.77
+  bbserver: 192.168.1.106
   sync_popup: New synchronized data
   sync_vibrate: 1000
 

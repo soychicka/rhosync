@@ -25,11 +25,13 @@ class ApplicationController < ActionController::Base
   # register this particular device and associated user as interested in queued sync
   def register_device
     if @current_user and not params["device_pin"].blank?
-      logger.debug "Device ping register for user: "+@current_user.login + "to Device PIN: " + params["device_pin"]
       @device=Device.find_or_create_by_pin params["device_pin"]
       if @device.user==nil   # device was not already registered
         @device.user=@current_user
-        @device.type=params["device_type"] if params["device_type"]   
+        @device.type=params["device_type"] if params["device_type"]  
+        @device.type||="Blackberry" # default to Blackberry 
+        @device.deviceport=params["device_port"] if params["device_port"]
+        @device.deviceport||="100"
         @device.save
       end
       existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # @current_user.devices has list of queued up devices for user
@@ -40,10 +42,8 @@ class ApplicationController < ActionController::Base
       @source.callback_url=request.url # this stuffs the "show" method URL as the callback to be used by later pings
       args=request.url.index("\?")  # get rid of ? and beyond 
       if args and args>1
-        p "Removing arguments"
         @source.callback_url=@source.callback_url[0...args] # if its there
       end
-      logger.debug "Saving: " + @source.callback_url
       @source.save
     end
   end
