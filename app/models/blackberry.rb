@@ -9,6 +9,7 @@ class Blackberry < Device
     self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
     self.host||="192.168.1.106"  # this is Lars' MDS server and shouldn't be hit. Change if you don't want to set APP_CONFIG[:bbserver]
     self.serverport="8080"
+    self.deviceport||="100"
   end
   
   def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via the BES server 

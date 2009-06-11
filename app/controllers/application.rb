@@ -27,11 +27,14 @@ class ApplicationController < ActionController::Base
     if @current_user and not params["device_pin"].blank?
       @device=Device.find_or_create_by_pin params["device_pin"]
       if @device.user==nil   # device was not already registered
+        logger.debug "Registering device for notification with pin " + @device.pin
         @device.user=@current_user
         @device.type=params["device_type"] if params["device_type"]  
         @device.type||="Blackberry" # default to Blackberry 
+        logger.debug "Device type is: " + @device.type
         @device.deviceport=params["device_port"] if params["device_port"]
         @device.deviceport||="100"
+        logger.debug "Device port is: " + @device.deviceport
         @device.save
       end
       existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # @current_user.devices has list of queued up devices for user
