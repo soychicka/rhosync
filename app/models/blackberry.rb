@@ -16,7 +16,29 @@ class Blackberry < Device
     p "Pinging Blackberry device: #{pin}"
     set_ports
     
-    @template = "--asdlfkjiurwghasf\nContent-Type: application/xml; charset=UTF-8\n\n<?xml version=\"1.0\"?>\n<!DOCTYPE pap PUBLIC \"-//WAPFORUM//DTD PAP 2.0//EN\"\n\"http://www.wapforum.org/DTD/pap_2.0.dtd\"\n[<?wap-pap-ver supported-versions=\"2.0\"?>]>\n<pap>\n<push-message push-id=\"pushID:--RAND_ID--\" ppg-notify-requested-to=\"http://localhost:7778\">\n\n<address address-value=\"WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net\"/>\n<quality-of-service delivery-method=\"confirmed\"/>\n</push-message>\n</pap>\n--asdlfkjiurwghasf\nContent-Type: text/plain\n\n--CONTENT----asdlfkjiurwghasf--\n"
+    @template =
+<<-DESC
+--asdlfkjiurwghasf
+Content-Type: application/xml; charset=UTF-8
+
+<?xml version="1.0"?>
+<!DOCTYPE pap PUBLIC "-//WAPFORUM//DTD PAP 2.0//EN" 
+  "http://www.wapforum.org/DTD/pap_2.0.dtd" 
+  [<?wap-pap-ver supported-versions="2.0"?>]>
+<pap>
+<push-message push-id="pushID:--RAND_ID--" ppg-notify-requested-to="http://localhost:7778">
+
+<address address-value="WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net"/>
+<quality-of-service delivery-method="confirmed"/>
+</push-message>
+</pap>
+--asdlfkjiurwghasf
+Content-Type: text/plain
+
+--CONTENT--
+--asdlfkjiurwghasf--
+DESC
+    
     @template.gsub!(/\n/,"\r\n")
     # begin
       data="do_sync="+callback_url+"\r\n"
@@ -26,13 +48,13 @@ class Blackberry < Device
       popup=URI.escape(popup)
       (data = data + "show_popup="+ popup + "\r\n") if popup
       vibrate=APP_CONFIG[:sync_vibrate]
-      (data = data + "vibrate="+vibrate.to_s + "\r\n") if vibrate
+      (data = data + "vibrate="+vibrate.to_s) if vibrate
       post_body = @template
       post_body = post_body.gsub(/--RAND_ID--/, (rand * 100000000).to_i.to_s).gsub(/--DEVICE_PIN_HEX--/, self.pin.to_i.to_s(base=16).upcase).gsub(/--CONTENT--/, data)
       puts "POST_BODY: #{post_body.inspect}"
       headers={"X-WAP-APPLICATION-ID"=>"/",
                "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
-               "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf"'}
+               "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
       uri=URI.parse(url)
       p "URI: #{uri}"
       response = Net::HTTP.new(uri.host, uri.port).start do |http|
@@ -40,7 +62,7 @@ class Blackberry < Device
         request.body = post_body
         http.request(request)
       end
-      p "Result of BlackBerry PAP Push" + response.body[0..255]   # log the results of the push
+      p "Result of BlackBerry PAP Push" + response.body  # log the results of the push
     # rescue
     #   p "Failed to push to BlackBerry device: "+ url + "=>" + $!
     # end
