@@ -57,7 +57,7 @@ class SourceAdapter
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
                 sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
-                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[atrrkey])          
+                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
                 sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
