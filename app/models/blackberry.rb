@@ -15,57 +15,73 @@ class Blackberry < Device
   def push(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 
     set_ports
+    setup_template
     data=build_payload(callback_url,message,vibrate)
-    pap_push(data)
+    headers={"X-WAP-APPLICATION-ID"=>"/",
+             "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
+             "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
+    http_post(url,data,headers)       
   end
-  
+
+  def http_post(address,data,headers)
+    uri=URI.parse(address)
+    p "URI: #{uri}"
+    response=Net::HTTP.new(uri.host,uri.port) do |http|
+      request = Net::HTTP::Post.new(uri.path,headers)
+      request.body = data
+      http.request(request)
+    end
+  end
+
   def build_payload(callback_url,message,vibrate)
+    setup_template
     data="do_sync="+callback_url
     popup||=message # supplied message
     popup||=APP_CONFIG[:sync_popup]
     popup||="You have new data"
     popup=URI.escape(popup)
-    (data = data + "&popup="+ popup) if popup
+    (data = data + "&show_popup="+ popup) if popup
     vibrate=APP_CONFIG[:sync_vibrate]
     (data = data + "&vibrate="+vibrate.to_s) if vibrate
-  end
-  
-  def pap_push(data)
-    boundary= "asdlfkjiurwghasf"
-    headers={"Content-Type"=>"multipart/related; type=\"application/xml\"; boundary="+boundary,
-      "X-Wap-Application-Id"=>"/",
-      "X-Rim-Push-Dest-Port"=>self.deviceport}
-    #template=loadfile("pap_push.txt")
-    @template = "--asdlfkjiurwghasf\nContent-Type: application/xml; charset=UTF-8\n\n<?xml version=\"1.0\"?>\n<!DOCTYPE pap PUBLIC \"-//WAPFORUM//DTD PAP 2.0//EN\"\n\"http://www.wapforum.org/DTD/pap_2.0.dtd\"\n[<?wap-pap-ver supported-versions=\"2.0\"?>]>\n<pap>\n<push-message push-id=\"pushID:--RAND_ID--\" ppg-notify-requested-to=\"http://localhost:7778\">\n\n<address address-value=\"WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net\"/>\n<quality-of-service delivery-method=\"confirmed\"/>\n</push-message>\n</pap>\n--asdlfkjiurwghasf\nContent-Type: text/plain\n\n--CONTENT----asdlfkjiurwghasf--\n"
-    @template.gsub!(/\n/,"\r\n")
-    @template.gsub("$(pushid)",push_id)
-    @template.gsub("$(notifyURL)",notifyURL)
-    @template.gsub("$(pin)",pin)
-    @template.gsub("$(headers)","Content-Type: text/plain")
-    @template.gsub("$(content)",data)
-    http_post(url,template,headers)
-  end
-  
-  def loadfile
-    # TODO: write code that loads a file into a string buffer and return that buffer
-  end
-  
-  def http_post(address,data,headers)
-    uri=URI.parse(address)
-    response=Net::HTTP.start(uri.host) do |http|
-      request = Net::HTTP::Post.new(uri.path,headers)
-      request.body = data
-      response = http.request(request)
-    end
+    post_body = @template
+    post_body = post_body.gsub(/--RAND_ID--/, push_id.gsub(/--DEVICE_PIN_HEX--/, self.pin.to_i.to_s(base=16).upcase).gsub(/--CONTENT--/, data)
   end
   
   def push_id
-    rand.to_s
+    (rand * 100000000).to_i.to_s)
   end
   
-  def url  # this is the logic for doing BES server PAP push.  Takes host, serverport, pin and deviceport
-    if host and serverport and pin and deviceport
-      @url="http://"+ host + "\:" + serverport + "/push?DESTINATION="+ pin + "&PORT=" + deviceport + "&REQUESTURI=" + host
+  def setup_template
+    @template =
+    <<-DESC
+    --asdlfkjiurwghasf
+    Content-Type: application/xml; charset=UTF-8
+
+    <?xml version="1.0"?>
+    <!DOCTYPE pap PUBLIC "-//WAPFORUM//DTD PAP 2.0//EN"
+    "http://www.wapforum.org/DTD/pap_2.0.dtd"
+    [<?wap-pap-ver supported-versions="2.0"?>]>
+    <pap>
+    <push-message push-id="pushID:--RAND_ID--" ppg-notify-requested-to="http://localhost:7778">
+
+    <address address-value="WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net"/>
+    <quality-of-service delivery-method="confirmed"/>
+    </push-message>
+    </pap>
+    --asdlfkjiurwghasf
+    Content-Type: text/plain
+
+    --CONTENT--
+    --asdlfkjiurwghasf--
+    DESC
+    @template.gsub!(/\n/,"\r\n")
+    
+  end
+  
+  
+  def url # this is the logic for doing BES server PAP push. Takes host & serverport
+    if host and serverport
+      @url="http://"+ host + "\:" + serverport + "/pap"
     else
       p "Do not have all values for URL"
       @url=nil
