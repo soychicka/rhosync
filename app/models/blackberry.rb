@@ -45,7 +45,6 @@ DESC
       popup||=message # supplied message
       popup||=APP_CONFIG[:sync_popup]
       popup||="You have new data"
-      popup=URI.escape(popup)
       (data = data + "show_popup="+ popup + "\r\n") if popup
       vibrate=APP_CONFIG[:sync_vibrate]
       (data = data + "vibrate="+vibrate.to_s) if vibrate
