@@ -70,10 +70,7 @@ class Source < ActiveRecord::Base
   end
 
   def dosync(current_user)
-    if source_adapter.nil?
-      logger.info "No source adapter supplied"
-      return
-    end
+
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
     
