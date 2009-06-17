@@ -43,17 +43,24 @@ module SourcesHelper
     # INDEX: SHOULD USE BY_SOURCE_USER_TYPE 
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
     (count_updates << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
-    (result=true) if (ObjectValue.count_by_sql count_updates ) > 0
+    if (ObjectValue.count_by_sql count_updates ) > 0
+      p "Refreshing because there are some non-query object values"
+      result = true
+    end
 
     # refresh if there is no data
     # INDEX: SHOULD USE BY_SOURCE_USER_TYPE
     count_query_objs="select count(*) from object_values where update_type='query' and source_id="+id.to_s
     (count_query_objs << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
-    (result=true) if (ObjectValue.count_by_sql count_query_objs ) <= 0
+    if (ObjectValue.count_by_sql count_query_objs ) <= 0
+      p "Refreshing because there is no data stored in object values"
+      result=true
+    end
     
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
+      p "Refreshing because the data is old"
       result=true
     end
     result  # return true of false (nil)
@@ -216,6 +223,34 @@ module SourcesHelper
     @client
   end
 
+  # check if there have been any changes on the client
+  # used to determine whether to ping client about changes
+  def check_for_changes_for_client(client)
+    have_changes=nil
+    objs_to_return = []
+    page_size = 100 # make it small just to do the check
+    user_condition="= #{current_user.id}" if current_user and current_user.id
+    user_condition ||= "is NULL"
+    # Setup the join conditions
+    object_value_join_conditions = "from object_values ov left join client_maps cm on \
+                                    ov.id = cm.object_value_id and \
+                                    cm.client_id = '#{client.id}'"
+    object_value_conditions = "#{object_value_join_conditions} \
+                               where ov.update_type = 'query' and \
+                                 ov.source_id = #{id} and \
+                                 ov.user_id #{user_condition} and \
+                                 cm.object_value_id is NULL order by ov.object limit #{page_size}"                  
+    object_value_query = "select * #{object_value_conditions}"
+    objs=ClientMap.check_insert_objects(object_value_query,client.id)  # are there any objects to insert for this client
+    if objs and objs.size>0
+      have_changes=true
+    end
+    objs=ClientMap.check_delete_objects(client.id) # are there any objects to delete for this client
+    if objs and objs.size>0
+      have_changes=true
+    end
+    have_changes
+  end
   
   # creates an object_value list for a given client
   # based on that client's client_map records

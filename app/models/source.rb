@@ -19,7 +19,7 @@ class Source < ActiveRecord::Base
       begin
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
       rescue
-        msg="No such adapter class provided!"
+        msg="Failure to create adapter from class #{self.adapter}"
         p msg
         slog(nil,msg)
       end
@@ -58,7 +58,9 @@ class Source < ActiveRecord::Base
     user=User.find synctask.user_id
     source.dosync(user)  # call the method below that performs the actual sync
     # notify all of the source's users' devices to call back to request the data that is now there.
-    source.ping # ping the devices queued up on this source to tell them to sync!   
+    if user.check_for_changes(source)  # but only if there are changes for any of the clients owned by that user
+      user.ping(callback_url)# ping the user queued up on this source to tell them to sync!   
+    end
     synctask.delete  # take this task out of the queue
   end
 
@@ -77,6 +79,11 @@ class Source < ActiveRecord::Base
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
     initadapter(self.credential)   
+    
+    if source_adapter.nil? 
+      slog(nil,"Couldn't set up source adapter due to missing or invalid class")
+      return
+    end 
     # make sure to use @client and @session_id variable in your code that is edited into each source!
     begin
       start=Time.new
@@ -85,6 +92,7 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
+      return
     end
     
     # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
@@ -128,9 +136,14 @@ class Source < ActiveRecord::Base
       slog(e,"timed out on query",self.id)
     end
 
-    start=Time.new
-    source_adapter.sync
-    tlog(start,"sync",self.id)
+    begin
+      start=Time.new
+      source_adapter.sync
+      tlog(start,"sync",self.id)
+    rescue Exception=>e
+      p "Failed to sync"
+      slog(e,"Failed to sync",self.id)
+    end 
     start=Time.new
     finalize_query_records(@credential)
     tlog(start,"finalize",self.id)

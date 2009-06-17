@@ -29,6 +29,7 @@ class SourcesController < ApplicationController
   # this pings JUST the specified user with the given message
   def ping_user(login,message=nil,vibrate=500)
     user=User.find_by_login login
+    lastslash=request.url.rindex('/')
     callback_url=request.url[0...lastslash-1] if lastslash
     user.ping(callback_url, message,vibrate)
   end

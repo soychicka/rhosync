@@ -11,6 +11,22 @@ class ClientMap < ActiveRecord::Base
     end
   end
   
+  # determine if there are any objects to insert on the client based on the current object_values stable contents
+  # used by the check_for_changes_for_client
+  def self.check_insert_objects(object_value_query,client_id)
+    objs_to_return = ObjectValue.find_by_sql object_value_query
+    return objs_to_return.collect! {|x| x.db_operation = 'insert'; x}
+  end
+  
+  # determine if there are any objects to delete on the client based on the current object_values stable contents
+  # used by the check_for_changes_for_client
+  def self.check_delete_objects(client_id)
+    objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on \
+                                            cm.object_value_id = ov.id \
+                                            where cm.client_id='#{client_id}' and ov.id is NULL \
+                                            and cm.dirty=0 order by ov.object limit 100"
+  end
+  
   # get insert objects based on token status
   def self.get_insert_objs_by_token_status(join_conditions,client_id,resend_token)
     objs_to_return = ObjectValue.find_by_sql "select * #{join_conditions} where cm.ack_token = 0 \
