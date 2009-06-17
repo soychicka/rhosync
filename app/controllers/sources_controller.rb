@@ -416,10 +416,9 @@ class SourcesController < ApplicationController
     error=nil
     if Source.find_by_name @source.name
       error="Source already exists. Please try a different name."
-    else
-      @app=App.find_by_permalink params["source"]["app_id"]
-      @source.app=@app
     end
+    @app=App.find_by_permalink params["source"]["app_id"]
+    @source.app=@app
     respond_to do |format|
       if !error and @source.save
         flash[:notice] = 'Source was successfully created.'
