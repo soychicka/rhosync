@@ -17,21 +17,34 @@ class SourcesController < ApplicationController
   protect_from_forgery :only => [:create, :delete, :update]
   
   
+  # PUSH TO ALL QUEUED UP USERS: (see show method below for queueing mechanism
   # this notifies all users and their devices that have "registered" interest 
   # in an queued sync completion or backend
   #  via a PAP push (BlackBerry BES, iPhone APN push, or SMS (Windows Mobile)
   def ping
     lastslash=request.url.rindex('/')
     @source.callback_url=request.url[0...lastslash-1] if lastslash
-    @source.ping
+    @result=@source.ping
   end
   
+  # PUSH TO SPECIFIC USER: 
   # this pings JUST the specified user with the given message
-  def ping_user(login,message=nil,vibrate=500)
-    user=User.find_by_login login
-    lastslash=request.url.rindex('/')
-    callback_url=request.url[0...lastslash-1] if lastslash
-    user.ping(callback_url, message,vibrate)
+  # defaults to no message, 1/2 second vibrate
+  # also provides callback URL of this source's show method but allows for overriding this callback
+  def ping_user
+    p "Pinging user #{params[:login]}"
+    user=User.find_by_login params[:login] if params[:login]
+    if user.nil?
+      logger.info "Failed to find user to notify: #{params[:login]}"
+    else
+      callback_url=params[:callback_url]
+      lastslash=request.url.rindex('/') if callback_url.nil? # compute the callback if not supplied
+      callback_url=request.url[0...lastslash-1] if lastslash  # as the show method on this controller
+      if callback_url
+        @result=user.ping(callback_url, params[:message],params[:vibrate])  # only does the notify if we have a message and a callback
+      end
+    end
+    @result
   end
   
   # PUSH CAPABILITY: 

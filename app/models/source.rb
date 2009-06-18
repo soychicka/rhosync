@@ -66,8 +66,9 @@ class Source < ActiveRecord::Base
 
   def ping
     # this is the URL for the show method
+    @result=""
     users.each do |user|
-      user.ping(callback_url) # this will ping all devices owned by that user
+      @result+=user.ping(callback_url) # this will ping all devices owned by that user
     end
   end
 

@@ -25,8 +25,10 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
   map.connect 'sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
   map.connect 'sources/:id/ask', :controller => 'sources', :action => 'ask'
+  map.connect 'sources/:id/ping_user', :controller => 'sources', :action => 'ping_user'
+  map.connect 'sources/:id/ping', :controller => 'sources', :action => 'ping'
   
-  # build in CRUD
+  # built in CRUD
   map.connect 'sources/:id/create', :controller => 'sources', :action => 'create'
   map.connect 'sources/:id/update', :controller => 'sources', :action => 'update'
   map.connect 'sources/:id/delete', :controller => 'sources', :action => 'delete'

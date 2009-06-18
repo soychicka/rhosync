@@ -12,7 +12,7 @@ class Blackberry < Device
     self.deviceport||="100"
   end
   
-  def push(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via PAP
+  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 
     set_ports
     setup_template
@@ -20,7 +20,14 @@ class Blackberry < Device
     headers={"X-WAP-APPLICATION-ID"=>"/",
              "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
-    http_post(url,data,headers)       
+    begin
+      @result=http_post(url,data,headers)   
+      p "Returning #{@result}"
+    rescue
+      p "Failed to post "
+      @result="post failure"
+    end
+    @result    
   end
 
   def http_post(address,data,headers)
@@ -31,6 +38,7 @@ class Blackberry < Device
       request.body = data
       http.request(request)
     end
+    response
   end
 
   def build_payload(callback_url,message,vibrate)

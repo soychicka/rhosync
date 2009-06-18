@@ -51,9 +51,12 @@ class User < ActiveRecord::Base
   end
   
   def ping(callback_url,message=nil,vibrate=500)
+    @result=""
     devices.each do |device|
-      device.ping(callback_url,message,vibrate)
+      @result=device.ping(callback_url,message,vibrate)
+      p "Result of device ping: #{@result}" if @result
     end
+    @result
   end 
 
   # checks for changes from all of the user's devices
