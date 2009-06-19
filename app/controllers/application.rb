@@ -20,7 +20,7 @@ class ApplicationController < ActionController::Base
   
   def check_device   # check to see if this is a queued sync request, in which case register the device for the update
     @source=Source.find_by_permalink params[:id] if params[:id]
-    register_device if @source and @source.queuesync 
+    register_device if @source 
   end
   # register this particular device and associated user as interested in queued sync
   def register_device
