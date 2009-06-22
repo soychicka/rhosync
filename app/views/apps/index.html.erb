@@ -65,6 +65,7 @@ You have no subscribed apps.
 <%
 first=true
 @allapps.each do |app|%>
+<%if app.stop_subscriptions!=1 %>
 <option value="<%=app.id%>"
 <%if first%>
 selected
@@ -73,6 +74,7 @@ selected
 <%
   first=nil
 end%>
+<%end%>
 </select>
 <% if @current_user.login=="anonymous"%>
 Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp;<input name="email"/>
