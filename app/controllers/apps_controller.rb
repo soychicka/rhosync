@@ -112,9 +112,8 @@ class AppsController < ApplicationController
   def subscribe
     @app=App.find_by_permalink(params[:app_id]) 
     @app||=App.find(params[:id]) 
-    if @app.stop_subscriptions==1
+    if @app.stop_subscriptions==true
       logger.info "This application has disallowed subscriptions"
-      redirect_to :action=>:edit,:id=>@app.id
       return
     end
     user=@current_user

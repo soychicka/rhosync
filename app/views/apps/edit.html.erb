@@ -31,13 +31,12 @@
 <b>User Access</b><br/>
 Anonymous (Allow All Users) <%=f.check_box :anonymous%>
 Autoregister Users <%=f.check_box :autoregister%>
-Stop subscriptions <%=f.check_box :stop_subscriptions,:onchange=>
-"if (document.getElementById('app_stop_subscriptions').value==1) {  
-  document.getElementById('app_stop_subscriptions').value=0; 
-  document.getElementById('add_subscriber').style.visibility='hidden';
+Stop subscriptions <%=f.check_box :stop_subscriptions,
+:onchange=>"
+if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
+   document.getElementById('add_subscriber').style.visibility='hidden';
 }
 else{ 
-  document.getElementById('app_stop_subscriptions').value=1; 
   document.getElementById('add_subscriber').style.visibility='visible';
 }"
 %>

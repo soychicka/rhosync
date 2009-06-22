@@ -65,7 +65,7 @@ You have no subscribed apps.
 <%
 first=true
 @allapps.each do |app|%>
-<%if app.stop_subscriptions!=1 %>
+<%if app.stop_subscriptions!=true %>
 <option value="<%=app.id%>"
 <%if first%>
 selected
