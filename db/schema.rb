@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090609233322) do
+ActiveRecord::Schema.define(:version => 20090621030001) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(:version => 20090609233322) do
     t.datetime "updated_at"
     t.integer  "anonymous"
     t.integer  "autoregister"
+    t.boolean  "stop_subscriptions"
   end
 
   create_table "client_maps", :id => false, :force => true do |t|

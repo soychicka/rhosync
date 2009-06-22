@@ -59,7 +59,7 @@ class Source < ActiveRecord::Base
     source.dosync(user)  # call the method below that performs the actual sync
     # notify all of the source's users' devices to call back to request the data that is now there.
     if user.check_for_changes(source)  # but only if there are changes for any of the clients owned by that user
-      user.ping(callback_url)# ping the user queued up on this source to tell them to sync!   
+      user.ping(callback_url) # ping the user queued up on this source to tell them to sync!   
     end
     synctask.delete  # take this task out of the queue
   end
