@@ -76,7 +76,7 @@ Rails::Initializer.run do |config|
   # config.active_record.observers = :cacher, :garbage_collector
   config.active_record.observers = :user_observer
 
-
+  
 end
 
 ActionController::Base.session_options[:session_expires] = 1.year.from_now
