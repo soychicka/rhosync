@@ -4,3 +4,5 @@
 coverage
 nbproject
 config/database.yml
+tmp/.*
+tmp/*
