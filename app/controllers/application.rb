@@ -29,9 +29,9 @@ class ApplicationController < ActionController::Base
       if @device.user==nil   # device was not already registered
         logger.debug "Registering device for notification with pin " + @device.pin
         @device.user=@current_user
-        @device.type=params["device_type"] if params["device_type"]  
-        @device.type||="Blackberry" # default to Blackberry 
-        logger.debug "Device type is: " + @device.type
+        @device.device_type=params["device_type"] if params["device_type"]  
+        @device.device_type||="Blackberry" # default to Blackberry 
+        logger.debug "Device type is: " + @device.device_type
         @device.deviceport=params["device_port"] if params["device_port"]
         @device.deviceport||="100"
         logger.debug "Device port is: " + @device.deviceport

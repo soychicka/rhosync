@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090624002048) do
+ActiveRecord::Schema.define(:version => 20090624184104) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -29,14 +29,16 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
     t.boolean  "stop_subscriptions"
   end
 
-  create_table "bj_config", :primary_key => "bj_config_id", :force => true do |t|
-    t.text "hostname"
-    t.text "key"
-    t.text "value"
-    t.text "cast"
+  create_table "bj_config", :id => false, :force => true do |t|
+    t.integer "bj_config_id", :null => false
+    t.text    "hostname"
+    t.text    "key"
+    t.text    "value"
+    t.text    "cast"
   end
 
-  create_table "bj_job", :primary_key => "bj_job_id", :force => true do |t|
+  create_table "bj_job", :id => false, :force => true do |t|
+    t.integer  "bj_job_id",      :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -55,7 +57,8 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
     t.integer  "exit_status"
   end
 
-  create_table "bj_job_archive", :primary_key => "bj_job_archive_id", :force => true do |t|
+  create_table "bj_job_archive", :id => false, :force => true do |t|
+    t.integer  "bj_job_archive_id", :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -112,7 +115,7 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
   create_table "devices", :force => true do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.string   "type"
+    t.string   "device_type"
     t.string   "carrier"
     t.string   "manufacturer"
     t.string   "model"
