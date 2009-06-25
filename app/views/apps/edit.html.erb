@@ -27,6 +27,12 @@
   <%=f.submit "Update Application Settings"%>
 </p>
 <h4>User Access</h4>
+<% if @app.authenticates? %>
+
+<p>Delegated to backend application. Not handled directly by rhosync.</p>
+
+<% else %>
+
 Anonymous (Allow All Users) <%=f.check_box :anonymous %>
 Autoregister Users <%=f.check_box :autoregister %>
 Stop subscriptions <%=f.check_box :stop_subscriptions,
@@ -38,7 +44,6 @@ else{
   document.getElementById('add_subscriber').style.visibility='visible';
 }"
 %>
-<%end%>
 
 <h4>Subscribed Users</h4>
 <table>
@@ -62,6 +67,9 @@ else{
 <%end%>
 </div>
 <%end%>
+
+<% end %>
+<% end %>
 <p>
 <h4>Administrator Access</h4>
 <table>

@@ -9,7 +9,7 @@ class Source < ActiveRecord::Base
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
   
-  def initadapter(credential)
+  def initadapter(credential,session)
     #create a source adapter with methods on it if there is a source adapter class identified
     if (credential and credential.url.blank?) and (!credential and self.url.blank?)
       msg= "Need to to have a URL for the source in either a user credential or globally"
@@ -19,6 +19,7 @@ class Source < ActiveRecord::Base
     if not self.adapter.blank? 
       begin
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
+        @source_adapter.session = session
       rescue
         msg="Failure to create adapter from class #{self.adapter}"
         p msg
@@ -39,7 +40,7 @@ class Source < ActiveRecord::Base
     result
   end
   
-  def refresh(current_user)
+  def refresh(current_user, session)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       task=Synctask.find_or_create_by_user_id_and_source_id(current_user.id,id)
       task.save
@@ -47,7 +48,7 @@ class Source < ActiveRecord::Base
       Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
       p "Queued up task for user "+current_user.login+ ", source "+name
     else # go ahead and do it right now
-      dosync(current_user)
+      dosync(current_user, session)
     end
   end
   
@@ -57,7 +58,7 @@ class Source < ActiveRecord::Base
     synctask=Synctask.find :first,:order=>:created_at
     source=Source.find synctask.source_id
     user=User.find synctask.user_id
-    source.dosync(user)  # call the method below that performs the actual sync
+    source.dosync(user,session)  # call the method below that performs the actual sync
     # notify all of the source's users' devices to call back to request the data that is now there.
     if user.check_for_changes(source)  # but only if there are changes for any of the clients owned by that user
       user.ping(source.callback_url) # ping the user queued up on this source to tell them to sync!   
@@ -73,14 +74,14 @@ class Source < ActiveRecord::Base
     end
   end
 
-  def dosync(current_user)
+  def dosync(current_user, session)
 
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
     
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential)   
+    initadapter(self.credential,session)   
     
     if source_adapter.nil? 
       slog(nil,"Couldn't set up source adapter due to missing or invalid class")

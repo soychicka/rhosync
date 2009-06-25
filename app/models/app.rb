@@ -19,11 +19,11 @@ class App < ActiveRecord::Base
   end
   
   def authenticates?
-    @delegate && @delegate.public_method_defined?(:authenticate)
+    @delegate && @delegate.singleton_methods.include?("authenticate")
   end
   
-  def authenticate(login, password)
-    if @delegate && @delegate.authenticate(login, password)
+  def authenticate(login, password, session)
+    if @delegate && @delegate.authenticate(login, password, session)
       user = User.find_by_login(login)
       if !user
         user = User.create(:login => login, :password => "doesnotmatter", :password_confirmation => "doesnotmatter")

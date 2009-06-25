@@ -1,6 +1,6 @@
 class TestWithAuthentication
   
-  def authenticate(username, password)
+  def self.authenticate(username, password, session=nil)
     true
   end
 end
