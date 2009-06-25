@@ -7,7 +7,6 @@ class SessionsController < ApplicationController
   # TODO: Only do this for json requests!
   protect_from_forgery :except => :client_login
 
-  
   # render new.rhtml
   def new
   end
@@ -18,20 +17,33 @@ class SessionsController < ApplicationController
   # "controller"=>"sessions", "app_id"=>"Wikipedia", "login"=>"anonymous", "password"=>"[FILTERED]", "remember_me"=>"1"}
   def client_login
     logout_keeping_session!
-    @app=App.find_by_permalink params[:app_id] if params[:app_id]
-    user = User.authenticate(params[:login], params[:password])
-    if user
-      self.current_user = user
-      new_cookie_flag = (params[:remember_me] == "1")
-      handle_remember_cookie! new_cookie_flag
-    else
-      if @app and @app.autoregister  # if its a "autoregistering" app just go ahead and create the user
-        user=create_user params[:login],params[:password]
+    @app=App.find_by_permalink(params[:app_id])
+    
+    if @app.authenticates? # authentication has been delegated to the application?
+      user = @app.authenticate(params[:login], params[:password])
+      if user
         self.current_user = user
-        @app.users << user
-        @app.save
+        # we store these in the session
+        session[:login] = params[:login]
+        session[:password] = params[:password]
       else
-        render :status => 401
+        render(:status => 401) and return
+      end
+    else       
+      user = User.authenticate(params[:login], params[:password])
+      if user
+        self.current_user = user
+        new_cookie_flag = (params[:remember_me] == "1")
+        handle_remember_cookie! new_cookie_flag
+      else
+        if @app and @app.autoregister  # if its a "autoregistering" app just go ahead and create the user
+          user=create_user params[:login],params[:password]
+          self.current_user = user
+          @app.users << user
+          @app.save
+        else
+          render :status => 401
+        end
       end
     end
   end
