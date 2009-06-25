@@ -12,6 +12,10 @@ class SessionsController < ApplicationController
   def new
   end
   
+  # GET http://rhosync.local/apps/Wikipedia/sources/Wikipedia/client_login
+  #
+  # Parameters: {"action"=>"client_login", "id"=>"Wikipedia", 
+  # "controller"=>"sessions", "app_id"=>"Wikipedia", "login"=>"anonymous", "password"=>"[FILTERED]", "remember_me"=>"1"}
   def client_login
     logout_keeping_session!
     @app=App.find_by_permalink params[:app_id] if params[:app_id]
