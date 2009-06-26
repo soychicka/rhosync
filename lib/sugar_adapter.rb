@@ -80,7 +80,7 @@ class SugarAdapter < SourceAdapter
   
   def sync
     puts "SugarCRM #{@module_name} sync with #{@result.entry_list.length}"
-    @result=sugar_to_generic_results(@result)
+   @result=sugar_to_generic_results(@result)
     super 
   end
 
