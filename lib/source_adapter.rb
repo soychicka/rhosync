@@ -1,3 +1,10 @@
+class SourceAdapterException < RuntimeError
+end
+
+# raise this to cause client to be logged out during a sync
+class SourceAdapterLoginException < SourceAdapterException
+end
+
 class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
