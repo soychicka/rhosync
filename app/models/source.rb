@@ -41,28 +41,12 @@ class Source < ActiveRecord::Base
   
   def refresh(current_user)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
-      task=Synctask.find_or_create_by_user_id_and_source_id(current_user.id,id)
-      task.save
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
       Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
       p "Queued up task for user "+current_user.login+ ", source "+name
     else # go ahead and do it right now
       dosync(current_user)
     end
-  end
-  
-  # this does the asynchronous synchronization as invoked by script/job_runner
-  # NOT NECESSARY WHEN USING BJ
-  def self.doqueuedsync
-    synctask=Synctask.find :first,:order=>:created_at
-    source=Source.find synctask.source_id
-    user=User.find synctask.user_id
-    source.dosync(user)  # call the method below that performs the actual sync
-    # notify all of the source's users' devices to call back to request the data that is now there.
-    if user.check_for_changes(source)  # but only if there are changes for any of the clients owned by that user
-      user.ping(source.callback_url) # ping the user queued up on this source to tell them to sync!   
-    end
-    synctask.delete  # take this task out of the queue
   end
 
   def ping
