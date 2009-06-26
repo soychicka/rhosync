@@ -1,4 +1,0 @@
-<% form_for :object_value, :url => "/apps/#{@source.app.id}/sources/#{@source.id}/createobjects?format=json&client_id=#{rand.to_s}&attrvals[][attrib]=myimage&attrvals[][value]=helloworld.png&attrvals[][object]=#{rand.to_s}&attrvals[][attrib_type]=blob", :html => { :multipart => true } do |f| %>
-  <input id="object_value_blob" name="blob" size="30" type="file" />
-  <%= submit_tag 'Create' %>
-<% end %>

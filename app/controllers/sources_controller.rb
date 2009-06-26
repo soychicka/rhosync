@@ -62,9 +62,6 @@ class SourcesController < ApplicationController
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
       @source.refresh(@current_user) if params[:refresh] || @source.needs_refresh 
-      objectvalues_cmd="select * from object_values where update_type='query' and source_id=#{@source.id}"
-      objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
-      objectvalues_cmd << " order by object,attrib"
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]
@@ -106,7 +103,7 @@ class SourcesController < ApplicationController
                         updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
       else
         # no client_id, just show everything
-        @object_values=ObjectValue.find_by_sql objectvalues_cmd
+        @object_values=ObjectValue.find_by_sql object_values_sql('query')
       end
       @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
       p "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
@@ -241,13 +238,20 @@ class SourcesController < ApplicationController
         # add the created ID + created_at time to the list
         objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
       end
-
     end
+    @object_values = ObjectValue.find_by_sql object_values_sql('create')
     respond_to do |format|
-      format.html { 
-        flash[:notice]="Created objects"
-        redirect_to :action=>"show",:id=>@source.id,:app_id=>@source.app.id
-      }
+      if params[:no_redirect]
+        format.html { 
+          flash[:notice]="Created objects"
+          render :action=>"show",:id=>@source.id,:app_id=>@source.app.id
+        }
+      else
+        format.html { 
+          flash[:notice]="Created objects"
+          redirect_to :action=>"show",:id=>@source.id,:app_id=>@source.app.id
+        }
+      end
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
@@ -515,5 +519,9 @@ protected
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
   
-
+  def object_values_sql(utype)
+    objectvalues_cmd="select * from object_values where update_type='#{utype}' and source_id=#{@source.id}"
+    objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
+    objectvalues_cmd << " order by object,attrib"
+  end
 end
