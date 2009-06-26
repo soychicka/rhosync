@@ -74,7 +74,7 @@ class Source < ActiveRecord::Base
     end
   end
 
-  def dosync(current_user, session)
+  def dosync(current_user, session=nil)
 
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
@@ -95,7 +95,7 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
-      return
+      raise e
     end
     
     # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
