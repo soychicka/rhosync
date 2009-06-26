@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090624002048) do
+ActiveRecord::Schema.define(:version => 20090624184104) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -112,16 +112,15 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
   create_table "devices", :force => true do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.string   "type"
+    t.string   "device_type"
     t.string   "carrier"
     t.string   "manufacturer"
     t.string   "model"
     t.integer  "user_id"
     t.string   "pin"
-    t.integer  "source_id"
-    t.string   "host",         :limit => 30
-    t.string   "deviceport",   :limit => 30
-    t.string   "serverport",   :limit => 30
+    t.string   "host"
+    t.string   "serverport"
+    t.string   "deviceport"
   end
 
   create_table "memberships", :force => true do |t|
@@ -135,7 +134,7 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value"
+    t.text     "value",             :limit => 255
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -201,7 +200,8 @@ ActiveRecord::Schema.define(:version => 20090624002048) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.integer  "source_id"
+    t.string   "password_reset_code"
+    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true
