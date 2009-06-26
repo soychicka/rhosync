@@ -50,6 +50,7 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'apps/:app_id/sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
   map.connect 'apps/:app_id/sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
   map.connect 'apps/:app_id/sources/:id/ask', :controller => 'sources', :action => 'ask'
+  map.connect 'apps/:app_id/sources/:id/test_createobjects', :controller => 'sources', :action => 'test_createobjects'
 
   map.connect 'sources/:id/refresh', :controller => 'sources', :action => 'refresh'
   map.connect 'apps/:app_id/sources/:id/refresh', :controller => 'sources', :action => 'refresh'
