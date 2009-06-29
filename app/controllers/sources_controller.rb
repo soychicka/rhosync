@@ -118,7 +118,7 @@ class SourcesController < ApplicationController
     end
   rescue SourceAdapterLoginException
     logout_killing_session!
-    render :status => 401
+    render :nothing=>true, :status => 401
   end
   
   # quick synchronous simple query that doesn't hit the database
@@ -254,6 +254,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -295,6 +298,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -327,6 +333,10 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json { render :json => objects }
     end
+    
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   def editobject
