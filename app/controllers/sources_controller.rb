@@ -61,7 +61,7 @@ class SourcesController < ApplicationController
     else 
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session) if params[:refresh] || @source.needs_refresh 
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]
@@ -113,6 +113,9 @@ class SourcesController < ApplicationController
         format.json
       end
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
   
   # quick synchronous simple query that doesn't hit the database
@@ -255,6 +258,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -296,6 +302,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -328,6 +337,10 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json { render :json => objects }
     end
+    
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   def editobject

@@ -9,7 +9,7 @@ class Source < ActiveRecord::Base
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
   
-  def initadapter(credential)
+  def initadapter(credential,session)
     #create a source adapter with methods on it if there is a source adapter class identified
     if (credential and credential.url.blank?) and (!credential and self.url.blank?)
       msg= "Need to to have a URL for the source in either a user credential or globally"
@@ -19,6 +19,7 @@ class Source < ActiveRecord::Base
     if not self.adapter.blank? 
       begin
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
+        @source_adapter.session = session
       rescue
         msg="Failure to create adapter from class #{self.adapter}"
         p msg
@@ -39,13 +40,13 @@ class Source < ActiveRecord::Base
     result
   end
   
-  def refresh(current_user)
+  def refresh(current_user, session)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
       Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
       p "Queued up task for user "+current_user.login+ ", source "+name
     else # go ahead and do it right now
-      dosync(current_user)
+      dosync(current_user, session)
     end
   end
 
@@ -57,14 +58,14 @@ class Source < ActiveRecord::Base
     end
   end
 
-  def dosync(current_user)
+  def dosync(current_user, session=nil)
 
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
     
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential)   
+    initadapter(self.credential,session)   
     
     if source_adapter.nil? 
       slog(nil,"Couldn't set up source adapter due to missing or invalid class")
@@ -78,7 +79,7 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
-      return
+      raise e
     end
     
     # first grab out all ObjectValues of updatetype="Create" with object named "qparms"

@@ -1,14 +1,21 @@
+class SourceAdapterException < RuntimeError
+end
+
+# raise this to cause client to be logged out during a sync
+class SourceAdapterLoginException < SourceAdapterException
+end
+
 class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
-  
+  attr_accessor :session
+    
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
   end
 
   def login
   end
-
   
   def query
   end
