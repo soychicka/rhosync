@@ -113,27 +113,23 @@ class Source < ActiveRecord::Base
         
     clear_pending_records(@credential)
 
+    # query,sync,finalize are atomic
     begin  
       start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
       source_adapter.query 
+      #raise StandardError
       tlog(start,"query",self.id)
-    rescue Exception=>e
-      p "Failed to perform query"
-      slog(e,"timed out on query",self.id)
-    end
-
-    begin
       start=Time.new
       source_adapter.sync
       tlog(start,"sync",self.id)
+      start=Time.new
+      finalize_query_records(@credential)
+      tlog(start,"finalize",self.id)
     rescue Exception=>e
       p "Failed to sync"
-      slog(e,"Failed to sync",self.id)
+      slog(e,"Failed to query,sync",self.id)
     end 
-    start=Time.new
-    finalize_query_records(@credential)
-    tlog(start,"finalize",self.id)
     source_adapter.logoff
     save
   end
