@@ -41,14 +41,6 @@ class User < ActiveRecord::Base
     u = find_by_login(login) # need to get the salt
     u && u.authenticated?(password) ? u : nil
   end
-
-  def login=(value)
-    write_attribute :login, (value ? value.downcase : nil)
-  end
-
-  def email=(value)
-    write_attribute :email, (value ? value.downcase : nil)
-  end
   
   def ping(callback_url,message=nil,vibrate=500)
     @result=""
