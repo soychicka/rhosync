@@ -47,6 +47,8 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
   map.connect 'sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
   
+   map.callback 'apps/:app_id/sources/:id/callback', :controller => 'sources', :action => 'callback'
+
   # routes for accessing sources through apps
   map.connect 'apps/:app_id/sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
   map.connect 'apps/:app_id/sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
