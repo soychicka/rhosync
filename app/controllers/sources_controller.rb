@@ -16,6 +16,10 @@ class SourcesController < ApplicationController
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
   
+  def callback
+    current_user=User.find_by_login params[:login]
+    Bj.submit "./script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{source_show_url(:id => params[:id])}"
+  end
   
   # PUSH TO ALL QUEUED UP USERS: (see show method below for queueing mechanism
   # this notifies all users and their devices that have "registered" interest 

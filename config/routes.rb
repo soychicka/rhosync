@@ -42,7 +42,7 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'sources/:id/attributes.:format', :controller => 'sources', :action => 'attributes'
 
   # object read (show), update, create, delete methods
-  map.connect 'sources/:id/show', :controller => 'sources', :action => 'show'
+  map.source_show 'sources/:id/show', :controller => 'sources', :action => 'show'
   map.connect 'sources/:id/updateobjects', :controller => 'sources', :action => 'updateobjects'
   map.connect 'sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
   map.connect 'sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
