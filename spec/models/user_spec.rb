@@ -70,44 +70,7 @@ describe User do
       u.errors.on(:password_confirmation).should_not be_nil
     end.should_not change(User, :count)
   end
-
-  it 'requires email' do
-    lambda do
-      u = create_user(:email => nil)
-      u.errors.on(:email).should_not be_nil
-    end.should_not change(User, :count)
-  end
-
-  describe 'allows legitimate emails:' do
-    ['foo@bar.com', 'foo@newskool-tld.museum', 'foo@twoletter-tld.de', 'foo@nonexistant-tld.qq',
-     'r@a.wk', '1234567890-234567890-234567890-234567890-234567890-234567890-234567890-234567890-234567890@gmail.com',
-     'hello.-_there@funnychar.com', 'uucp%addr@gmail.com', 'hello+routing-str@gmail.com',
-     'domain@can.haz.many.sub.doma.in', 'student.name@university.edu'
-    ].each do |email_str|
-      it "'#{email_str}'" do
-        lambda do
-          u = create_user(:email => email_str)
-          u.errors.on(:email).should     be_nil
-        end.should change(User, :count).by(1)
-      end
-    end
-  end
-  describe 'disallows illegitimate emails' do
-    ['!!@nobadchars.com', 'foo@no-rep-dots..com', 'foo@badtld.xxx', 'foo@toolongtld.abcdefg',
-     'Iñtërnâtiônàlizætiøn@hasnt.happened.to.email', 'need.domain.and.tld@de', "tab\t", "newline\n",
-     'r@.wk', '1234567890-234567890-234567890-234567890-234567890-234567890-234567890-234567890-234567890@gmail2.com',
-     # these are technically allowed but not seen in practice:
-     'uucp!addr@gmail.com', 'semicolon;@gmail.com', 'quote"@gmail.com', 'tick\'@gmail.com', 'backtick`@gmail.com', 'space @gmail.com', 'bracket<@gmail.com', 'bracket>@gmail.com'
-    ].each do |email_str|
-      it "'#{email_str}'" do
-        lambda do
-          u = create_user(:email => email_str)
-          u.errors.on(:email).should_not be_nil
-        end.should_not change(User, :count)
-      end
-    end
-  end
-
+  
   describe 'allows legitimate names:' do
     ['Andre The Giant (7\'4", 520 lb.) -- has a posse',
      '', '1234567890_234567890_234567890_234567890_234567890_234567890_234567890_234567890_234567890_234567890',
