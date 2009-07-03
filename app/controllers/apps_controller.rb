@@ -31,6 +31,7 @@ class AppsController < ApplicationController
       login=@current_user.login.downcase 
       admins = @current_user.administrations
       @apps=admins.map { |a| a.app}
+      @devices=@current_user.devices
     else
       login="anonymous"
       @current_user=User.find 1

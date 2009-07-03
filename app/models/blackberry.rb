@@ -5,14 +5,7 @@ require 'uri'
 # set APP_CONFIG['bbserver] in your settings.yml
 class Blackberry < Device
   
-  def set_ports    
-    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
-    self.host||="192.168.1.103"  # this is Lars' MDS server and shouldn't be hit. Change if you don't want to set APP_CONFIG[:bbserver]
-    self.serverport="8080"
-    self.deviceport||="100"
-  end
-  
-  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via PAP
+  def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 
     set_ports
     setup_template
@@ -22,12 +15,20 @@ class Blackberry < Device
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
     begin
       @result=http_post(url,data,headers)   
-      p "Returning #{@result}"
+      p "Returning #{@result.inspect}"
     rescue
       p "Failed to post "
       @result="post failure"
     end
-    @result    
+    @result
+  end
+  
+  private
+  
+  def set_ports    
+    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
+    self.serverport="8080"
+    self.deviceport||="100"
   end
 
   def http_post(address,data,headers)
@@ -90,23 +91,6 @@ DESC
     else
       p "Do not have all values for URL"
       @url=nil
-    end
-  end
-  
-  # this will not get called (unless you rename it to ping)
-  # it does BlackBerry BES style push as opposed to PAP push (which is implemented above)
-  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via the BES server 
-    p "Pinging Blackberry device via BES push: " + pin 
-    set_ports
-    begin
-      data=build_payload(callback_url,message,vibrate)
-      headers={"X-WAP-APPLICATION-ID"=>"/",
-               "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
-               "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
-      response = http_post(url,data,headers)
-      p "Result of BlackBerry PAP Push" + response.body # log the results of the push
-    rescue
-      p "Failed to push to BlackBerry device: "+ url + "=>" + $!
     end
   end
   

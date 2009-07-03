@@ -1,4 +1,9 @@
 ActionController::Routing::Routes.draw do |map|
+  map.resources :devices
+  map.resources :iphones, :controller => 'devices'
+  map.resources :blackberrys, :controller => 'devices'
+  map.resources :androids, :controller => 'devices'
+
   map.resources :synctasks
 
   map.logout '/logout', :controller => 'sessions', :action => 'destroy'

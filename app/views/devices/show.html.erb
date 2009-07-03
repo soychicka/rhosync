@@ -1,0 +1,58 @@
+<p>
+  <b>Created at:</b>
+  <%=h @device.created_at %>
+</p>
+
+<p>
+  <b>Updated at:</b>
+  <%=h @device.updated_at %>
+</p>
+
+<p>
+  <b>Device type:</b>
+  <%=h @device.device_type %>
+</p>
+
+<p>
+  <b>Carrier:</b>
+  <%=h @device.carrier %>
+</p>
+
+<p>
+  <b>Manufacturer:</b>
+  <%=h @device.manufacturer %>
+</p>
+
+<p>
+  <b>Model:</b>
+  <%=h @device.model %>
+</p>
+
+<p>
+  <b>User:</b>
+  <%=h @device.user_id %>
+</p>
+
+<p>
+  <b>Pin:</b>
+  <%=h @device.pin %>
+</p>
+
+<p>
+  <b>Host:</b>
+  <%=h @device.host %>
+</p>
+
+<p>
+  <b>Serverport:</b>
+  <%=h @device.serverport %>
+</p>
+
+<p>
+  <b>Deviceport:</b>
+  <%=h @device.deviceport %>
+</p>
+
+<%= link_to 'Ping', :action => 'new_ping', :id => @device%> |
+<%= link_to 'Edit', edit_device_path(@device) %> |
+<%= link_to 'Back', apps_path %>

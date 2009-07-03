@@ -1,6 +1,7 @@
 *.sqlite3
 .DS_Store
 *.log
+*.pem
 coverage
 nbproject
 config/database.yml
