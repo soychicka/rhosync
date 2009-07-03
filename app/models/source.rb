@@ -39,6 +39,11 @@ class Source < ActiveRecord::Base
     result
   end
   
+  def callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
+  
   def refresh(current_user)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
@@ -118,8 +123,9 @@ class Source < ActiveRecord::Base
       source_adapter.query 
       tlog(start,"query",self.id)
     rescue Exception=>e
-      p "Failed to perform query"
-      slog(e,"timed out on query",self.id)
+      msg= "Failed to perform query"
+      p msg
+      slog(e,msg,self.id)
     end
 
     begin
