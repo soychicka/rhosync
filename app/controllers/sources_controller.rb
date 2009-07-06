@@ -8,7 +8,7 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  before_filter :check_device, :except=> :clientcreate
+  before_filter :check_client, :except=> :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source

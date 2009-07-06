@@ -8,7 +8,6 @@ class User < ActiveRecord::Base
   has_many :clients
   has_many :synctasks
   has_many :users
-  has_many :devices
   has_many :source_notifies
   has_many :sources, :through => :source_notifies
   
@@ -50,16 +49,16 @@ class User < ActiveRecord::Base
     write_attribute :email, (value ? value.downcase : nil)
   end
   
-  def ping(callback_url,message=nil,vibrate=500)
+  def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
-    devices.each do |device|
-      @result=device.ping(callback_url,message,vibrate)
-      p "Result of device ping: #{@result}" if @result
+    clients.each do |client|
+      @result=client.ping(callback_url,message,vibrate,badge=nil,sound=nil)
+      p "Result of client ping: #{@result}" if @result
     end
     @result
   end 
 
-  # checks for changes from all of the user's devices
+  # checks for changes from all of the user's clients
   def check_for_changes(source)
     clients.each do |client|
       source.check_for_changes_for_client(client)

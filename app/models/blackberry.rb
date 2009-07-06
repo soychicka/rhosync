@@ -1,9 +1,7 @@
 require 'net/http'
 require 'uri'
 
-# this class performs push to notify devices to retrieve data, all via BES server PAP push
-# set APP_CONFIG['bbserver] in your settings.yml
-class Blackberry < Device
+class Blackberry < Client
   
   def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 

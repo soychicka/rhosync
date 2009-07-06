@@ -1,7 +1,7 @@
 require 'socket'
 require 'openssl'
 
-class Iphone < Device
+class Iphone < Client
   
   def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil)  # do an iPhone-based push to the specified 
     cert = File.read("config/apple_push_cert.pem") if File.exists?("config/apple_push_cert.pem")

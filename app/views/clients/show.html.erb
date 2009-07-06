@@ -1,0 +1,63 @@
+<p>
+  <b>Created at:</b>
+  <%=h @client.created_at %>
+</p>
+
+<p>
+  <b>Updated at:</b>
+  <%=h @client.updated_at %>
+</p>
+
+<p>
+  <b>Client ID:</b>
+  <%=h @client.client_id %>
+</p>
+
+<p>
+  <b>Device type:</b>
+  <%=h @client.device_type %>
+</p>
+
+<p>
+  <b>Carrier:</b>
+  <%=h @client.carrier %>
+</p>
+
+<p>
+  <b>Manufacturer:</b>
+  <%=h @client.manufacturer %>
+</p>
+
+<p>
+  <b>Model:</b>
+  <%=h @client.model %>
+</p>
+
+<p>
+  <b>User:</b>
+  <%=h @client.user_id %>
+</p>
+
+<p>
+  <b>Pin:</b>
+  <%=h @client.pin %>
+</p>
+
+<p>
+  <b>Host:</b>
+  <%=h @client.host %>
+</p>
+
+<p>
+  <b>Serverport:</b>
+  <%=h @client.serverport %>
+</p>
+
+<p>
+  <b>Deviceport:</b>
+  <%=h @client.deviceport %>
+</p>
+
+<%= link_to 'Ping', :action => 'new_ping', :id => @client%> |
+<%= link_to 'Edit', edit_client_path(@client) %> |
+<%= link_to 'Back', apps_path %>

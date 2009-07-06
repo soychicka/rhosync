@@ -1,7 +1,7 @@
 # This controller handles the login/logout function of the site.  
 class SessionsController < ApplicationController
   include UsersHelper
-  after_filter :check_device, :only => :client_login
+  after_filter :check_client, :only => :client_login
   
   # disable forgery protection for login
   # TODO: Only do this for json requests!

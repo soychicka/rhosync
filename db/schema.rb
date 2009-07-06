@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090624184104) do
+ActiveRecord::Schema.define(:version => 20090706183329) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -95,6 +95,14 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.datetime "updated_at"
     t.integer  "user_id"
     t.string   "last_sync_token"
+    t.string   "device_type"
+    t.string   "carrier"
+    t.string   "manufacturer"
+    t.string   "model"
+    t.string   "pin"
+    t.string   "host"
+    t.string   "serverport"
+    t.string   "deviceport"
   end
 
   add_index "clients", ["client_id"], :name => "index_clients_on_client_id"
@@ -109,20 +117,6 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.string   "url"
   end
 
-  create_table "devices", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string   "device_type"
-    t.string   "carrier"
-    t.string   "manufacturer"
-    t.string   "model"
-    t.integer  "user_id"
-    t.string   "pin"
-    t.string   "host"
-    t.string   "serverport"
-    t.string   "deviceport"
-  end
-
   create_table "memberships", :force => true do |t|
     t.integer  "app_id"
     t.integer  "user_id"
@@ -134,7 +128,7 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value",             :limit => 255
+    t.text     "value"
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"

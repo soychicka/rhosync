@@ -1,8 +1,8 @@
 ActionController::Routing::Routes.draw do |map|
-  map.resources :devices
-  map.resources :iphones, :controller => 'devices'
-  map.resources :blackberrys, :controller => 'devices'
-  map.resources :androids, :controller => 'devices'
+  map.resources :clients
+  map.resources :iphones, :controller => 'clients'
+  map.resources :blackberrys, :controller => 'clients'
+  map.resources :androids, :controller => 'clients'
 
   map.resources :synctasks
 
