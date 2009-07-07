@@ -43,7 +43,7 @@ class Source < ActiveRecord::Base
   def refresh(current_user, session)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
-      Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
+      Bj.submit "ruby script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
       p "Queued up task for user "+current_user.login+ ", source "+name
     else # go ahead and do it right now
       dosync(current_user, session)
