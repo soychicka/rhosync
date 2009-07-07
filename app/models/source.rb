@@ -115,8 +115,8 @@ class Source < ActiveRecord::Base
 
     # query,sync,finalize are atomic
     begin  
-      start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      start=Time.new
       source_adapter.query 
       #raise StandardError
       tlog(start,"query",self.id)

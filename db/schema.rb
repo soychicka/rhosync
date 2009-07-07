@@ -118,9 +118,10 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.string   "model"
     t.integer  "user_id"
     t.string   "pin"
-    t.string   "host"
-    t.string   "serverport"
-    t.string   "deviceport"
+    t.integer  "source_id"
+    t.string   "host",         :limit => 30
+    t.string   "deviceport",   :limit => 30
+    t.string   "serverport",   :limit => 30
   end
 
   create_table "memberships", :force => true do |t|
@@ -134,7 +135,7 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value",             :limit => 255
+    t.text     "value"
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -200,8 +201,7 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.string   "password_reset_code"
-    t.datetime "expires_at"
+    t.integer  "source_id"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true
