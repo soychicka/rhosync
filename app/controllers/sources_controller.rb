@@ -113,9 +113,6 @@ class SourcesController < ApplicationController
         format.json
       end
     end
-  rescue SourceAdapterLoginException
-    logout_killing_session!
-    render :nothing=>true, :status => 401
   end
   
   # quick synchronous simple query that doesn't hit the database

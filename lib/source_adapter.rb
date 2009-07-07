@@ -38,7 +38,6 @@ class SourceAdapter
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
         count=0
         @result.keys.each do |objkey|
-          p "Key " + objkey
           obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
             obj.keys.each do |attrkey|

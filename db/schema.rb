@@ -194,8 +194,7 @@ ActiveRecord::Schema.define(:version => 20090706183329) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.string   "password_reset_code"
-    t.datetime "expires_at"
+    t.integer  "source_id"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

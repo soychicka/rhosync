@@ -39,8 +39,13 @@ class Source < ActiveRecord::Base
     tlog(start,"ask",self.id)
     result
   end
+
+  def callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
   
-  def refresh(current_user, session)
+  def refresh(current_user,session)
     if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
       Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
@@ -115,8 +120,8 @@ class Source < ActiveRecord::Base
 
     # query,sync,finalize are atomic
     begin  
-      start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      start=Time.new
       source_adapter.query 
       #raise StandardError
       tlog(start,"query",self.id)
