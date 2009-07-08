@@ -184,8 +184,10 @@ class SourcesController < ApplicationController
         @client.last_sync_token=nil
         @client.save
       end
+      render :nothing=> true, :status => 200 and return
+    else
+      render :text => "No client_id provided!", :status => 500
     end
-    render :nothing=> true, :status => 200
   end
 
   # this creates all of the rows in the object values table corresponding to
