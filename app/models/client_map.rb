@@ -1,3 +1,16 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: client_maps
+#
+#  client_id       :string(36)    
+#  object_value_id :integer(4)    
+#  db_operation    :string(255)   
+#  token           :string(255)   
+#  dirty           :integer(1)    default(0)
+#  ack_token       :integer(1)    default(0)
+#
+
 class ClientMap < ActiveRecord::Base
   belongs_to :client
   belongs_to :object_value

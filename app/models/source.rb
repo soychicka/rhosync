@@ -1,3 +1,26 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: sources
+#
+#  id           :integer(4)    not null, primary key
+#  name         :string(255)   
+#  url          :string(255)   
+#  login        :string(255)   
+#  password     :string(255)   
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  refreshtime  :datetime      
+#  adapter      :string(255)   
+#  app_id       :integer(4)    
+#  pollinterval :integer(4)    
+#  priority     :integer(4)    
+#  incremental  :integer(4)    
+#  queuesync    :boolean(1)    
+#  limit        :string(255)   
+#  callback_url :string(255)   
+#
+
 
 class Source < ActiveRecord::Base
   include SourcesHelper
