@@ -4,6 +4,8 @@ require 'open-uri'
 require 'net/http'
 require 'net/https'
 
+require 'source_adapter.rb'
+
 class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
