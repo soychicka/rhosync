@@ -96,7 +96,8 @@ Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp
     <th>Host</th>
     <th>Serverport</th>
     <th>Clientport</th>
-	<th>OAV Row Count</th>
+	<th>OAV Rows (unverified)</th>
+	<th>OAV Rows (verified)</th>
 	<th>Ping</th>
 	<th>Edit</th>
 	<th>Delete</th>
@@ -114,7 +115,8 @@ Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp
     <td><%=h client.host %></td>
     <td><%=h client.serverport %></td>
     <td><%=h client.deviceport %></td>
-	<td><%=client.client_maps.count(:conditions => "db_operation !='delete'")%></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=0")%></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=1")%></td>
 	<td><%= link_to 'Ping', :action => :new_ping, :controller => :clients, :id => client.id %></td>
     <td><%= link_to 'Edit', edit_client_path(client) %></td>
     <td><%= link_to 'X', client, :confirm => 'Are you sure?', :method => :delete %></td>

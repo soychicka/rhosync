@@ -1,7 +1,6 @@
 # This controller handles the login/logout function of the site.  
 class SessionsController < ApplicationController
   include UsersHelper
-  after_filter :check_client, :only => :client_login
   
   # disable forgery protection for login
   # TODO: Only do this for json requests!
@@ -11,7 +10,7 @@ class SessionsController < ApplicationController
   def new
   end
   
-  # GET http://rhosync.local/apps/Wikipedia/sources/Wikipedia/client_login
+  # POST http://rhosync.local/apps/Wikipedia/sources/Wikipedia/client_login
   #
   # Parameters: {"action"=>"client_login", "id"=>"Wikipedia", 
   # "controller"=>"sessions", "app_id"=>"Wikipedia", "login"=>"anonymous", "password"=>"[FILTERED]", "remember_me"=>"1"}

@@ -136,7 +136,6 @@ class Source < ActiveRecord::Base
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
-    save
   end
   
   def before_validate

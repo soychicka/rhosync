@@ -29,6 +29,8 @@ ActionController::Routing::Routes.draw do |map|
 
   map.connect 'sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
   map.connect 'sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
+  map.connect 'sources/:id/clientregister', :controller => 'sources', :action => 'clientregister'
+  map.connect 'sources/:id/clientreset', :controller => 'sources', :action => 'clientreset'
   map.connect 'sources/:id/ask', :controller => 'sources', :action => 'ask'
   map.connect 'sources/:id/ping_user', :controller => 'sources', :action => 'ping_user'
   map.connect 'sources/:id/ping', :controller => 'sources', :action => 'ping'
@@ -50,6 +52,8 @@ ActionController::Routing::Routes.draw do |map|
   # routes for accessing sources through apps
   map.connect 'apps/:app_id/sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
   map.connect 'apps/:app_id/sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
+  map.connect 'apps/:app_id/sources/:id/clientregister', :controller => 'sources', :action => 'clientregister'
+  map.connect 'apps/:app_id/sources/:id/clientreset', :controller => 'sources', :action => 'clientreset'
   map.connect 'apps/:app_id/sources/:id/updateobjects', :controller => 'sources', :action => 'updateobjects'
   map.connect 'apps/:app_id/sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
   map.connect 'apps/:app_id/sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
