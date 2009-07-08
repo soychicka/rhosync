@@ -1,3 +1,16 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: clients
+#
+#  client_id       :string(36)    primary key
+#  session         :string(255)   
+#  created_at      :datetime      
+#  updated_at      :datetime      
+#  user_id         :integer(4)    
+#  last_sync_token :string(255)   
+#
+
 require 'uuidtools'
 
 class Client < ActiveRecord::Base
