@@ -58,6 +58,16 @@
   <%=h @client.deviceport %>
 </p>
 
+<p>
+  <b>OAV Rows (unverified):</b>
+  <%=@client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=0")%>
+</p>
+
+<p>
+  <b>OAV Rows (verified):</b>
+  <%=@client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=1")%>
+</p>
+
 <%= link_to 'Ping', :action => 'new_ping', :id => @client%> |
 <%= link_to 'Edit', edit_client_path(@client) %> |
 <%= link_to 'Back', apps_path %>
