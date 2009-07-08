@@ -178,16 +178,12 @@ class SourcesController < ApplicationController
   # reset client_maps data
   def clientreset
     @client = Client.find_by_client_id(params[:client_id])
-    if @client
-      ActiveRecord::Base.transaction do
-        ClientMap.delete_all(:client_id => @client.client_id)
-        @client.last_sync_token=nil
-        @client.save
-      end
-      render :nothing=> true, :status => 200 and return
-    else
-      render :text => "No client_id provided!", :status => 500
+    ActiveRecord::Base.transaction do
+      ClientMap.delete_all(:client_id => @client.client_id)
+      @client.last_sync_token=nil
+      @client.save
     end
+    render :nothing=> true, :status => 200
   end
 
   # this creates all of the rows in the object values table corresponding to
