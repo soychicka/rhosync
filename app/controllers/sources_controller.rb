@@ -66,7 +66,7 @@ class SourcesController < ApplicationController
     else 
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user,session) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session, source_show_url(:id => id)) if params[:refresh] || @source.needs_refresh 
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]
