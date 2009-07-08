@@ -38,10 +38,11 @@ class SourceAdapter
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
         count=0
         @result.keys.each do |objkey|
+          p "Key " + objkey
           obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?   
+              unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
@@ -60,7 +61,7 @@ class SourceAdapter
           obj=@result[objkey]
           if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?  
+              unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
                 sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
