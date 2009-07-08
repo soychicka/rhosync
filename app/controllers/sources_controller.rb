@@ -178,10 +178,12 @@ class SourcesController < ApplicationController
   # reset client_maps data
   def clientreset
     @client = Client.find_by_client_id(params[:client_id])
-    ActiveRecord::Base.transaction do
-      ClientMap.delete_all(:client_id => @client.client_id)
-      @client.last_sync_token=nil
-      @client.save
+    if @client
+      ActiveRecord::Base.transaction do
+        ClientMap.delete_all(:client_id => @client.client_id)
+        @client.last_sync_token=nil
+        @client.save
+      end
     end
     render :nothing=> true, :status => 200
   end

@@ -88,7 +88,7 @@ ActiveRecord::Schema.define(:version => 20090706183329) do
   add_index "client_maps", ["client_id"], :name => "client_map_c_id"
   add_index "client_maps", ["token"], :name => "client_map_tok"
 
-  create_table "clients", :id => false, :force => true do |t|
+  create_table "clients", :primary_key => "client_id", :id => false, :force => true do |t|
     t.string   "client_id",       :limit => 36
     t.string   "session"
     t.datetime "created_at"

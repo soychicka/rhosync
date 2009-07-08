@@ -3,7 +3,7 @@ require 'uuidtools'
 class Client < ActiveRecord::Base
   set_primary_key :client_id
   belongs_to :user
-  has_many :client_maps
+  has_many :client_maps, :dependent => :destroy
   has_many :object_values, :through => :client_maps
   set_inheritance_column "device_type"
   
