@@ -14,10 +14,10 @@ class Iphone < Client
     @sound = sound if sound and not sound.blank?
     begin
       ssl_ctx = OpenSSL::SSL::SSLContext.new
-  		ssl_ctx.key = OpenSSL::PKey::RSA.new(self.cert, self.passphrase)
-  		ssl_ctx.cert = OpenSSL::X509::Certificate.new(self.cert)
+  		ssl_ctx.key = OpenSSL::PKey::RSA.new(@cert, @passphrase)
+  		ssl_ctx.cert = OpenSSL::X509::Certificate.new(@cert)
 
-  		socket = TCPSocket.new(self.host, self.serverport)
+  		socket = TCPSocket.new(@host, @port)
   		ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, ssl_ctx)
   		ssl_socket.sync = true
   		ssl_socket.connect
