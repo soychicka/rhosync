@@ -1,24 +1,33 @@
 File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
-#logfile = File.open('log/bj-sync_and_ping.log', 'a')  
-#Rails.logger = Logger.new(logfile)
+logfile = File.open("log/bj-sync_and_ping.log", "a+")  
+logger = Logger.new(logfile)
 
-# usage: sync_and_ping_user.rb TUser 10 http://rhosync.example.com/sources/10/show
+logger.debug "******* BEGIN *********"
+logger.debug "#{Time.now} starting sync_and_ping_user #{ARGV.inspect.to_s}"
+
+# usage: sync_and_ping_user.rb 2 AeropriseSrd http://rhosync.example.com/sources/10/show
 current_user=User.find(ARGV[0])
 source=Source.find_by_permalink(ARGV[1])
 callback_url=ARGV[2]
 
-Rails.logger.debug "****************"
-Rails.logger.debug "#{Time.now} starting sync_and_ping_user #{ARGV.inspect.to_s}"
-Rails.logger.debug "current_user = #{current_user.inspect.to_s}"
-Rails.logger.debug "source = #{source.inspect.to_s}"
-Rails.logger.debug "callback_url = #{callback_url}"
+logger.debug "current_user = #{current_user.inspect.to_s}"
+logger.debug "source = #{source.inspect.to_s}"
+logger.debug "callback_url = #{callback_url}"
+
+logger.debug "current_user devices arrary="
+current_user.devices.each {|d| logger.debug d.inspect.to_s}
 
 begin
   source.dosync(current_user)
-  current_user.ping(callback_url)
+  result = current_user.ping(callback_url)
+  logger.debug result.insepect.to_s 
 rescue SourceAdapterLoginException
+  logger.debug "!!!SourceAdapterLoginException"
   current_user.ping(callback_url, "login failed")
+rescue => e
+  logger.debug e.inspect.to_s
+  logger.debug e.backtrace.join("\n")
 end
 
-Rails.logger.debug "... done sync_and_ping_user #{Time.now}"
+logger.debug "... done sync_and_ping_user #{Time.now}"
