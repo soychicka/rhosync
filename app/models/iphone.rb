@@ -4,18 +4,18 @@ require 'openssl'
 class Iphone < Client
   
   def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil)  # do an iPhone-based push to the specified 
-    cert = File.read("config/apple_push_cert.pem") if File.exists?("config/apple_push_cert.pem")
-  	passphrase = APP_CONFIG[:iphonepassphrase]
-  	host = APP_CONFIG[:iphoneserver]
-  	port = APP_CONFIG[:iphoneport] 
+    @cert = File.read("config/apple_push_cert.pem") if File.exists?("config/apple_push_cert.pem")
+  	@passphrase = APP_CONFIG[:iphonepassphrase]
+  	@host = APP_CONFIG[:iphoneserver]
+  	@port = APP_CONFIG[:iphoneport] 
     @message = message if message
     @payload = {"callback_url" => callback_url} if callback_url
     @badge = badge if badge
     @sound = sound if sound and not sound.blank?
     begin
       ssl_ctx = OpenSSL::SSL::SSLContext.new
-  		ssl_ctx.key = OpenSSL::PKey::RSA.new(cert, passphrase)
-  		ssl_ctx.cert = OpenSSL::X509::Certificate.new(cert)
+  		ssl_ctx.key = OpenSSL::PKey::RSA.new(self.cert, self.passphrase)
+  		ssl_ctx.cert = OpenSSL::X509::Certificate.new(self.cert)
 
   		socket = TCPSocket.new(self.host, self.serverport)
   		ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, ssl_ctx)
