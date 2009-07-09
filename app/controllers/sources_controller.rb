@@ -20,7 +20,8 @@ class SourcesController < ApplicationController
   
   def callback
     current_user=User.find_by_login params[:login]
-    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{source_show_url(:id => params[:id])}"
+    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{source_show_url(:id => params[:id])}",
+       :tag => current_user.id.to_s
     render(:nothing=>true, :status=>200)
   end
   

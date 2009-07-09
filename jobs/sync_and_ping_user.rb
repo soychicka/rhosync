@@ -21,10 +21,15 @@ current_user.devices.each {|d| logger.debug d.inspect.to_s}
 begin
   source.dosync(current_user)
   result = current_user.ping(callback_url)
-  logger.debug result.insepect.to_s 
+  logger.debug result.insepect.to_s
 rescue SourceAdapterLoginException
-  logger.debug "!!!SourceAdapterLoginException"
-  current_user.ping(callback_url, "login failed")
+  logger.debug "SourceAdapterLoginException, sending login failure to device"
+  current_user.ping("", "login failed")
+  # TODO: send specific message based on reason for failure
+  
+  # delete all other jobs for this user, otherwise we will get multiple login failures signalled to device
+  ActiveRecord::Base.connection.execute("delete from bj_job where tag=#{current_user.id}")
+  logger.debug "deleted all other jobs tagged with #{current_user.id}"
 rescue => e
   logger.debug e.inspect.to_s
   logger.debug e.backtrace.join("\n")

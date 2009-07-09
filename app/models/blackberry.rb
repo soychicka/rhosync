@@ -63,7 +63,11 @@ class Blackberry < Device
 
   def build_payload(callback_url,message,vibrate)
     setup_template
-    data="do_sync="+callback_url + "\r\n"
+    data=""
+    # warning: sending "" as do_sync will sync all sources
+    if (!callback_url.blank?)
+      data = "do_sync=#{callback_url}\r\n"
+    end
     popup||=message # supplied message
     popup||=APP_CONFIG[:sync_popup]
     popup||="You have new data"
