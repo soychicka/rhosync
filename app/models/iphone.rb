@@ -10,6 +10,7 @@ class Iphone < Client
   	@port = APP_CONFIG[:iphoneport] 
     @message = message if message
     @payload = {"do_sync" => callback_url.to_a} if callback_url
+    @vibrate = vibrate if vibrate
     puts "PAYLOAD" + @payload.to_json.inspect
     @badge = badge if badge
     @sound = sound if sound and not sound.blank?
@@ -39,6 +40,7 @@ class Iphone < Client
 		data['aps']['alert'] = @message if @message 
 		data['aps']['badge'] = @badge if @badge
 		data['aps']['sound'] = @sound if @sound and @sound.is_a? String
+		data['aps']['vibrate'] = @vibrate if @vibrate
 		puts "PAYLOAD BEFORE MERGE #{@payload.inspect}"
 		data['do_sync'] = @payload['do_sync'] if @payload
 		json = data.to_json
