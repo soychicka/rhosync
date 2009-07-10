@@ -9,7 +9,8 @@ class Iphone < Client
   	@host = APP_CONFIG[:iphoneserver]
   	@port = APP_CONFIG[:iphoneport] 
     @message = message if message
-    @payload = {"callback_url" => callback_url} if callback_url
+    @payload = {"do_sync" => callback_url.to_a} if callback_url
+    puts "PAYLOAD" + @payload.to_json.inspect
     @badge = badge if badge
     @sound = sound if sound and not sound.blank?
     begin
@@ -38,7 +39,8 @@ class Iphone < Client
 		data['aps']['alert'] = @message if @message 
 		data['aps']['badge'] = @badge if @badge
 		data['aps']['sound'] = @sound if @sound and @sound.is_a? String
-		data.merge @payload if @payload
+		puts "PAYLOAD BEFORE MERGE #{@payload.inspect}"
+		data['do_sync'] = @payload['do_sync'] if @payload
 		json = data.to_json
 		logger.debug "Ping message to iPhone: #{json}"
 		"\0\0 #{[self.pin.delete(' ')].pack('H*')}\0#{json.length.chr}#{json}"
