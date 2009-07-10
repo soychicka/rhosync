@@ -365,10 +365,6 @@ class SourcesController < ApplicationController
   def newobject
   end
 
-  def pick_load
-    # go to the view to pick the file to load
-  end
-
   def load_all
     # NOTE: THIS DOES NOT WORK FROM OUR SAVING FORMAT RIGHT NOW! (the one that save_all does)
     # it only works from the YAML format in db/migrate/sources.yml
