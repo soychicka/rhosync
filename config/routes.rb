@@ -3,6 +3,7 @@ ActionController::Routing::Routes.draw do |map|
   map.resources :iphones, :controller => 'clients'
   map.resources :blackberrys, :controller => 'clients'
   map.resources :androids, :controller => 'clients'
+  map.resources :winces, :controller => 'clients'
 
   map.resources :synctasks
 
