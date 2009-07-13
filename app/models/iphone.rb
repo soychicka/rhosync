@@ -9,7 +9,7 @@ class Iphone < Client
   	@host = APP_CONFIG[:iphoneserver]
   	@port = APP_CONFIG[:iphoneport] 
     @message = message if message
-    @payload = {"do_sync" => callback_url.to_a} if callback_url
+    @payload = {"do_sync" => callback_url.split(',')} if callback_url
     @vibrate = vibrate if vibrate
     puts "PAYLOAD" + @payload.to_json.inspect
     @badge = badge if badge
