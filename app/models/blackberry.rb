@@ -66,10 +66,8 @@ class Blackberry < Client
     if (!callback_url.blank?)
       data = "do_sync=#{callback_url}\r\n"
     end
-    popup||=message # supplied message
-    popup||=APP_CONFIG[:sync_popup]
-    popup||="You have new data"
-    (data = data + "show_popup="+ popup + "\r\n") if popup
+    popup = (message || APP_CONFIG[:sync_popup])
+    (data = data + "show_popup="+ popup + "\r\n") if !popup.blank?
     vibrate=APP_CONFIG[:sync_vibrate]
     (data = data + "vibrate="+vibrate.to_s) if vibrate
     post_body = @template

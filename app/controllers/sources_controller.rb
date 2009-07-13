@@ -19,7 +19,8 @@ class SourcesController < ApplicationController
   
   def callback
     current_user=User.find_by_login params[:login]
-    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{source_show_url(:id => params[:id])}",
+    @app=@source.app
+    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{app_source_url(:app_id=>@app.name, :id => @source.name)}",
        :tag => current_user.id.to_s
     render(:nothing=>true, :status=>200)
   end
@@ -68,7 +69,7 @@ class SourcesController < ApplicationController
     else 
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user,session, source_url(:id => params["id"])) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]

@@ -7,8 +7,6 @@ development:
   iphoneport: 2195
   iphonepassphrase: something
   iphonecert: config/apple_push_cert.pem
-  sync_popup: New synchronized data
-  sync_vibrate: 1000
     
 test:
   domain: mail.rhomobile.com
@@ -19,8 +17,6 @@ test:
   iphoneport: 2195
   iphonepassphrase: something
   iphonecert: config/apple_push_cert.pem
-  sync_popup: New synchronized data
-  sync_vibrate: 1000
   
 production:
   domain: mail.rhomobile.com
@@ -31,5 +27,3 @@ production:
   iphoneport: 2195  
   iphonepassphrase: something
   iphonecert: config/apple_push_cert.pem
-  sync_popup: New synchronized data
-  sync_vibrate: 1000

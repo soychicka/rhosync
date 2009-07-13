@@ -21,7 +21,7 @@ current_user.clients.each {|d| logger.debug d.inspect.to_s}
 begin
   source.dosync(current_user)
   result = current_user.ping(callback_url)
-  logger.debug result.insepect.to_s
+  logger.debug result.inspect.to_s
 rescue SourceAdapterLoginException
   logger.debug "SourceAdapterLoginException, sending login failure to device"
   current_user.ping("", "login failed")
