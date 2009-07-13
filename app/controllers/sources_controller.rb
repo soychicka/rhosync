@@ -10,7 +10,6 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  before_filter :check_device, :except=> :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -121,9 +120,6 @@ class SourcesController < ApplicationController
         format.json
       end
     end
-  rescue SourceAdapterLoginException
-    logout_killing_session!
-    render :nothing=>true, :status => 401
   end
   
   # quick synchronous simple query that doesn't hit the database
@@ -170,6 +166,7 @@ class SourcesController < ApplicationController
   # generate a new client for this source
   def clientcreate
     @client = Client.new
+    @client.user = current_user if current_user
     
     respond_to do |format|
       if @client.save
@@ -178,7 +175,24 @@ class SourcesController < ApplicationController
       end
     end
   end
-
+  
+  # register client for for push notifications
+  def clientregister
+    @client = Client.find_by_client_id(params[:client_id])
+    register_client(@client) if @client
+    render :nothing => true, :status => 200
+  end
+  
+  # reset client_maps data
+  def clientreset
+    @client = Client.find_by_client_id(params[:client_id])
+    ActiveRecord::Base.transaction do
+      ClientMap.delete_all(:client_id => @client.client_id)
+      @client.last_sync_token=nil
+      @client.save
+    end
+    render :nothing=> true, :status => 200
+  end
 
   # this creates all of the rows in the object values table corresponding to
   # the array of hashes given by the attrvals parameter
@@ -357,10 +371,6 @@ class SourcesController < ApplicationController
   end
 
   def newobject
-  end
-
-  def pick_load
-    # go to the view to pick the file to load
   end
 
   def load_all

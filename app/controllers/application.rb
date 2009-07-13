@@ -16,38 +16,21 @@ class ApplicationController < ActionController::Base
   # Uncomment this to filter the contents of submitted sensitive data parameters
   # from your application log (in this case, all fields with names like "password"). 
   filter_parameter_logging :password
-  
-  
-  def check_device   # check to see if this is a queued sync request, in which case register the device for the update
-    @source=Source.find_by_permalink params[:id] if params[:id]
-    register_device if @source 
-  end
-  # register this particular device and associated user as interested in queued sync
-  def register_device
-    if @current_user and not params["device_pin"].blank?
-      @device=Device.find_or_create_by_pin params["device_pin"]
-      if @device.user==nil   # device was not already registered
-        logger.debug "Registering device for notification with pin " + @device.pin
-        @device.user=@current_user
-        @device.device_type=params["device_type"] if params["device_type"]  
-        @device.device_type||="Blackberry" # default to Blackberry 
-        logger.debug "Device type is: " + @device.device_type
-        @device.deviceport=params["device_port"] if params["device_port"]
-        @device.deviceport||="100"
-        logger.debug "Device port is: " + @device.deviceport
-        @device.save
-      end
-      existing=@current_user.devices.reject { |dvc| dvc.pin!=@device.pin}  # @current_user.devices has list of queued up devices for user
-      @current_user.devices << @device if existing.size==0  # if there is no existing device with same pin add this new one
 
-      existing=@source.users.reject { |user| user.id!=@current_user.id}  # @source.users has list of users queued up for pings
-      @source.users<< @current_user if existing.size==0  # if not already in list 
-      @source.callback_url=request.url # this stuffs the "show" method URL as the callback to be used by later pings
-      args=request.url.index("\?")  # get rid of ? and beyond 
-      if args and args>1
-        @source.callback_url=@source.callback_url[0...args] # if its there
-      end
-      @source.save
+  # register this particular device and associated user as interested in queued sync
+  def register_client(client)
+    debugger
+    p 'Registering Client: ' + client.inspect
+    if @current_user and not params["device_pin"].blank?
+      client.pin = params["device_pin"]
+      logger.debug "Registering device for notification with pin " + client.pin
+      client.device_type=params["device_type"] if params["device_type"]  
+      client.device_type||="Blackberry" # default to Blackberry 
+      logger.debug "Device type is: " + client.device_type
+      client.deviceport=params["device_port"] if params["device_port"]
+      client.deviceport||="100"
+      logger.debug "Device port is: " + client.deviceport
+      client.save
     end
   end
   

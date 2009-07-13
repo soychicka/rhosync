@@ -62,7 +62,13 @@ class Source < ActiveRecord::Base
     tlog(start,"ask",self.id)
     result
   end
+
+  def callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
   
+
   def refresh(current_user, session, url=nil)
     if queuesync # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
@@ -78,7 +84,7 @@ class Source < ActiveRecord::Base
     # this is the URL for the show method
     @result=""
     users.each do |user|
-      @result+=user.ping(callback_url) # this will ping all devices owned by that user
+      @result+=user.ping(callback_url) # this will ping all clients owned by that user
     end
   end
 
@@ -139,8 +145,8 @@ class Source < ActiveRecord::Base
 
     # query,sync,finalize are atomic
     begin  
-      start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      start=Time.new
       source_adapter.query 
       #raise StandardError
       tlog(start,"query",self.id)
@@ -155,7 +161,6 @@ class Source < ActiveRecord::Base
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
-    save
   end
   
   def before_validate

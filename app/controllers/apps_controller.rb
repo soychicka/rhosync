@@ -31,7 +31,7 @@ class AppsController < ApplicationController
       login=@current_user.login
       admins = @current_user.administrations
       @apps=admins.map { |a| a.app}
-      @devices=@current_user.devices
+      @clients=@current_user.clients
     else
       login="anonymous"
       @current_user=User.find 1
