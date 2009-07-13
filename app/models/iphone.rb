@@ -11,7 +11,6 @@ class Iphone < Client
     @message = message if message
     @payload = {"do_sync" => callback_url.split(',')} if callback_url
     @vibrate = vibrate if vibrate
-    puts "PAYLOAD" + @payload.to_json.inspect
     @badge = badge if badge
     @sound = sound if sound and not sound.blank?
     begin
@@ -41,7 +40,6 @@ class Iphone < Client
 		data['aps']['badge'] = @badge if @badge
 		data['aps']['sound'] = @sound if @sound and @sound.is_a? String
 		data['aps']['vibrate'] = @vibrate if @vibrate
-		puts "PAYLOAD BEFORE MERGE #{@payload.inspect}"
 		data['do_sync'] = @payload['do_sync'] if @payload
 		json = data.to_json
 		logger.debug "Ping message to iPhone: #{json}"
