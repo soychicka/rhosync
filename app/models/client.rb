@@ -29,7 +29,7 @@ class Client < ActiveRecord::Base
   end
 
   
-  def ping(callback_url,message=nil,vibrate=nil,badge=nil)  # this should never get hit
+  def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil)  # this should never get hit
     raise "Base client class notify.  Should never hit this!"
   end
 end

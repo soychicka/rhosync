@@ -15,8 +15,8 @@ logger.debug "current_user = #{current_user.inspect.to_s}"
 logger.debug "source = #{source.inspect.to_s}"
 logger.debug "callback_url = #{callback_url}"
 
-logger.debug "current_user devices arrary="
-current_user.devices.each {|d| logger.debug d.inspect.to_s}
+logger.debug "current_user clients arrary="
+current_user.clients.each {|d| logger.debug d.inspect.to_s}
 
 begin
   source.dosync(current_user)

@@ -63,7 +63,7 @@ class User < ActiveRecord::Base
   def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
     clients.each do |client|
-      @result=client.ping(callback_url,message,vibrate,badge=nil,sound=nil)
+      @result=client.ping(callback_url,message,vibrate,badge,sound)
       p "Result of client ping: #{@result}" if @result
     end
     @result
@@ -75,9 +75,4 @@ class User < ActiveRecord::Base
       source.check_for_changes_for_client(client)
     end
   end
-
-  protected
-    
-
-
 end
