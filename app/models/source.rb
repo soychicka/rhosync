@@ -40,7 +40,7 @@ class Source < ActiveRecord::Base
     result
   end
 
-  def callback
+  def do_callback
     current_user=User.find_by_login params[:login]
     refresh(current_user)
   end
@@ -138,14 +138,14 @@ class Source < ActiveRecord::Base
     source_adapter.logoff
   end
   
-  #def before_validate
-  #  self.initadapter
-  #end
+  def before_validate
+    self.initadapter
+  end
 
-  #def before_save
-  #  self.pollinterval||=300
-  #  self.priority||=3
-  #end
+  def before_save
+    self.pollinterval||=300
+    self.priority||=3
+  end
   
   def to_param
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
