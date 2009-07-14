@@ -134,14 +134,14 @@ class Source < ActiveRecord::Base
     save
   end
   
-  def before_validate
-    self.initadapter
-  end
+  #def before_validate
+  #  self.initadapter
+  #end
 
-  def before_save
-    self.pollinterval||=300
-    self.priority||=3
-  end
+  #def before_save
+  #  self.pollinterval||=300
+  #  self.priority||=3
+  #end
   
   def to_param
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
