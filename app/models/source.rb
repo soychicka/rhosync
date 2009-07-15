@@ -1,6 +1,29 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: sources
+#
+#  id           :integer(4)    not null, primary key
+#  name         :string(255)   
+#  url          :string(255)   
+#  login        :string(255)   
+#  password     :string(255)   
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  refreshtime  :datetime      
+#  adapter      :string(255)   
+#  app_id       :integer(4)    
+#  pollinterval :integer(4)    
+#  priority     :integer(4)    
+#  incremental  :integer(4)    
+#  queuesync    :boolean(1)    
+#  limit        :string(255)   
+#  callback_url :string(255)   
+#
 
 class Source < ActiveRecord::Base
   include SourcesHelper
+  
   has_many :object_values
   has_many :source_logs
   has_many :source_notifies
@@ -39,12 +62,19 @@ class Source < ActiveRecord::Base
     tlog(start,"ask",self.id)
     result
   end
+
+  def do_callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
   
-  def refresh(current_user, session)
-    if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
-      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
-      Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
-      p "Queued up task for user "+current_user.login+ ", source "+name
+
+  def refresh(current_user, session, url=nil)
+    if queuesync # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
+      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
+      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
+        :tag => current_user.id.to_s
+      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
     else # go ahead and do it right now
       dosync(current_user, session)
     end
@@ -54,7 +84,7 @@ class Source < ActiveRecord::Base
     # this is the URL for the show method
     @result=""
     users.each do |user|
-      @result+=user.ping(callback_url) # this will ping all devices owned by that user
+      @result+=user.ping(callback_url) # this will ping all clients owned by that user
     end
   end
 
@@ -115,8 +145,8 @@ class Source < ActiveRecord::Base
 
     # query,sync,finalize are atomic
     begin  
-      start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      start=Time.new
       source_adapter.query 
       #raise StandardError
       tlog(start,"query",self.id)
@@ -131,7 +161,6 @@ class Source < ActiveRecord::Base
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
-    save
   end
   
   def before_validate

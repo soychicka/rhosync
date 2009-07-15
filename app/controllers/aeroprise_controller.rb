@@ -7,4 +7,7 @@ class AeropriseController < ApplicationController
   def notify(msg)
     "msg = "+ msg
   end
+  
+  def sr_needs_attention(login, sr_id)
+  end
 end

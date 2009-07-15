@@ -1,9 +1,26 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: devices
+#
+#  id           :integer(4)    not null, primary key
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  device_type  :string(255)   
+#  carrier      :string(255)   
+#  manufacturer :string(255)   
+#  model        :string(255)   
+#  user_id      :integer(4)    
+#  pin          :string(255)   
+#  host         :string(255)   
+#  serverport   :string(255)   
+#  deviceport   :string(255)   
+#
+
 require 'net/http'
 require 'uri'
 
-# this class performs push to notify devices to retrieve data, all via BES server PAP push
-# set APP_CONFIG['bbserver] in your settings.yml
-class Blackberry < Device
+class Blackberry < Client
   
   def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 
@@ -44,11 +61,13 @@ class Blackberry < Device
 
   def build_payload(callback_url,message,vibrate)
     setup_template
-    data="do_sync="+callback_url + "\r\n"
-    popup||=message # supplied message
-    popup||=APP_CONFIG[:sync_popup]
-    popup||="You have new data"
-    (data = data + "show_popup="+ popup + "\r\n") if popup
+    data=""
+    # warning: sending "" as do_sync will sync all sources
+    if (!callback_url.blank?)
+      data = "do_sync=#{callback_url}\r\n"
+    end
+    popup = (message || APP_CONFIG[:sync_popup])
+    (data = data + "show_popup="+ popup + "\r\n") if !popup.blank?
     vibrate=APP_CONFIG[:sync_vibrate]
     (data = data + "vibrate="+vibrate.to_s) if vibrate
     post_body = @template

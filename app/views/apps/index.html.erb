@@ -82,45 +82,49 @@ Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp
 <input type="submit" value="Subscribe">
 </form>
 <p/>
-<h3>Your Devices</h3>
-<%if @devices.size > 0%>
+<h3>Your Clients</h3>
+<%if @clients.size > 0%>
 <table cellpadding="5">
   <tr>
-    <th>Device type</th>
+	<th>Client ID</th>
+    <th>Client type</th>
     <th>Carrier</th>
     <th>Manufacturer</th>
     <th>Model</th>
-    <th>User</th>
     <th>Pin</th>
     <th>Host</th>
     <th>Serverport</th>
-    <th>Deviceport</th>
+    <th>Clientport</th>
+	<th>OAV Rows (unverified)</th>
+	<th>OAV Rows (verified)</th>
 	<th>Ping</th>
 	<th>Edit</th>
 	<th>Delete</th>
   </tr>
 
-<% for device in @devices %>
+<% for client in @clients %>
   <tr>
-    <td><%=h device.device_type %></td>
-    <td><%=h device.carrier %></td>
-    <td><%=h device.manufacturer %></td>
-    <td><%=h device.model %></td>
-    <td><%=h device.user_id %></td>
-    <td><%=h device.pin %></td>
-    <td><%=h device.host %></td>
-    <td><%=h device.serverport %></td>
-    <td><%=h device.deviceport %></td>
-	<td><%= link_to 'Ping', :action => :new_ping, :controller => :devices, :id => device.id %></td>
-    <td><%= link_to 'Edit', edit_device_path(device) %></td>
-    <td><%= link_to 'X', device, :confirm => 'Are you sure?', :method => :delete %></td>
+	<td><%=link_to client.client_id, client_path(client) %></td>
+    <td><%=h client.device_type %></td>
+    <td><%=h client.carrier %></td>
+    <td><%=h client.manufacturer %></td>
+    <td><%=h client.model %></td>
+    <td><%=h client.pin %></td>
+    <td><%=h client.host %></td>
+    <td><%=h client.serverport %></td>
+    <td><%=h client.deviceport %></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=0")%></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=1")%></td>
+	<td><%= link_to 'Ping', :action => :new_ping, :controller => :clients, :id => client.id %></td>
+    <td><%= link_to 'Edit', edit_client_path(client) %></td>
+    <td><%= link_to 'X', client, :confirm => 'Are you sure?', :method => :delete %></td>
   </tr>
 <% end %>
 </table>
 <%else%>
-You have no devices.<br/>
+You have no clients.<br/>
 <%end%>
-<%= link_to 'New device', new_device_path %>
+<%= link_to 'New client', new_client_path %>
 <br/><br/>
 <%if @current_user.nil? or @current_user.login=="anonymous" %><br/>
 <%= link_to 'Login',{:controller=>'sessions',:action=>'new'}%><br/>
