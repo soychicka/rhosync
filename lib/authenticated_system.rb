@@ -1,4 +1,12 @@
 module AuthenticatedSystem
+  @@login_error = 'You are not logged in.'
+  
+  attr_accessor :login_error
+  
+  def self.login_error(error)
+    @@login_error = error if error
+  end
+  
   protected
     # Returns true or false if the user is logged in.
     # Preloads @current_user with the user model if they're logged in.
@@ -75,6 +83,7 @@ module AuthenticatedSystem
         # the 'format.any' block incorrectly. See http://bit.ly/ie6_borken or http://bit.ly/ie6_borken2
         # for a workaround.)
         format.any(:json, :xml) do
+          render :text => @@login_error, :status => 401 and return
           request_http_basic_authentication 'Web Password'
         end
       end
