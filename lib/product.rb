@@ -6,8 +6,8 @@ class Product < SourceAdapter
   
   def initialize(source,credential)
     super(source,credential)
-    #@baseurl="http://rhostore.heroku.com"
-    @baseurl="http://localhost:3001"
+    @baseurl="http://rhostore.heroku.com"
+    #@baseurl="http://localhost:3001"
   end
  
   def login

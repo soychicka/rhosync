@@ -63,7 +63,7 @@ class Source < ActiveRecord::Base
     result
   end
 
-  def callback
+  def do_callback
     current_user=User.find_by_login params[:login]
     refresh(current_user)
   end
