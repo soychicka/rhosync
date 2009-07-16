@@ -26,7 +26,7 @@ class SourceAdapter
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
     if @result.size>0 
-      if @current_user.nil?
+      if @source.current_user.nil?
         user_id='NULL'
       else
         user_id=@source.current_user.id
