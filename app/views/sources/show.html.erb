@@ -21,7 +21,7 @@
 
 </td><td><%=x.value%></td>
   <td><%=link_to "X",{:action=>"deleteobjects",:id=>@source.id,:attrvals=>[{"object"=>x.object}]}%></td>
-  <%if x.attrib_type == 'blob.url' and x.value!="/blobs/original/missing.png"%><td><%= image_tag x.value %></td><%end%>
+  <%if x.attrib_type == 'blob.url' and x.value!="/blobs/original/missing.png"%><td><img src="<%=x.value%>"/></td><%end%>
   </tr>
 <%
   prevobj=x.object
