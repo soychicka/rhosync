@@ -1,21 +1,22 @@
-require 'uri'
-require 'xmlsimple'
-require 'net/http'
-require 'httpclient'
-
 class Camera < SourceAdapter
+  PATH = File.join(RAILS_ROOT,'public','images')
+  
   def initialize(source,credential)
     super(source,credential)
   end
  
   def login
-    #TODO: Write some code here
-    # use the variable @source.login and @source.password
-    #raise "Please provide some code to perform an authenticated login to the backend application"
   end
  
   def query
-    
+    @result={}
+    Dir.entries(PATH).each do |entry|
+      puts "Entry: #{entry.inspect}"
+      new_item = {'image_uri' => 'http://dev.rhosync.rhohub.com/images/'+entry}
+      @result[entry.hash.to_s] = new_item unless (entry == '..' || entry == '.')
+    end
+    puts "@result: #{@result.inspect}"
+    @result
   end
  
   def sync
@@ -26,26 +27,19 @@ class Camera < SourceAdapter
     if blob
       obj = ObjectValue.find(:first, :conditions => "object = '#{blob.instance.object}' AND value = '#{name_value_list[0]["value"]}'")
       path = blob.path.gsub(/\/\//,"\/#{obj.id}\/")
+      name = name_value_list[0]["value"]
     
-      `cp #{path} #{File.join(RAILS_ROOT,'public','images',name)}`
+      `cp #{path} #{File.join(PATH,name)}`
     end
   end
  
   def update(name_value_list)
-    #TODO: write some code here
-    # be sure to have a hash key and value for "object"
-    #raise "Please provide some code to update a single object in the backend application using the hash values in name_value_list"
   end
  
   def delete(name_value_list)
-    #TODO: write some code here if applicable
-    # be sure to have a hash key and value for "object"
-    # for now, we'll say that its OK to not have a delete operation
-    # raise "Please provide some code to delete a single object in the backend application using the hash values in name_value_list"
+    
   end
  
   def logoff
-    #TODO: write some code here if applicable
-    # no need to do a raise here
   end
 end
