@@ -13,7 +13,7 @@ class Camera < SourceAdapter
     Dir.entries(PATH).each do |entry|
       puts "Entry: #{entry.inspect}"
       new_item = {'image_uri' => 'http://dev.rhosync.rhohub.com/images/'+entry}
-      @result[entry.hash.to_s] = new_item unless (entry == '..' || entry == '.')
+      @result[entry.hash.to_s] = new_item unless (entry == '..' || entry == '.' || entry == '.keep')
     end
     puts "@result: #{@result.inspect}"
     @result
