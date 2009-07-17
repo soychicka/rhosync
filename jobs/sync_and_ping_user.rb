@@ -22,6 +22,9 @@ begin
   source.dosync(current_user)
   result = current_user.ping(callback_url)
   logger.debug result.inspect.to_s
+  logger.debug result.code
+  logger.debug result.message
+  logger.debug result.body
 rescue SourceAdapterLoginException
   logger.debug "SourceAdapterLoginException, sending login failure to device"
   current_user.ping("", "login failed")

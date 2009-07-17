@@ -128,7 +128,7 @@ ActiveRecord::Schema.define(:version => 20090706183329) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value"
+    t.text     "value",             :limit => 255
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"

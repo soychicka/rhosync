@@ -32,9 +32,11 @@ class Blackberry < Client
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
     begin
       @result=http_post(url,data,headers)   
-      p "Returning #{@result.inspect}"
+      Rails.logger.debug "Returning #{@result.inspect}"
+Rails.logger.debug @result.body
+
     rescue
-      p "Failed to post "
+      Rails.logger.debug "Failed to post "
       @result="post failure"
     end
     @result
@@ -54,6 +56,11 @@ class Blackberry < Client
     response=Net::HTTP.new(uri.host,uri.port).start do |http|
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data
+
+Rails.logger.debug "*******"
+Rails.logger.debug data
+Rails.logger.debug "*******"
+
       http.request(request)
     end
     response
@@ -92,7 +99,7 @@ Content-Type: application/xml; charset=UTF-8
 <push-message push-id="pushID:--RAND_ID--" ppg-notify-requested-to="http://localhost:7778">
 
 <address address-value="WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net"/>
-<quality-of-service delivery-method="confirmed"/>
+<quality-of-service delivery-method="preferconfirmed"/>
 </push-message>
 </pap>
 --asdlfkjiurwghasf

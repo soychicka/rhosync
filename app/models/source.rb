@@ -67,8 +67,7 @@ class Source < ActiveRecord::Base
     current_user=User.find_by_login params[:login]
     refresh(current_user)
   end
-  
-
+ 
   def refresh(current_user, session, url=nil)
     if queuesync # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
