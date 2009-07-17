@@ -1,5 +1,6 @@
 class Camera < SourceAdapter
   PATH = File.join(RAILS_ROOT,'public','images')
+  BASEURL = 'http://dev.rhosync.rhohub.com'
   
   def initialize(source,credential)
     super(source,credential)
@@ -11,11 +12,12 @@ class Camera < SourceAdapter
   def query
     @result={}
     Dir.entries(PATH).each do |entry|
-      puts "Entry: #{entry.inspect}"
-      new_item = {'image_uri' => 'http://dev.rhosync.rhohub.com/images/'+entry}
-      @result[entry.hash.to_s] = new_item unless (entry == '..' || entry == '.' || entry == '.keep')
+      new_item = {'image_uri' => BASEURL+'/images/'+entry}
+      unless entry == '..' || entry == '.' || entry == '.keep'
+        p "Found: #{entry}"
+        @result[entry.hash.to_s] = new_item
+      end
     end
-    puts "@result: #{@result.inspect}"
     @result
   end
  
@@ -28,7 +30,6 @@ class Camera < SourceAdapter
       obj = ObjectValue.find(:first, :conditions => "object = '#{blob.instance.object}' AND value = '#{name_value_list[0]["value"]}'")
       path = blob.path.gsub(/\/\//,"\/#{obj.id}\/")
       name = name_value_list[0]["value"]
-    
       `cp #{path} #{File.join(PATH,name)}`
     end
   end
@@ -37,7 +38,14 @@ class Camera < SourceAdapter
   end
  
   def delete(name_value_list)
-    
+    puts "NVLIST: #{name_value_list.inspect}"
+    Dir.entries(PATH).each do |entry|
+      obj_id = name_value_list[0]['value']
+      if entry.hash.to_s == obj_id
+        p "Removing: #{entry}"
+        `rm #{File.join(PATH,entry)}`
+      end
+    end
   end
  
   def logoff
