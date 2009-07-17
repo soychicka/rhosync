@@ -3,6 +3,7 @@ require 'yaml'
 require 'open-uri'
 require 'net/http'
 require 'net/https'
+require 'source_adapter'
 
 require 'source_adapter.rb'
 

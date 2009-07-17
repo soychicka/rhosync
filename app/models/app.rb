@@ -19,6 +19,7 @@ class App < ActiveRecord::Base
   has_many :users, :through=>:memberships # these are the users that are allowed to access the source for query, create, update, delete
   has_many :memberships
   has_many :administrations
+  has_many :configurations
   
   attr_accessor :delegate
   
