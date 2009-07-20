@@ -25,7 +25,7 @@ class Camera < SourceAdapter
     super
   end
  
-  def create(name_value_list,blob)
+  def create(name_value_list,blob=nil)
     if blob
       obj = ObjectValue.find(:first, :conditions => "object = '#{blob.instance.object}' AND value = '#{name_value_list[0]["value"]}'")
       path = blob.path.gsub(/\/\//,"\/#{obj.id}\/")
