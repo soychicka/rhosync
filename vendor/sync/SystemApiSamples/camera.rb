@@ -1,6 +1,6 @@
 class Camera < SourceAdapter
   PATH = File.join(RAILS_ROOT,'public','images')
-  BASEURL = 'http://dev.rhosync.rhohub.com'
+  BASEURL = 'http://localhost:3000'
   
   def initialize(source,credential)
     super(source,credential)
@@ -12,7 +12,7 @@ class Camera < SourceAdapter
   def query
     @result={}
     Dir.entries(PATH).each do |entry|
-      new_item = {'image_uri' => BASEURL+'/images/'+entry}
+      new_item = {'image_uri' => BASEURL+'/images/'+entry, 'attrib_type' => 'blob.url'}
       unless entry == '..' || entry == '.' || entry == '.keep'
         p "Found: #{entry}"
         @result[entry.hash.to_s] = new_item
@@ -38,7 +38,6 @@ class Camera < SourceAdapter
   end
  
   def delete(name_value_list)
-    puts "NVLIST: #{name_value_list.inspect}"
     Dir.entries(PATH).each do |entry|
       obj_id = name_value_list[0]['value']
       if entry.hash.to_s == obj_id
