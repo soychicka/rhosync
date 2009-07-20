@@ -1,6 +1,6 @@
 class Camera < SourceAdapter
   PATH = File.join(RAILS_ROOT,'public','images')
-  BASEURL = 'http://localhost:3000'
+  BASEURL = 'http://dev.rhosync.rhohub.com'
   
   def initialize(source,credential)
     super(source,credential)
