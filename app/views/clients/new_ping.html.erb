@@ -1,0 +1,13 @@
+<h1>Send Ping to <%=@client.client_id%></h1>
+
+<form action="<%=url_for(:controller=>'clients',:action=>'ping',:id=>@client.client_id)%>">
+    <input type="hidden" name="client_id" value="<%=@client.client_id%>"/>
+    Callback URL <input name="callback_url" size="50"/><br/>
+    Message <input name="message" size="50"/><br/>
+ 	Vibrate(ms) <input name="vibrate" value="500" size="5"/><br/>
+ 	Sound(optional) <input name="sound" value="1.aiff" size="20"/><br/>
+	Badge(optional) <input name="vibrate" value="1" size="4"/><br/>
+	<input type="submit" value="Ping!"/>
+</form>
+
+<%= link_to 'Back', apps_path %>

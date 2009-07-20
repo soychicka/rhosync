@@ -1,0 +1,43 @@
+<h1>Editing client</h1>
+
+<% form_for(@client) do |f| %>
+  <%= f.error_messages %>
+  <p>
+    <%= f.label :device_type %><br />
+    <%= f.text_field :device_type %>
+  </p>
+  <p>
+    <%= f.label :carrier %><br />
+    <%= f.text_field :carrier %>
+  </p>
+  <p>
+    <%= f.label :manufacturer %><br />
+    <%= f.text_field :manufacturer %>
+  </p>
+  <p>
+    <%= f.label :model %><br />
+    <%= f.text_field :model %>
+  </p>
+  <p>
+    <%= f.label :pin %><br />
+    <%= f.text_field :pin %>
+  </p>
+  <p>
+    <%= f.label :host %><br />
+    <%= f.text_field :host %>
+  </p>
+  <p>
+    <%= f.label :serverport %><br />
+    <%= f.text_field :serverport %>
+  </p>
+  <p>
+    <%= f.label :deviceport %><br />
+    <%= f.text_field :deviceport %>
+  </p>
+  <p>
+    <%= f.submit "Update" %>
+  </p>
+<% end %>
+<%= link_to 'Ping', :action => 'new_ping', :id => @client%> |
+<%= link_to 'Show', @client %> |
+<%= link_to 'Back', apps_path %>

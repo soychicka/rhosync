@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090624184104) do
+ActiveRecord::Schema.define(:version => 20090715212851) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -29,14 +29,16 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.boolean  "stop_subscriptions"
   end
 
-  create_table "bj_config", :primary_key => "bj_config_id", :force => true do |t|
-    t.text "hostname"
-    t.text "key"
-    t.text "value"
-    t.text "cast"
+  create_table "bj_config", :id => false, :force => true do |t|
+    t.integer "bj_config_id", :null => false
+    t.text    "hostname"
+    t.text    "key"
+    t.text    "value"
+    t.text    "cast"
   end
 
-  create_table "bj_job", :primary_key => "bj_job_id", :force => true do |t|
+  create_table "bj_job", :id => false, :force => true do |t|
+    t.integer  "bj_job_id",      :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -55,7 +57,8 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.integer  "exit_status"
   end
 
-  create_table "bj_job_archive", :primary_key => "bj_job_archive_id", :force => true do |t|
+  create_table "bj_job_archive", :id => false, :force => true do |t|
+    t.integer  "bj_job_archive_id", :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -95,9 +98,25 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.datetime "updated_at"
     t.integer  "user_id"
     t.string   "last_sync_token"
+    t.string   "device_type"
+    t.string   "carrier"
+    t.string   "manufacturer"
+    t.string   "model"
+    t.string   "pin"
+    t.string   "host"
+    t.string   "serverport"
+    t.string   "deviceport"
   end
 
   add_index "clients", ["client_id"], :name => "index_clients_on_client_id"
+
+  create_table "configurations", :force => true do |t|
+    t.integer  "app_id"
+    t.string   "name"
+    t.string   "value"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "credentials", :force => true do |t|
     t.string   "login"
@@ -107,20 +126,6 @@ ActiveRecord::Schema.define(:version => 20090624184104) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "url"
-  end
-
-  create_table "devices", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string   "device_type"
-    t.string   "carrier"
-    t.string   "manufacturer"
-    t.string   "model"
-    t.integer  "user_id"
-    t.string   "pin"
-    t.string   "host"
-    t.string   "serverport"
-    t.string   "deviceport"
   end
 
   create_table "memberships", :force => true do |t|

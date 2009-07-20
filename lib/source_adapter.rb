@@ -1,14 +1,21 @@
+class SourceAdapterException < RuntimeError
+end
+
+# raise this to cause client to be logged out during a sync
+class SourceAdapterLoginException < SourceAdapterException
+end
+
 class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
-  
+  attr_accessor :session
+    
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
   end
 
   def login
   end
-
   
   def query
   end
@@ -19,7 +26,7 @@ class SourceAdapter
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
     if @result.size>0 
-      if @source.credential.nil?
+      if @current_user.nil?
         user_id='NULL'
       else
         user_id=@source.current_user.id
@@ -34,7 +41,7 @@ class SourceAdapter
           obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?   
+              unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
@@ -53,7 +60,7 @@ class SourceAdapter
           obj=@result[objkey]
           if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?  
+              unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
                 sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)

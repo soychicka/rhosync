@@ -1,18 +1,28 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: devices
+#
+#  id           :integer(4)    not null, primary key
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  device_type  :string(255)   
+#  carrier      :string(255)   
+#  manufacturer :string(255)   
+#  model        :string(255)   
+#  user_id      :integer(4)    
+#  pin          :string(255)   
+#  host         :string(255)   
+#  serverport   :string(255)   
+#  deviceport   :string(255)   
+#
+
 require 'net/http'
 require 'uri'
 
-# this class performs push to notify devices to retrieve data, all via BES server PAP push
-# set APP_CONFIG['bbserver] in your settings.yml
-class Blackberry < Device
+class Blackberry < Client
   
-  def set_ports    
-    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
-    self.host||="192.168.1.103"  # this is Lars' MDS server and shouldn't be hit. Change if you don't want to set APP_CONFIG[:bbserver]
-    self.serverport="8080"
-    self.deviceport||="100"
-  end
-  
-  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via PAP
+  def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil) # notify the BlackBerry device via PAP
     p "Pinging Blackberry device via BES push: " + pin 
     set_ports
     setup_template
@@ -22,12 +32,22 @@ class Blackberry < Device
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
     begin
       @result=http_post(url,data,headers)   
-      p "Returning #{@result}"
+      Rails.logger.debug "Returning #{@result.inspect}"
+Rails.logger.debug @result.body
+
     rescue
-      p "Failed to post "
+      Rails.logger.debug "Failed to post "
       @result="post failure"
     end
-    @result    
+    @result
+  end
+  
+  private
+  
+  def set_ports    
+    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
+    self.serverport="8080"
+    self.deviceport||="100"
   end
 
   def http_post(address,data,headers)
@@ -36,6 +56,11 @@ class Blackberry < Device
     response=Net::HTTP.new(uri.host,uri.port).start do |http|
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data
+
+Rails.logger.debug "*******"
+Rails.logger.debug data
+Rails.logger.debug "*******"
+
       http.request(request)
     end
     response
@@ -43,11 +68,13 @@ class Blackberry < Device
 
   def build_payload(callback_url,message,vibrate)
     setup_template
-    data="do_sync="+callback_url + "\r\n"
-    popup||=message # supplied message
-    popup||=APP_CONFIG[:sync_popup]
-    popup||="You have new data"
-    (data = data + "show_popup="+ popup + "\r\n") if popup
+    data=""
+    # warning: sending "" as do_sync will sync all sources
+    if (!callback_url.blank?)
+      data = "do_sync=#{callback_url}\r\n"
+    end
+    popup = (message || APP_CONFIG[:sync_popup])
+    (data = data + "show_popup="+ popup + "\r\n") if !popup.blank?
     vibrate=APP_CONFIG[:sync_vibrate]
     (data = data + "vibrate="+vibrate.to_s) if vibrate
     post_body = @template
@@ -72,7 +99,7 @@ Content-Type: application/xml; charset=UTF-8
 <push-message push-id="pushID:--RAND_ID--" ppg-notify-requested-to="http://localhost:7778">
 
 <address address-value="WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net"/>
-<quality-of-service delivery-method="confirmed"/>
+<quality-of-service delivery-method="preferconfirmed"/>
 </push-message>
 </pap>
 --asdlfkjiurwghasf
@@ -90,23 +117,6 @@ DESC
     else
       p "Do not have all values for URL"
       @url=nil
-    end
-  end
-  
-  # this will not get called (unless you rename it to ping)
-  # it does BlackBerry BES style push as opposed to PAP push (which is implemented above)
-  def ping(callback_url,message=nil,vibrate=nil) # notify the BlackBerry device via the BES server 
-    p "Pinging Blackberry device via BES push: " + pin 
-    set_ports
-    begin
-      data=build_payload(callback_url,message,vibrate)
-      headers={"X-WAP-APPLICATION-ID"=>"/",
-               "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
-               "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
-      response = http_post(url,data,headers)
-      p "Result of BlackBerry PAP Push" + response.body # log the results of the push
-    rescue
-      p "Failed to push to BlackBerry device: "+ url + "=>" + $!
     end
   end
   

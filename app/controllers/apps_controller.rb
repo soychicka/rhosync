@@ -28,9 +28,10 @@ class AppsController < ApplicationController
   # GET /apps.xml
   def index
     if @current_user
-      login=@current_user.login.downcase 
+      login=@current_user.login
       admins = @current_user.administrations
       @apps=admins.map { |a| a.app}
+      @clients=@current_user.clients
     else
       login="anonymous"
       @current_user=User.find 1
@@ -65,7 +66,7 @@ class AppsController < ApplicationController
   def refresh # execute a refresh on all sources associated with an app 
     @sources=Source.find_all_by_app_id @app.id,:order=>:priority
     @sources.each do |src|
-      src.refresh(@current_user)
+      src.refresh(@current_user, session)
     end
     flash[:notice]="Refreshed all sources"
     redirect_to :action=>:edit

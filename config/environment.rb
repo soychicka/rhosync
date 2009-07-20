@@ -5,7 +5,7 @@
 # ENV['RAILS_ENV'] ||= 'production'
 
 # Specifies gem version of Rails to use when vendor/rails is not present
-RAILS_GEM_VERSION = '2.3.2' unless defined? RAILS_GEM_VERSION
+RAILS_GEM_VERSION = '2.2.2' unless defined? RAILS_GEM_VERSION
 
 # Bootstrap the Rails environment, frameworks, and default configuration
 require File.join(File.dirname(__FILE__), 'boot')
@@ -35,14 +35,18 @@ Rails::Initializer.run do |config|
   config.gem "rcov"
   config.gem "libxml-ruby", :lib => "xml/libxml"
   
+  config.gem "datanoise-actionwebservice", :lib => "actionwebservice",:version => "2.2.2"
+  
+
+  
 
   # Only load the plugins named here, in the order given. By default, all plugins 
   # in vendor/plugins are loaded in alphabetical order.
   # :all can be used as a placeholder for all plugins not explicitly named
   # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
 
-  # Add additional load paths for your own custom dirs
-  # config.load_paths += %W( #{RAILS_ROOT}/extras )
+  # load source adapters, et al from here
+  config.load_paths += Dir["#{RAILS_ROOT}/vendor/sync/*"]
 
   # Force all environments to use the same logger level
   # (by default production uses :info, the others :debug)
@@ -76,7 +80,7 @@ Rails::Initializer.run do |config|
   # config.active_record.observers = :cacher, :garbage_collector
   config.active_record.observers = :user_observer
 
-  
+  config.active_record.colorize_logging = false
 end
 
 ActionController::Base.session_options[:session_expires] = 1.year.from_now
@@ -92,4 +96,10 @@ ActionMailer::Base.smtp_settings = {
   :authentication => :plain                 # :plain, :login or :cram_md5
 }
 =end
+
+module SOAP
+    SOAPNamespaceTag = 'env'
+    XSDNamespaceTag = 'xsd'
+    XSINamespaceTag = 'xsi'
+end
 

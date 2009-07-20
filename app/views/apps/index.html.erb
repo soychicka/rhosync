@@ -82,6 +82,50 @@ Login&nbsp;<input name="login"/>Password&nbsp;<input name="password"/>Email&nbsp
 <input type="submit" value="Subscribe">
 </form>
 <p/>
+<h3>Your Clients</h3>
+<%if @clients.size > 0%>
+<table cellpadding="5">
+  <tr>
+	<th>Client ID</th>
+    <th>Client type</th>
+    <th>Carrier</th>
+    <th>Manufacturer</th>
+    <th>Model</th>
+    <th>Pin</th>
+    <th>Host</th>
+    <th>Serverport</th>
+    <th>Clientport</th>
+	<th>OAV Rows (unverified)</th>
+	<th>OAV Rows (verified)</th>
+	<th>Ping</th>
+	<th>Edit</th>
+	<th>Delete</th>
+  </tr>
+
+<% for client in @clients %>
+  <tr>
+	<td><%=link_to client.client_id, client_path(client) %></td>
+    <td><%=h client.device_type %></td>
+    <td><%=h client.carrier %></td>
+    <td><%=h client.manufacturer %></td>
+    <td><%=h client.model %></td>
+    <td><%=h client.pin %></td>
+    <td><%=h client.host %></td>
+    <td><%=h client.serverport %></td>
+    <td><%=h client.deviceport %></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=0")%></td>
+	<td><%=client.client_maps.count(:conditions => "db_operation !='delete' and ack_token=1")%></td>
+	<td><%= link_to 'Ping', :action => :new_ping, :controller => :clients, :id => client.id %></td>
+    <td><%= link_to 'Edit', edit_client_path(client) %></td>
+    <td><%= link_to 'X', client, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+<%else%>
+You have no clients.<br/>
+<%end%>
+<%= link_to 'New client', new_client_path %>
+<br/><br/>
 <%if @current_user.nil? or @current_user.login=="anonymous" %><br/>
 <%= link_to 'Login',{:controller=>'sessions',:action=>'new'}%><br/>
 <%= link_to 'Register',{:controller=>'users',:action=>'new'}%><br/>
