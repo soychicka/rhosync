@@ -1,5 +1,5 @@
 require 'rhobase'
-class Rhomedium < RhoBase
+class Rhomedium < Rhobase
   def initialize(source,credential)
     super(source,credential)
     @baseurl = 'http://datafactory.heroku.com/data_tables/rhomedium'
