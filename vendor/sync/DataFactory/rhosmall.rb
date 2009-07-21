@@ -1,4 +1,4 @@
-require 'rho_base'
+require 'rhobase'
 class Rhosmall < RhoBase
   def initialize(source,credential)
     super(source,credential)
