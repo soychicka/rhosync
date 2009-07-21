@@ -1,7 +1,7 @@
 require 'json'
 require 'open-uri'
 
-class RhoBase < SourceAdapter
+class Rhobase < SourceAdapter
   def initialize(source,credential)
     super(source,credential)
   end

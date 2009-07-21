@@ -1,7 +1,7 @@
 require 'rho_base'
-class RhoSmall < RhoBase
+class Rhomedium < RhoBase
   def initialize(source,credential)
     super(source,credential)
-    @baseurl = 'http://datafactory.heroku.com/data_tables/rhosmall'
+    @baseurl = 'http://datafactory.heroku.com/data_tables/rhomedium'
   end
 end
