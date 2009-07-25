@@ -274,9 +274,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
-  rescue SourceAdapterLoginException
-    logout_killing_session!
-    render :nothing=>true, :status => 401
+  #rescue SourceAdapterLoginException
+  #  logout_killing_session!
+  #  render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
