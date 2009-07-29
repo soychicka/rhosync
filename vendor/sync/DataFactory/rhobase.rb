@@ -10,22 +10,6 @@ class Rhobase < SourceAdapter
   end
  
   def query
-    parsed=nil
-    open(@baseurl+"/showdata?format=json") do |f|
-      parsed=JSON.parse(f.read)
-    end
-    @result={}
-    parsed.each do |item|
-      obj = item["id"].to_s
-      @result[obj] = {}
-      item.each do |key,val|
-        unless key == 'id'
-          element = {key => val}
-          @result[obj].merge! element
-        end
-      end
-    end
-    @result
   end
  
   def sync
@@ -42,5 +26,17 @@ class Rhobase < SourceAdapter
   end
  
   def logoff
+  end
+  
+  protected
+  def populate(columnsize,rows)
+    @res={}
+    rows.times do |i|
+      @res[i.to_s]={}
+      columnsize.times do |j|
+        @res[i.to_s] = {"column#{j}" => "row#{i}-column#{j}"}
+      end
+    end
+    @res
   end
 end

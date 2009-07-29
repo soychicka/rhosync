@@ -2,6 +2,8 @@ require 'rhobase'
 class Rhomedium < Rhobase
   def initialize(source,credential)
     super(source,credential)
-    @baseurl = 'http://datafactory.heroku.com/data_tables/rhomedium'
+  end
+  def query
+    populate(25,100)
   end
 end
