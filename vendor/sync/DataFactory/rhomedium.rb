@@ -4,6 +4,6 @@ class Rhomedium < Rhobase
     super(source,credential)
   end
   def query
-    @result = populate(25,100)
+    @result = populate('rhomedium',25,1000)
   end
 end

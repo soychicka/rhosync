@@ -29,12 +29,12 @@ class Rhobase < SourceAdapter
   end
   
   protected
-  def populate(columnsize,rows)
+  def populate(tbl,columnsize,rows)
     @res={}
     rows.times do |i|
-      @res[i.to_s]={}
+      @res[tbl+i.to_s] = {}
       columnsize.times do |j|
-        @res[i.to_s] = {"column#{j}" => "row#{i}-column#{j}"}
+        @res[tbl+i.to_s].merge!({"column#{j}" => "row#{i}-column#{j}"})
       end
     end
     @res

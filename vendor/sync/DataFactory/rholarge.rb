@@ -4,6 +4,6 @@ class Rholarge < Rhobase
     super(source,credential)
   end
   def query
-    @result = populate(50,1000)
+    @result = populate('rholarge',50,1000)
   end
 end
