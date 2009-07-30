@@ -11,6 +11,7 @@ class Blackberry < Client
     headers={"X-WAP-APPLICATION-ID"=>"/",
              "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
+    puts "SELF ------- #{self.inspect}"
     begin
       @result=http_post(url,data,headers)   
       p "Returning #{@result.inspect}"
@@ -24,8 +25,8 @@ class Blackberry < Client
   private
   
   def set_ports    
-    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
-    self.serverport="8080"
+    self.host||=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
+    self.serverport||="8080"
     self.deviceport||="100"
   end
 
