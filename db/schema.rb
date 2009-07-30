@@ -9,7 +9,8 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090715212851) do
+
+ActiveRecord::Schema.define(:version => 20090716233709) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -148,6 +149,7 @@ ActiveRecord::Schema.define(:version => 20090715212851) do
     t.string   "blob_file_name"
     t.string   "blob_content_type"
     t.integer  "blob_file_size"
+    t.string   "attrib_type"
   end
 
   add_index "object_values", ["source_id", "user_id", "update_type"], :name => "by_source_user_type"

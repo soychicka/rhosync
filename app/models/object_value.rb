@@ -18,8 +18,6 @@
 #  blob_file_size    :integer(4)    
 #
 
-require "xml/libxml"
-
 class ObjectValue < ActiveRecord::Base
   set_primary_key :id
   belongs_to :source
@@ -28,8 +26,9 @@ class ObjectValue < ActiveRecord::Base
   has_attached_file :blob
   
   attr_accessor :db_operation
-
-  def before_validate
+  
+  def get_id
+    self.id
   end
   
   def before_save

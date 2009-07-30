@@ -110,7 +110,7 @@ module SourcesHelper
     objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
     objs.each do |obj|  
       begin
-        pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s
+        pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
         ActiveRecord::Base.connection.execute(pending_to_query)
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
@@ -122,7 +122,7 @@ module SourcesHelper
   def finalize_query_records(credential)
     # first delete the existing query records
     ActiveRecord::Base.transaction do
-      delete_cmd = "(update_type is not null) and source_id="+id.to_s
+      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
       (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
       ObjectValue.delete_all delete_cmd
       remove_dupe_pendings(credential)
@@ -206,12 +206,15 @@ module SourcesHelper
   # return nil if there are no such objects
   def qparms_from_object(user_id)
     qparms=nil
-    attrs=ObjectValue.find_by_sql("select attrib,value from object_values where object='qparms' and update_type='create'and source_id="+id.to_s+" and user_id="+user_id.to_s)
+    attrs=ObjectValue.find_by_sql("select * from object_values where object='qparms' and source_id="+id.to_s+" and user_id="+user_id.to_s)
     if attrs
       qparms={}
       attrs.each do |x|
         qparms[x.attrib]=x.value
-        x.destroy
+        if x.update_type == 'create'
+          x.update_attribute('update_type', 'qparms') 
+          x.save
+        end
       end
     end
     qparms

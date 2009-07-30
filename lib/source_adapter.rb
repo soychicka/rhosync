@@ -26,7 +26,7 @@ class SourceAdapter
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
     if @result.size>0 
-      if @current_user.nil?
+      if @source.current_user.nil?
         user_id='NULL'
       else
         user_id=@source.current_user.id
@@ -35,17 +35,18 @@ class SourceAdapter
       if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
         max_sql_statement=2048
         p "MySQL optimized sync"
-        sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
+        sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
         count=0
         @result.keys.each do |objkey|
           obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
+            attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id"
+              unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id" or attrkey=="attrib_type"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + "),"
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
               end
             end
             count+=1
@@ -59,13 +60,14 @@ class SourceAdapter
         @result.keys.each do |objkey|
           obj=@result[objkey]
           if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
+            attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
               unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
-                sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
+                sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + ")"
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
             end # for all keys in hash
