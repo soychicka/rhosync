@@ -7,8 +7,7 @@ class Client < ActiveRecord::Base
   has_many :object_values, :through => :client_maps
   set_inheritance_column "device_type"
   
-  attr_accessible :client_id, :last_sync_token, :updated_at, :carrier, :device_type, :deviceport, :manufacturer, :serverport,
-    :host, :model, :pin
+  attr_accessible :client_id, :last_sync_token, :updated_at, :carrier, :device_type, :deviceport, :manufacturer, :serverport, :host, :model, :pin
   
   def initialize(params=nil)
     super
