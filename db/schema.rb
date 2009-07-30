@@ -9,6 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
+
 ActiveRecord::Schema.define(:version => 20090716233709) do
 
   create_table "administrations", :force => true do |t|
@@ -29,14 +30,16 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.boolean  "stop_subscriptions"
   end
 
-  create_table "bj_config", :primary_key => "bj_config_id", :force => true do |t|
-    t.text "hostname"
-    t.text "key"
-    t.text "value"
-    t.text "cast"
+  create_table "bj_config", :id => false, :force => true do |t|
+    t.integer "bj_config_id", :null => false
+    t.text    "hostname"
+    t.text    "key"
+    t.text    "value"
+    t.text    "cast"
   end
 
-  create_table "bj_job", :primary_key => "bj_job_id", :force => true do |t|
+  create_table "bj_job", :id => false, :force => true do |t|
+    t.integer  "bj_job_id",      :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -55,7 +58,8 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "exit_status"
   end
 
-  create_table "bj_job_archive", :primary_key => "bj_job_archive_id", :force => true do |t|
+  create_table "bj_job_archive", :id => false, :force => true do |t|
+    t.integer  "bj_job_archive_id", :null => false
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -107,6 +111,14 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
 
   add_index "clients", ["client_id"], :name => "index_clients_on_client_id"
 
+  create_table "configurations", :force => true do |t|
+    t.integer  "app_id"
+    t.string   "name"
+    t.string   "value"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "credentials", :force => true do |t|
     t.string   "login"
     t.string   "password"
@@ -128,7 +140,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value"
+    t.text     "value",             :limit => 255
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -195,7 +207,8 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.integer  "source_id"
+    t.string   "password_reset_code"
+    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

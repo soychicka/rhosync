@@ -28,7 +28,7 @@ class AppsController < ApplicationController
   # GET /apps.xml
   def index
     if @current_user
-      login=@current_user.login.downcase 
+      login=@current_user.login
       admins = @current_user.administrations
       @apps=admins.map { |a| a.app}
       @clients=@current_user.clients

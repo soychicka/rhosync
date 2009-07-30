@@ -44,8 +44,8 @@ module SourcesHelper
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
     (count_updates << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
     if (ObjectValue.count_by_sql count_updates ) > 0
-      p "Refreshing because there are some non-query object values"
-      result = true
+      p "Refreshing source #{name} #{id} because there are some non-query object values"
+      return true
     end
 
     # refresh if there is no data
@@ -53,17 +53,25 @@ module SourcesHelper
     count_query_objs="select count(*) from object_values where update_type='query' and source_id="+id.to_s
     (count_query_objs << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
     if (ObjectValue.count_by_sql count_query_objs ) <= 0
-      p "Refreshing because there is no data stored in object values"
-      result=true
+      p "Refreshing source #{name} #{id} because there is no data stored in object values"
+      return true
     end
+    
+    # provided there is data....
+    # allow -1 to mean dont ever poll
+    return false if -1==self.pollinterval
+    
+    # allow 0 to mean always poll
+    return true if 0==self.pollinterval
     
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      p "Refreshing because the data is old"
-      result=true
+      p "Refreshing source #{name} #{id}  because the data is old"
+      return true
     end
-    result  # return true of false (nil)
+    
+    false  # return true of false (nil)
   end
   
   # presence or absence of credential determines whether we are using a "per user sandbox" or not

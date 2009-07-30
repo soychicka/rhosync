@@ -17,10 +17,12 @@
 #  deviceport   :string(255)   
 #
 
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-# one:
-#   column: value
-#
-# two:
-#   column: value
+class Device < ActiveRecord::Base
+  #  belongs_to :source  DON'T NEED THIS NOW. Can just say that devices belong to users
+  belongs_to :user
+  set_inheritance_column "device_type"
+  
+  def ping(callback_url,message=nil,vibrate=nil,badge=nil)  # this should never get hit
+    raise "Base device class notify.  Should never hit this!"
+  end
+end
