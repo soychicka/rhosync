@@ -9,5 +9,14 @@ class AeropriseController < ApplicationController
   end
   
   def sr_needs_attention(login, sr_id)
+    "OK sr_needs_attention stub"
+  end
+  
+  def sr_work_info(login,instance_id,sr_id)
+    "OK sr_work_info stub"
+  end
+  
+  def srd_notification(instance_id, status, active_state)
+    "OK srd_notification stub"
   end
 end
