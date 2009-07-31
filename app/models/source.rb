@@ -87,7 +87,7 @@ class Source < ActiveRecord::Base
       raise e
     end
     
-    # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
+    # first grab out all ObjectValues of updatetype="qparms"
     # put those together into a qparms hash
     # qparms is nil or empty if there is no such hash
     qparms=qparms_from_object(current_user.id)

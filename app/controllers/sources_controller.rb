@@ -239,13 +239,20 @@ class SourcesController < ApplicationController
       objects={}
       @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
 
+      newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
       params[:attrvals].each do |x| # for each hash in the array
         # note that there should NOT be an object value for new records
         o=ObjectValue.new
         o.object=x["object"]
         o.attrib=x["attrib"]
         o.value=x["value"]
-        o.update_type="create"
+        if x["object"]=="qparms"
+          cleanup_update_type("qparms") if newqparms  # delete the existing qparms objects
+          newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
+          o.update_type="qparms"
+        else
+          o.update_type="create"
+        end
         o.source=@source
         o.user_id=current_user.id
         

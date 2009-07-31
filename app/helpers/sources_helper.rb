@@ -177,7 +177,10 @@ module SourcesHelper
   end
   
   def cleanup_update_type(utype)
-    objs=ObjectValue.find_by_sql("select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    cleanup_cmd="select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s
+    (cleanup_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential  
+    objs=ObjectValue.find_by_sql(cleanup_cmd)
+    
     objs.each do |x| 
       if x.object
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
@@ -198,12 +201,11 @@ module SourcesHelper
   # return nil if there are no such objects
   def qparms_from_object(user_id)
     qparms=nil
-    attrs=ObjectValue.find_by_sql("select attrib,value from object_values where object='qparms' and update_type='create'and source_id="+id.to_s+" and user_id="+user_id.to_s)
+    attrs=ObjectValue.find_by_sql("select attrib,value from object_values where update_type='qparms'and source_id="+id.to_s+" and user_id="+user_id.to_s)
     if attrs
       qparms={}
       attrs.each do |x|
         qparms[x.attrib]=x.value
-        x.destroy
       end
     end
     qparms

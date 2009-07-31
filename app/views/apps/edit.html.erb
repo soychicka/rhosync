@@ -1,3 +1,9 @@
+<body onload="if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+   document.getElementById('subscribers').style.visibility='hidden';
+}
+else{ 
+  document.getElementById('subscribers').style.visibility='visible';
+}">
 <h3>Editing Application</h3>
 
 <% form_for(@app) do |f| %>
@@ -33,18 +39,23 @@
 
 <% else %>
 
-Anonymous (Allow All Users) <%=f.check_box :anonymous %>
-Autoregister Users <%=f.check_box :autoregister %>
-Stop subscriptions <%=f.check_box :stop_subscriptions,
-:onchange=>"
-if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
+<%=f.check_box :anonymous,:onchange=>"if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+   document.getElementById('subscribers').style.visibility='hidden';
+}
+else{ 
+  document.getElementById('subscribers').style.visibility='visible';
+}"
+%>
+Anonymous (Allow All Users) 
+<%=f.check_box :autoregister %> Auto-register
+<%=f.check_box :stop_subscriptions,:onchange=>"if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
    document.getElementById('add_subscriber').style.visibility='hidden';
 }
 else{ 
   document.getElementById('add_subscriber').style.visibility='visible';
 }"
-%>
-
+%> Stop Subscriptions
+<div id="subscribers">
 <h4>Subscribed Users</h4>
 <table>
 <% @app.users.each do |user| %>
@@ -67,10 +78,10 @@ else{
 <%end%>
 </div>
 <%end%>
+<% end %>
+<% end %>
+</div>
 
-<% end %>
-<% end %>
-<p>
 <h4>Administrator Access</h4>
 <table>
 <%@admins.each do |admin|%>
@@ -89,3 +100,4 @@ else{
 <p>
 <%= link_to 'Back to applications list', apps_path %>
 </p>
+</body>
