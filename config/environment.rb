@@ -93,3 +93,9 @@ ActionMailer::Base.smtp_settings = {
 }
 =end
 
+module SOAP
+    SOAPNamespaceTag = 'env'
+    XSDNamespaceTag = 'xsd'
+    XSINamespaceTag = 'xsi'
+end
+

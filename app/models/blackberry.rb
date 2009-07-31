@@ -1,3 +1,22 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: devices
+#
+#  id           :integer(4)    not null, primary key
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  device_type  :string(255)   
+#  carrier      :string(255)   
+#  manufacturer :string(255)   
+#  model        :string(255)   
+#  user_id      :integer(4)    
+#  pin          :string(255)   
+#  host         :string(255)   
+#  serverport   :string(255)   
+#  deviceport   :string(255)   
+#
+
 require 'net/http'
 require 'uri'
 
@@ -11,11 +30,14 @@ class Blackberry < Client
     headers={"X-WAP-APPLICATION-ID"=>"/",
              "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
+    puts "SELF ------- #{self.inspect}"
     begin
       @result=http_post(url,data,headers)   
-      p "Returning #{@result.inspect}"
+      Rails.logger.debug "Returning #{@result.inspect}"
+Rails.logger.debug @result.body
+
     rescue
-      p "Failed to post "
+      Rails.logger.debug "Failed to post "
       @result="post failure"
     end
     @result
@@ -24,8 +46,8 @@ class Blackberry < Client
   private
   
   def set_ports    
-    self.host=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
-    self.serverport="8080"
+    self.host||=APP_CONFIG[:bbserver]  # make sure to set APP_CONFIG[:bbserver] in settings.yml
+    self.serverport||="8080"
     self.deviceport||="100"
   end
 
@@ -35,6 +57,11 @@ class Blackberry < Client
     response=Net::HTTP.new(uri.host,uri.port).start do |http|
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data
+
+Rails.logger.debug "*******"
+Rails.logger.debug data
+Rails.logger.debug "*******"
+
       http.request(request)
     end
     response
@@ -42,11 +69,13 @@ class Blackberry < Client
 
   def build_payload(callback_url,message,vibrate)
     setup_template
-    data="do_sync="+callback_url + "\r\n"
-    popup||=message # supplied message
-    popup||=APP_CONFIG[:sync_popup]
-    popup||="You have new data"
-    (data = data + "show_popup="+ popup + "\r\n") if popup
+    data=""
+    # warning: sending "" as do_sync will sync all sources
+    if (!callback_url.blank?)
+      data = "do_sync=#{callback_url}\r\n"
+    end
+    popup = (message || APP_CONFIG[:sync_popup])
+    (data = data + "show_popup="+ popup + "\r\n") if !popup.blank?
     vibrate=APP_CONFIG[:sync_vibrate]
     (data = data + "vibrate="+vibrate.to_s) if vibrate
     post_body = @template
@@ -71,7 +100,7 @@ Content-Type: application/xml; charset=UTF-8
 <push-message push-id="pushID:--RAND_ID--" ppg-notify-requested-to="http://localhost:7778">
 
 <address address-value="WAPPUSH=--DEVICE_PIN_HEX--%3A100/TYPE=USER@rim.net"/>
-<quality-of-service delivery-method="confirmed"/>
+<quality-of-service delivery-method="preferconfirmed"/>
 </push-message>
 </pap>
 --asdlfkjiurwghasf

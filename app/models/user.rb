@@ -1,3 +1,22 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: users
+#
+#  id                        :integer(4)    not null, primary key
+#  login                     :string(40)    
+#  name                      :string(100)   default("")
+#  email                     :string(100)   
+#  crypted_password          :string(40)    
+#  salt                      :string(40)    
+#  created_at                :datetime      
+#  updated_at                :datetime      
+#  remember_token            :string(40)    
+#  remember_token_expires_at :datetime      
+#  password_reset_code       :string(255)   
+#  expires_at                :datetime      
+#
+
 require 'digest/sha1'
 require 'rubygems'
 require 'aasm'
@@ -40,19 +59,11 @@ class User < ActiveRecord::Base
     u = find_by_login(login) # need to get the salt
     u && u.authenticated?(password) ? u : nil
   end
-
-  def login=(value)
-    write_attribute :login, (value ? value.downcase : nil)
-  end
-
-  def email=(value)
-    write_attribute :email, (value ? value.downcase : nil)
-  end
   
   def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
     clients.each do |client|
-      @result=client.ping(callback_url,message,vibrate,badge=nil,sound=nil)
+      @result=client.ping(callback_url,message,vibrate,badge,sound)
       p "Result of client ping: #{@result}" if @result
     end
     @result
@@ -64,9 +75,4 @@ class User < ActiveRecord::Base
       source.check_for_changes_for_client(client)
     end
   end
-
-  protected
-    
-
-
 end

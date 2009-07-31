@@ -3,6 +3,9 @@ require 'yaml'
 require 'open-uri'
 require 'net/http'
 require 'net/https'
+require 'source_adapter'
+
+require 'source_adapter.rb'
 
 class SourcesController < ApplicationController
 
@@ -15,6 +18,13 @@ class SourcesController < ApplicationController
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
   
+  def callback
+    current_user=User.find_by_login params[:login]
+    @app=@source.app
+    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{app_source_url(:app_id=>@app.name, :id => @source.name)}",
+       :tag => current_user.id.to_s
+    render(:nothing=>true, :status=>200)
+  end
   
   # PUSH TO ALL QUEUED UP USERS: (see show method below for queueing mechanism
   # this notifies all users and their devices that have "registered" interest 
@@ -60,7 +70,7 @@ class SourcesController < ApplicationController
     else 
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user,session) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]
@@ -281,9 +291,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
-  rescue SourceAdapterLoginException
-    logout_killing_session!
-    render :nothing=>true, :status => 401
+  #rescue SourceAdapterLoginException
+  #  logout_killing_session!
+  #  render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -413,7 +423,7 @@ class SourcesController < ApplicationController
   # GET /sources.xml
   # this returns all sources that are associated with a given "app" as determine by the token
   def index    
-    login=current_user.login.downcase
+    login=current_user.login
     if params[:app_id].nil?
       @app=App.find_by_admin login
     else

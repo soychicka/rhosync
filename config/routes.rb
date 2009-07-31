@@ -15,7 +15,6 @@ ActionController::Routing::Routes.draw do |map|
   map.reset_password '/reset_password', :controller => 'users', :action => 'reset_password'
   
   map.resources :users
-
   map.resource :session
 
   # 1.2-style routes
