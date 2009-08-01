@@ -9,7 +9,6 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-
 ActiveRecord::Schema.define(:version => 20090716233709) do
 
   create_table "administrations", :force => true do |t|
@@ -37,6 +36,8 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.text    "value"
     t.text    "cast"
   end
+
+  add_index "bj_config", ["hostname", "key"], :name => "index_bj_config_on_hostname_and_key", :unique => true
 
   create_table "bj_job", :id => false, :force => true do |t|
     t.integer  "bj_job_id",      :null => false
@@ -140,7 +141,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value"
+    t.text     "value",             :limit => 255
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -185,7 +186,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.boolean  "queuesync"
+    t.integer  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end
@@ -207,8 +208,6 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.string   "password_reset_code"
-    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true
