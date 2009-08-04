@@ -3,12 +3,14 @@ require 'yaml'
 require 'open-uri'
 require 'net/http'
 require 'net/https'
+require 'source_adapter'
+
+require 'source_adapter.rb'
 
 class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  before_filter :check_device, :except=> :clientcreate
   
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -16,6 +18,13 @@ class SourcesController < ApplicationController
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
   
+  def callback
+    current_user=User.find_by_login params[:login]
+    @app=@source.app
+    Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{params[:id]} #{app_source_url(:app_id=>@app.name, :id => @source.name)}",
+       :tag => current_user.id.to_s
+    render(:nothing=>true, :status=>200)
+  end
   
   # PUSH TO ALL QUEUED UP USERS: (see show method below for queueing mechanism
   # this notifies all users and their devices that have "registered" interest 
@@ -61,7 +70,7 @@ class SourcesController < ApplicationController
     else 
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
 
       # if client_id is provided, return only relevant objects for that client
       if params[:client_id]
@@ -159,6 +168,7 @@ class SourcesController < ApplicationController
   # generate a new client for this source
   def clientcreate
     @client = Client.new
+    @client.user = current_user if current_user
     
     respond_to do |format|
       if @client.save
@@ -167,7 +177,26 @@ class SourcesController < ApplicationController
       end
     end
   end
-
+  
+  # register client for for push notifications
+  def clientregister
+    @client = Client.find_by_client_id(params[:client_id])
+    register_client(@client) if @client
+    render :nothing => true, :status => 200
+  end
+  
+  # reset client_maps data
+  def clientreset
+    @client = Client.find_by_client_id(params[:client_id])
+    if @client
+      ActiveRecord::Base.transaction do
+        ClientMap.delete_all(:client_id => @client.client_id)
+        @client.last_sync_token=nil
+        @client.save
+      end
+    end
+    render :nothing=> true, :status => 200
+  end
 
   # this creates all of the rows in the object values table corresponding to
   # the array of hashes given by the attrvals parameter
@@ -220,13 +249,20 @@ class SourcesController < ApplicationController
       objects={}
       @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
 
+      newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
       params[:attrvals].each do |x| # for each hash in the array
         # note that there should NOT be an object value for new records
         o=ObjectValue.new
         o.object=x["object"]
         o.attrib=x["attrib"]
         o.value=x["value"]
-        o.update_type="create"
+        if x["object"]=="qparms"
+          cleanup_update_type("qparms") if newqparms  # delete the existing qparms objects
+          newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
+          o.update_type="qparms"
+        else
+          o.update_type="create"
+        end
         o.source=@source
         o.user_id=current_user.id
         
@@ -255,6 +291,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  #rescue SourceAdapterLoginException
+  #  logout_killing_session!
+  #  render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -296,6 +335,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -328,6 +370,10 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json { render :json => objects }
     end
+    
+  rescue SourceAdapterLoginException
+    logout_killing_session!
+    render :nothing=>true, :status => 401
   end
 
   def editobject
@@ -336,10 +382,6 @@ class SourcesController < ApplicationController
   end
 
   def newobject
-  end
-
-  def pick_load
-    # go to the view to pick the file to load
   end
 
   def load_all
@@ -381,7 +423,7 @@ class SourcesController < ApplicationController
   # GET /sources.xml
   # this returns all sources that are associated with a given "app" as determine by the token
   def index    
-    login=current_user.login.downcase
+    login=current_user.login
     if params[:app_id].nil?
       @app=App.find_by_admin login
     else

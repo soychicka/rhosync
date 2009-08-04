@@ -44,8 +44,8 @@ module SourcesHelper
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
     (count_updates << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
     if (ObjectValue.count_by_sql count_updates ) > 0
-      p "Refreshing because there are some non-query object values"
-      result = true
+      p "Refreshing source #{name} #{id} because there are some non-query object values"
+      return true
     end
 
     # refresh if there is no data
@@ -53,17 +53,25 @@ module SourcesHelper
     count_query_objs="select count(*) from object_values where update_type='query' and source_id="+id.to_s
     (count_query_objs << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
     if (ObjectValue.count_by_sql count_query_objs ) <= 0
-      p "Refreshing because there is no data stored in object values"
-      result=true
+      p "Refreshing source #{name} #{id} because there is no data stored in object values"
+      return true
     end
+    
+    # provided there is data....
+    # allow -1 to mean dont ever poll
+    return false if -1==self.pollinterval
+    
+    # allow 0 to mean always poll
+    return true if 0==self.pollinterval
     
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      p "Refreshing because the data is old"
-      result=true
+      p "Refreshing source #{name} #{id}  because the data is old"
+      return true
     end
-    result  # return true of false (nil)
+    
+    false  # return true of false (nil)
   end
   
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
@@ -102,7 +110,7 @@ module SourcesHelper
     objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
     objs.each do |obj|  
       begin
-        pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s
+        pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
         ActiveRecord::Base.connection.execute(pending_to_query)
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
@@ -114,7 +122,7 @@ module SourcesHelper
   def finalize_query_records(credential)
     # first delete the existing query records
     ActiveRecord::Base.transaction do
-      delete_cmd = "(update_type is not null) and source_id="+id.to_s
+      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
       (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
       ObjectValue.delete_all delete_cmd
       remove_dupe_pendings(credential)
@@ -177,7 +185,10 @@ module SourcesHelper
   end
   
   def cleanup_update_type(utype)
-    objs=ObjectValue.find_by_sql("select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    cleanup_cmd="select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s
+    (cleanup_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential  
+    objs=ObjectValue.find_by_sql(cleanup_cmd)
+    
     objs.each do |x| 
       if x.object
         objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
@@ -198,12 +209,15 @@ module SourcesHelper
   # return nil if there are no such objects
   def qparms_from_object(user_id)
     qparms=nil
-    attrs=ObjectValue.find_by_sql("select attrib,value from object_values where object='qparms' and update_type='create'and source_id="+id.to_s+" and user_id="+user_id.to_s)
-    if attrs
+    attrs=ObjectValue.find_by_sql("select * from object_values where object='qparms' and source_id="+id.to_s+" and user_id="+user_id.to_s)
+   if attrs
       qparms={}
       attrs.each do |x|
         qparms[x.attrib]=x.value
-        x.destroy
+        if x.update_type == 'create'
+          x.update_attribute('update_type', 'qparms') 
+          x.save
+        end
       end
     end
     qparms

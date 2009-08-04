@@ -1,33 +1,49 @@
 # This controller handles the login/logout function of the site.  
 class SessionsController < ApplicationController
   include UsersHelper
-  after_filter :check_device, :only => :client_login
   
   # disable forgery protection for login
   # TODO: Only do this for json requests!
   protect_from_forgery :except => :client_login
 
-  
   # render new.rhtml
   def new
   end
   
+  # POST http://rhosync.local/apps/Wikipedia/sources/Wikipedia/client_login
+  #
+  # Parameters: {"action"=>"client_login", "id"=>"Wikipedia", 
+  # "controller"=>"sessions", "app_id"=>"Wikipedia", "login"=>"anonymous", "password"=>"[FILTERED]", "remember_me"=>"1"}
   def client_login
     logout_keeping_session!
-    @app=App.find_by_permalink params[:app_id] if params[:app_id]
-    user = User.authenticate(params[:login], params[:password])
-    if user
-      self.current_user = user
-      new_cookie_flag = (params[:remember_me] == "1")
-      handle_remember_cookie! new_cookie_flag
-    else
-      if @app and @app.autoregister  # if its a "autoregistering" app just go ahead and create the user
-        user=create_user params[:login],params[:password]
+    @app=App.find_by_permalink(params[:app_id])
+    
+    if @app.authenticates? # authentication has been delegated to the application?
+      user = @app.authenticate(params[:login], params[:password], session)
+      if user
         self.current_user = user
-        @app.users << user
-        @app.save
       else
-        render :status => 401
+        render(:status => 401) and return
+      end
+    else       
+      user = User.authenticate(params[:login], params[:password])
+      if user
+        self.current_user = user
+        new_cookie_flag = (params[:remember_me] == "1")
+        handle_remember_cookie! new_cookie_flag
+      else
+        begin
+          if @app and @app.autoregister  # if its a "autoregistering" app just go ahead and create the user
+            user=create_user params[:login],params[:password]
+            self.current_user = user
+            @app.users << user
+            @app.save
+          else
+            render :status => 401
+          end
+        rescue ActiveRecord::RecordInvalid
+          render :status => 401
+        end
       end
     end
   end

@@ -1,4 +1,22 @@
-require "xml/libxml"
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: object_values
+#
+#  id                :integer(4)    not null, primary key
+#  source_id         :integer(4)    
+#  object            :string(255)   
+#  attrib            :string(255)   
+#  value             :text(255)     
+#  pending_id        :integer(4)    
+#  update_type       :string(255)   
+#  user_id           :integer(4)    
+#  created_at        :datetime      
+#  updated_at        :datetime      
+#  blob_file_name    :string(255)   
+#  blob_content_type :string(255)   
+#  blob_file_size    :integer(4)    
+#
 
 class ObjectValue < ActiveRecord::Base
   set_primary_key :id
@@ -8,8 +26,9 @@ class ObjectValue < ActiveRecord::Base
   has_attached_file :blob
   
   attr_accessor :db_operation
-
-  def before_validate
+  
+  def get_id
+    self.id
   end
   
   def before_save

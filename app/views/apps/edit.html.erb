@@ -1,5 +1,9 @@
-<script type="text/javascript"> 
-</script> 
+<body onload="if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+   document.getElementById('subscribers').style.visibility='hidden';
+}
+else{ 
+  document.getElementById('subscribers').style.visibility='visible';
+}">
 <h3>Editing Application</h3>
 
 <% form_for(@app) do |f| %>
@@ -7,7 +11,7 @@
 <%= f.label :name %>&nbsp;<%= f.text_field :name %><br/>
 <%= f.label :description %><br/>
 <%=  f.text_area :description,:rows=>2,:cols=>40  %><br/>
-<b>Sources</b>&nbsp;<%=link_to "(Refresh All)",:controller=>"apps",:action=>"refresh",:id=>@app.id%><br/>
+<h4>Sources &nbsp;<%=link_to "(Refresh All)",:controller=>"apps",:action=>"refresh",:id=>@app.id%></h4>
 <table>
 <tr><th>Name</th><th>Priority</th></tr>
 <% @app.sources.each do |source| %>
@@ -28,21 +32,33 @@
 <p>
   <%=f.submit "Update Application Settings"%>
 </p>
-<b>User Access</b><br/>
-Anonymous (Allow All Users) <%=f.check_box :anonymous%>
-Autoregister Users <%=f.check_box :autoregister%>
-Stop subscriptions <%=f.check_box :stop_subscriptions,
-:onchange=>"
-if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
+<h4>User Access</h4>
+<% if @app.authenticates? %>
+
+<p>Delegated to backend application. Not handled directly by rhosync.</p>
+
+<% else %>
+
+<%=f.check_box :anonymous,:onchange=>"if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+   document.getElementById('subscribers').style.visibility='hidden';
+}
+else{ 
+  document.getElementById('subscribers').style.visibility='visible';
+}"
+%>
+Anonymous (Allow All Users) 
+<%=f.check_box :autoregister %> Auto-register
+<%=f.check_box :stop_subscriptions,:onchange=>"if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
    document.getElementById('add_subscriber').style.visibility='hidden';
 }
 else{ 
   document.getElementById('add_subscriber').style.visibility='visible';
 }"
-%>
+%> Stop Subscriptions
 <%end%>
-
-Subscribed Users
+</form>
+<div id="subscribers">
+<h4>Subscribed Users</h4>
 <table>
 <% @app.users.each do |user| %>
 <%sub=Membership.find_by_app_id_and_user_id @app.id,user.id%>
@@ -51,19 +67,25 @@ Subscribed Users
 </table>
 <%if @app.stop_subscriptions!=true%>
 <div id="add_subscriber">
-<%form_for(:subscribe, @app,:url=>{:controller=>"apps",:action=>"subscribe",:id=>@app.id})  do |f|%>
+<%form_for(:subscribe, @app,:url=>{:controller=>"apps",:action=>"subscribe"})  do |f|%>
+<input type="hidden" name="app_id" value="<%=@app.id%>"/>
 <select name="subscriber">
 <%@users.each do |user|%>
 <option value="<%=user.login%>"><%=user.login%></option>
 <%end%>
 </select>
-<i>Credential URL <input name="url" size=40">&nbsp;Login <input name="login" size="12">&nbsp;Password <input name="password" size="12">&nbsp;Token<input name="token"/></i><br/>
-<%= f.submit "Subscribe User" %>
+<div>
+<i>Credential URL <input name="url" size="40">&nbsp;Login <input name="login" size="12" />&nbsp;Password <input name="password" size="12" />&nbsp;Token<input name="token" /></i>
+</div>
+<%=f.submit "Subscribe User" %>
 <%end%>
 </div>
+
+<% end %>
 <%end%>
-<p>
-<b>Administrator Access</b>
+</div>
+
+<h4>Administrator Access</h4>
 <table>
 <%@admins.each do |admin|%>
 <tr><td><%=link_to admin.user.login+" (remove admin rights)",{:action=>:unadminister,:id=>@app.id,:administrator=>admin.user.login}%></td></tr>
@@ -81,3 +103,4 @@ Subscribed Users
 <p>
 <%= link_to 'Back to applications list', apps_path %>
 </p>
+</body>

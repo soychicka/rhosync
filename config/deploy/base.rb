@@ -8,6 +8,8 @@ set :use_sudo, false
 
 set :scm, "git"
 
+set :branch, "1-2-unstable"
+
 set :ssh_options, { :forward_agent => true }
 
 # options to override in the stage file
@@ -32,6 +34,8 @@ namespace :deploy do
   task :symlink_db_config do
     run "ln -nfs #{shared_path}/config/database.yml #{latest_release}/config/database.yml"
     run "ln -nfs #{shared_path}/config/s3.yml #{latest_release}/config/s3.yml"
+    run "ln -nfs #{shared_path}/config/settings.yml #{latest_release}/config/settings.yml"
+    run "ln -nfs #{shared_path}/config/apple_push_cert.pem #{latest_release}/config/apple_push_cert.pem"
   end
 
   [:start, :stop].each do |t|
