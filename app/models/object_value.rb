@@ -22,6 +22,7 @@ require 'uuidtools'
 class ObjectValue < ActiveRecord::Base
   set_primary_key :id
   belongs_to :source
+  belongs_to :user
   has_many :clients, :through => :client_maps
   has_many :client_maps
   has_attached_file :blob
