@@ -12,4 +12,6 @@ describe Source do
     @source.name.should == "SugarAccounts"
     @source.attributes.size.should == 21
   end
+  
+  
 end
