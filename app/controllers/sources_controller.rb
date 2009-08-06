@@ -110,6 +110,8 @@ class SourcesController < ApplicationController
         logger.debug "[sources_controller] Finished processing objects for client,
                         token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
                         updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+        @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
+                                                 source_id = #{@source.id} and update_type = 'query'"
       else
         # no client_id, just show everything
         @object_values=ObjectValue.find_by_sql object_values_sql('query')
@@ -249,13 +251,20 @@ class SourcesController < ApplicationController
       objects={}
       @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
 
+      newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
       params[:attrvals].each do |x| # for each hash in the array
         # note that there should NOT be an object value for new records
         o=ObjectValue.new
         o.object=x["object"]
         o.attrib=x["attrib"]
         o.value=x["value"]
-        o.update_type="create"
+        if x["object"]=="qparms"
+          cleanup_update_type("qparms") if newqparms  # delete the existing qparms objects
+          newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
+          o.update_type="qparms"
+        else
+          o.update_type="create"
+        end
         o.source=@source
         o.user_id=current_user.id
         

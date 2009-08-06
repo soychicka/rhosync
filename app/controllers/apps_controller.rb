@@ -1,5 +1,5 @@
 class AppsController < ApplicationController
-  
+
   before_filter :login_required
   before_filter :find_app
   
@@ -30,7 +30,7 @@ class AppsController < ApplicationController
     if @current_user
       login=@current_user.login
       admins = @current_user.administrations
-      @apps=admins.map { |a| a.app}
+      @apps=admins.map {|a| a.app}
       @clients=@current_user.clients
     else
       login="anonymous"
@@ -86,6 +86,7 @@ class AppsController < ApplicationController
   # GET /apps/1/edit
   def edit
     @users = User.find :all
+    @users.delete_if {|user| user.name=="anonymous"}
     @admins= Administration.find_all_by_app_id @app.id
     @isadmin=Administration.find_by_user_id_and_app_id @current_user.id,@app.id  # is the current user an admin?
     if !@isadmin 

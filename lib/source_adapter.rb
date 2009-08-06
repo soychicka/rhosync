@@ -33,7 +33,7 @@ class SourceAdapter
       end
       config =Rails::Configuration.new
       if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
-        max_sql_statement=2048
+        max_sql_statement=64000
         p "MySQL optimized sync"
         sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
         count=0
@@ -47,6 +47,11 @@ class SourceAdapter
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
                 sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                if sql.size > max_sql_statement  # this should not really be necessary. its just for safety. we've seen errors with very large statements
+                  sql.chop!
+                  ActiveRecord::Base.connection.execute sql
+                  sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
+                end
               end
             end
             count+=1

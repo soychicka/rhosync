@@ -24,7 +24,7 @@ class Client < ActiveRecord::Base
   
   def initialize(params=nil)
     super
-    self.client_id = UUID.random_create.to_s unless self.client_id
+    self.client_id = UUIDTools::UUID.random_create.to_s unless self.client_id
   end
 
   
