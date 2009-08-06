@@ -96,7 +96,9 @@ module SourcesHelper
     prev=nil
     objs.each do |obj|  # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
-        p "Deleting a duplicate: " + obj.pending_id.to_s + "(#{obj.object.to_s},#{obj.attrib},#{obj.value})"
+        dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
+        p dupemsg
+        logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
       prev=obj
@@ -126,13 +128,11 @@ module SourcesHelper
       (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
       ObjectValue.delete_all delete_cmd
       remove_dupe_pendings(credential)
-=begin  THIS PERFORM THE PENDING TO FINAL IN BULK QUICKLY
       pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
-=end
       # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-      update_pendings
+      #update_pendings
     end
     self.refreshtime=Time.new # timestamp    
   end
