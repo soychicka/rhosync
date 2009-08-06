@@ -8,6 +8,8 @@ set :use_sudo, false
 
 set :scm, "git"
 
+set :branch, "1-2-unstable"
+
 set :ssh_options, { :forward_agent => true }
 
 # options to override in the stage file
@@ -32,6 +34,8 @@ namespace :deploy do
   task :symlink_db_config do
     run "ln -nfs #{shared_path}/config/database.yml #{latest_release}/config/database.yml"
     run "ln -nfs #{shared_path}/config/s3.yml #{latest_release}/config/s3.yml"
+    run "ln -nfs #{shared_path}/config/settings.yml #{latest_release}/config/settings.yml"
+    run "ln -nfs #{shared_path}/config/apple_push_cert.pem #{latest_release}/config/apple_push_cert.pem"
   end
 
   [:start, :stop].each do |t|
@@ -42,35 +46,6 @@ namespace :deploy do
   after "deploy:setup", "deploy:upload_db_configs"
   after "deploy:update_code", "deploy:symlink_db_config"
 end
-
-########################################################################
-
-namespace :demons do
-  desc "stop demons"
-  task :stop, :roles => [:app]  do
-    run "echo 'stopping demons' #{stage}"
-    run <<-CMD
-      #{current_path}/script/job_runner stop #{stage}
-    CMD
-  end
-  
-  desc "start demons"
-  task :start, :roles => [:app]  do
-    run "echo 'starting demons' #{stage}"
-    run <<-CMD
-      #{current_path}/script/job_runner start #{stage}
-    CMD
-  end
-end
-
-
-after :deploy do
-  demons.stop
-  demons.start
-end
-
-########################################################################
-
 
 namespace :rake do
   desc "Load the sample data remotely"

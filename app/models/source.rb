@@ -1,6 +1,29 @@
+# == Schema Information
+# Schema version: 20090624184104
+#
+# Table name: sources
+#
+#  id           :integer(4)    not null, primary key
+#  name         :string(255)   
+#  url          :string(255)   
+#  login        :string(255)   
+#  password     :string(255)   
+#  created_at   :datetime      
+#  updated_at   :datetime      
+#  refreshtime  :datetime      
+#  adapter      :string(255)   
+#  app_id       :integer(4)    
+#  pollinterval :integer(4)    
+#  priority     :integer(4)    
+#  incremental  :integer(4)    
+#  queuesync    :boolean(1)    
+#  limit        :string(255)   
+#  callback_url :string(255)   
+#
 
 class Source < ActiveRecord::Base
   include SourcesHelper
+  
   has_many :object_values
   has_many :source_logs
   has_many :source_notifies
@@ -9,7 +32,7 @@ class Source < ActiveRecord::Base
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
   
-  def initadapter(credential)
+  def initadapter(credential,session)
     #create a source adapter with methods on it if there is a source adapter class identified
     if (credential and credential.url.blank?) and (!credential and self.url.blank?)
       msg= "Need to to have a URL for the source in either a user credential or globally"
@@ -19,6 +42,7 @@ class Source < ActiveRecord::Base
     if not self.adapter.blank? 
       begin
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
+        @source_adapter.session = session
       rescue
         msg="Failure to create adapter from class #{self.adapter}"
         p msg
@@ -38,49 +62,39 @@ class Source < ActiveRecord::Base
     tlog(start,"ask",self.id)
     result
   end
-  
-  def refresh(current_user)
-    if  queuesync==true # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
-      task=Synctask.find_or_create_by_user_id_and_source_id(current_user.id,id)
-      task.save
-      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README) 
-      Bj.submit "./script/runner ./jobs/dosync.rb #{current_user.id} #{id}"
-      p "Queued up task for user "+current_user.login+ ", source "+name
-    else # go ahead and do it right now
-      dosync(current_user)
-    end
+
+  def do_callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
   end
-  
-  # this does the asynchronous synchronization as invoked by script/job_runner
-  # NOT NECESSARY WHEN USING BJ
-  def self.doqueuedsync
-    synctask=Synctask.find :first,:order=>:created_at
-    source=Source.find synctask.source_id
-    user=User.find synctask.user_id
-    source.dosync(user)  # call the method below that performs the actual sync
-    # notify all of the source's users' devices to call back to request the data that is now there.
-    if user.check_for_changes(source)  # but only if there are changes for any of the clients owned by that user
-      user.ping(source.callback_url) # ping the user queued up on this source to tell them to sync!   
+ 
+  def refresh(current_user, session, url=nil)
+    if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
+      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
+      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
+        :tag => current_user.id.to_s
+      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
+    else # go ahead and do it right now
+      dosync(current_user, session)
     end
-    synctask.delete  # take this task out of the queue
   end
 
   def ping
     # this is the URL for the show method
     @result=""
     users.each do |user|
-      @result+=user.ping(callback_url) # this will ping all devices owned by that user
+      @result+=user.ping(callback_url) # this will ping all clients owned by that user
     end
   end
 
-  def dosync(current_user)
+  def dosync(current_user, session=nil)
 
     @current_user=current_user
     logger.info "Logged in as: "+ current_user.login if current_user
     
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential)   
+    initadapter(self.credential,session)   
     
     if source_adapter.nil? 
       slog(nil,"Couldn't set up source adapter due to missing or invalid class")
@@ -94,10 +108,10 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       logger.info "Failed to login"
       slog(e,"can't login",self.id,"login")
-      return
+      raise e
     end
     
-    # first grab out all ObjectValues of updatetype="Create" with object named "qparms"
+    # first grab out all ObjectValues of updatetype="qparms"
     # put those together into a qparms hash
     # qparms is nil or empty if there is no such hash
     qparms=qparms_from_object(current_user.id)
@@ -128,29 +142,24 @@ class Source < ActiveRecord::Base
         
     clear_pending_records(@credential)
 
+    # query,sync,finalize are atomic
     begin  
-      start=Time.new
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
+      start=Time.new
       source_adapter.query 
+      #raise StandardError
       tlog(start,"query",self.id)
-    rescue Exception=>e
-      p "Failed to perform query"
-      slog(e,"timed out on query",self.id)
-    end
-
-    begin
       start=Time.new
       source_adapter.sync
       tlog(start,"sync",self.id)
+      start=Time.new
+      finalize_query_records(@credential)
+      tlog(start,"finalize",self.id)
     rescue Exception=>e
       p "Failed to sync"
-      slog(e,"Failed to sync",self.id)
+      slog(e,"Failed to query,sync",self.id)
     end 
-    start=Time.new
-    finalize_query_records(@credential)
-    tlog(start,"finalize",self.id)
     source_adapter.logoff
-    save
   end
   
   def before_validate

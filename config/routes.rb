@@ -1,5 +1,9 @@
 ActionController::Routing::Routes.draw do |map|
-  map.resources :synctasks
+  map.resources :clients
+  map.resources :iphones, :controller => 'clients'
+  map.resources :blackberrys, :controller => 'clients'
+  map.resources :androids, :controller => 'clients'
+  map.resources :winces, :controller => 'clients'
 
   map.logout '/logout', :controller => 'sessions', :action => 'destroy'
   map.login '/login', :controller => 'sessions', :action => 'new'
@@ -11,58 +15,33 @@ ActionController::Routing::Routes.draw do |map|
   map.reset_password '/reset_password', :controller => 'users', :action => 'reset_password'
   
   map.resources :users
-
   map.resource :session
 
-  map.resources :apps do |app|
-    app.resources :sources
-  end
-
-  map.resources :applications
-
-  map.resources :accounts
-
-  map.connect 'sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
-  map.connect 'sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
-  map.connect 'sources/:id/ask', :controller => 'sources', :action => 'ask'
-  map.connect 'sources/:id/ping_user', :controller => 'sources', :action => 'ping_user'
-  map.connect 'sources/:id/ping', :controller => 'sources', :action => 'ping'
+  # 1.2-style routes
+  map.connect 'apps/:app_id/sources/client_login', :controller => 'sessions', :action => 'client_login'
   
-  # built in CRUD
-  map.connect 'sources/:id/create', :controller => 'sources', :action => 'create'
-  map.connect 'sources/:id/update', :controller => 'sources', :action => 'update'
-  map.connect 'sources/:id/delete', :controller => 'sources', :action => 'delete'
-
-  map.connect 'sources/:id/attributes', :controller => 'sources', :action => 'attributes'
-  map.connect 'sources/:id/attributes.:format', :controller => 'sources', :action => 'attributes'
-
-  # object read (show), update, create, delete methods
-  map.connect 'sources/:id/show', :controller => 'sources', :action => 'show'
-  map.connect 'sources/:id/updateobjects', :controller => 'sources', :action => 'updateobjects'
-  map.connect 'sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
-  map.connect 'sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
-  map.connect 'sources/:id/test_createobjects', :controller => 'sources', :action => 'test_createobjects'
-  
-  # routes for accessing sources through apps
-  map.connect 'apps/:app_id/sources/:id/clientcreate', :controller => 'sources', :action => 'clientcreate'
+  # Pre 1.2-style routes
   map.connect 'apps/:app_id/sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
-  map.connect 'apps/:app_id/sources/:id/updateobjects', :controller => 'sources', :action => 'updateobjects'
-  map.connect 'apps/:app_id/sources/:id/createobjects', :controller => 'sources', :action => 'createobjects'
-  map.connect 'apps/:app_id/sources/:id/deleteobjects', :controller => 'sources', :action => 'deleteobjects'
-  map.connect 'apps/:app_id/sources/:id/ask', :controller => 'sources', :action => 'ask'
-
-  map.connect 'sources/:id/refresh', :controller => 'sources', :action => 'refresh'
-  map.connect 'apps/:app_id/sources/:id/refresh', :controller => 'sources', :action => 'refresh'
-  map.connect 'apps/:app_id/sources/:id', :controller => 'sources', :action => 'delete'
   
-  # yaml saving and loading
-  map.connect 'sources/:id/load_all',:controller=>'sources',:action => 'load_all'
-  map.connect 'sources/:id/save_all',:controller=>'sources',:action => 'save_all'
-  map.connect 'sources/:id/save',:controller=>'sources',:action => 'save'
+  src_collection = { :clientcreate => :get, 
+                     :clientregister => :post, 
+                     :clientreset => :get }
+                     
+  src_member = { :createobjects => :post, 
+                 :updateobjects => :post, 
+                 :deleteobjects => :post, 
+                 :ask => :post, 
+                 :ping => :get,
+                 :ping_user => :get,
+                 :refresh => :get,
+                 :clientcreate => :get, 
+                 :clientreset => :get }
 
-  map.resources :object_values
-  map.resources :stores
-  map.resources :sources
+  map.resources :sources, :collection => src_collection, :member => src_member
+
+  map.resources :apps do |app|
+    app.resources :sources, :collection => src_collection, :member => src_member
+  end
 
   # The priority is based upon order of creation: first created -> highest priority.
 

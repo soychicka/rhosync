@@ -18,3 +18,13 @@ Value <input name="attrvals[][value]" value=""/><br/>
 Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
 Value <input name="attrvals[][value]" value=""/><br/>
 <%end%>
+
+<h3>Or, test creating an image (filename will be helloworld.png)</h3>
+<% form_for :object_value, :url => "/apps/#{@source.app.id}/sources/#{@source.id}/createobjects?no_redirect=1", :html => { :multipart => true } do |f| %>
+  <input type="hidden" name="attrvals[][attrib_type]" value="blob"/>
+  <input type="hidden" name="attrvals[][object]" value="temp1"/>
+  <input type="hidden" name="attrvals[][value]" value="helloworld.png"/>
+Image Name <input name="attrvals[][attrib]" value="myimage"/><br/>
+  <input id="object_value_blob" name="blob" size="30" type="file" />
+  <%= submit_tag 'Create' %>
+<% end %>

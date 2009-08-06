@@ -1,14 +1,21 @@
+class SourceAdapterException < RuntimeError
+end
+
+# raise this to cause client to be logged out during a sync
+class SourceAdapterLoginException < SourceAdapterException
+end
+
 class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
-  
+  attr_accessor :session
+    
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
   end
 
   def login
   end
-
   
   def query
   end
@@ -19,26 +26,32 @@ class SourceAdapter
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
     if @result.size>0 
-      if @source.credential.nil?
+      if @source.current_user.nil?
         user_id='NULL'
       else
         user_id=@source.current_user.id
       end
       config =Rails::Configuration.new
       if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
-        max_sql_statement=2048
+        max_sql_statement=64000
         p "MySQL optimized sync"
-        sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
+        sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
         count=0
         @result.keys.each do |objkey|
           obj=@result[objkey]   
           if @source.limit.blank? or count < @source.limit.to_i # if there's a limit on objects see if we've exceeded it          
+            attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?   
+              unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id" or attrkey=="attrib_type"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + "),"
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                if sql.size > max_sql_statement  # this should not really be necessary. its just for safety. we've seen errors with very large statements
+                  sql.chop!
+                  ActiveRecord::Base.connection.execute sql
+                  sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
+                end
               end
             end
             count+=1
@@ -52,13 +65,14 @@ class SourceAdapter
         @result.keys.each do |objkey|
           obj=@result[objkey]
           if @source.limit.blank? or count < @source.limit.to_i    # if there's a limit on objects see if we've exceeded it 
+            attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
-              unless attrkey.blank? or obj[attrkey].blank?  
+              unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
                 obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
-                sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id) VALUES"
+                sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + ")"
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
             end # for all keys in hash
