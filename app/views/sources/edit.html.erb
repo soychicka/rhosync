@@ -15,7 +15,6 @@
       <%= f.label "Poll Interval (seconds)"%><%= f.text_field :pollinterval, :size=>10 %>&nbsp;
       <%= f.label "Limit (# objects)"%><%= f.text_field :limit, :size=>6 %>&nbsp;
       <%= f.label :priority%><%=f.text_field :priority, :size=>10%>&nbsp;
-      <%= f.label "Queue sync"%> (for slow backends)<%=f.check_box :queuesync%>&nbsp;      
   </p>
 <p>
 <%= f.submit "Update source adapter code" %>
