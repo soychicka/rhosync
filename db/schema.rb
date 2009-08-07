@@ -37,8 +37,6 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.text    "cast"
   end
 
-  add_index "bj_config", ["hostname", "key"], :name => "index_bj_config_on_hostname_and_key", :unique => true
-
   create_table "bj_job", :id => false, :force => true do |t|
     t.integer  "bj_job_id",      :null => false
     t.text     "command"

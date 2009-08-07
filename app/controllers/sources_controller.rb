@@ -110,6 +110,8 @@ class SourcesController < ApplicationController
         logger.debug "[sources_controller] Finished processing objects for client,
                         token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
                         updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+        @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
+                                                 source_id = #{@source.id} and update_type = 'query'"
       else
         # no client_id, just show everything
         @object_values=ObjectValue.find_by_sql object_values_sql('query')

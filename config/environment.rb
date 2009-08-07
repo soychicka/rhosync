@@ -28,7 +28,7 @@ Rails::Initializer.run do |config|
   config.gem "rubyist-aasm", :lib => "aasm", :source => "http://gems.github.com"
   config.gem "httpclient", :version => "2.1.2"
   config.gem "soap4r", :lib => "soap/mapping"
-  config.gem "uuidtools"
+  config.gem "uuidtools", :version => ">=2.0.0"
   config.gem "actionmailer",:lib => "actionmailer"
   config.gem "rspec", :lib => "spec"
   config.gem "rspec-rails", :lib => "spec/rake/spectask"
