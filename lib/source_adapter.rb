@@ -43,7 +43,8 @@ class SourceAdapter
             attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
               unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id" or attrkey=="attrib_type"
-                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
+                obj[attrkey]=obj[attrkey].to_s if obj[attrkey].is_a? Fixnum
+                obj[attrkey]||=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
                 sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"

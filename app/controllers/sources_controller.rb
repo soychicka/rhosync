@@ -67,7 +67,7 @@ class SourcesController < ApplicationController
     @app=@source.app
     if !check_access(@app)  
       render :action=>"noaccess"
-    else 
+    else
       usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
       @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
