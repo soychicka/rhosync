@@ -99,7 +99,8 @@ class SourceAdapter
   def logoff
   end
   
-  def set_callback(notify_urL)
-    
-  end
+  # only implement this if you want RhoSync to install a callback into your backend
+  #def set_callback(notify_urL)
+  #  
+  #end
 end

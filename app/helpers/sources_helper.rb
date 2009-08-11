@@ -170,7 +170,9 @@ module SourcesHelper
           if source_adapter
             name_value_list=eval(nvlist)
             params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
-            eval("source_adapter." +utype +params)
+            cmd="source_adapter." +utype +params
+            p "Executing" + cmd
+            eval cmd
           end
         else
           msg="Missing object property on object value: " + x.inspect.to_s
@@ -184,9 +186,10 @@ module SourcesHelper
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
   end
   
-  def cleanup_update_type(utype)
+  # for query parameters (update type of qparms) they get cleared on subsequent calls just for a given user (or credentials)
+  def cleanup_update_type(utype,user_id=nil)
     cleanup_cmd="select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s
-    (cleanup_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential  
+    (cleanup_cmd << " and user_id="+ user_id.to_s) if user_id# if there is a user_id then just do delete and update based upon the records with that credential  
     objs=ObjectValue.find_by_sql(cleanup_cmd)
     
     objs.each do |x| 
@@ -210,7 +213,8 @@ module SourcesHelper
   def qparms_from_object(user_id)
     qparms=nil
     attrs=ObjectValue.find_by_sql("select * from object_values where object='qparms' and source_id="+id.to_s+" and user_id="+user_id.to_s)
-   if attrs
+    if attrs
+      cleanup_update_type('qparms',user_id)
       qparms={}
       attrs.each do |x|
         qparms[x.attrib]=x.value

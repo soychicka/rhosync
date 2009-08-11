@@ -259,7 +259,7 @@ class SourcesController < ApplicationController
         o.attrib=x["attrib"]
         o.value=x["value"]
         if x["object"]=="qparms"
-          cleanup_update_type("qparms") if newqparms  # delete the existing qparms objects
+          cleanup_update_type("qparms",current_user.id)  # delete the existing qparms objects
           newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
           o.update_type="qparms"
         else
