@@ -113,7 +113,7 @@ class Source < ActiveRecord::Base
     
     # first grab out all ObjectValues of updatetype="qparms"
     # put those together into a qparms hash
-    # qparms is nil or empty if there is no such hash
+    # qparms is nil if there is no such hash
     qparms=qparms_from_object(current_user.id)
     # must do it before the create processing below!
     begin 
@@ -140,7 +140,7 @@ class Source < ActiveRecord::Base
       raise e
     end
         
-    clear_pending_records(@credential)
+    clear_pending_records(self.credential)
 
     # query,sync,finalize are atomic
     begin  

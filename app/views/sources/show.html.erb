@@ -20,7 +20,7 @@
 <%=link_to x.attrib,{:action=>"editobject",:id=>@source.id,:object=>x.object,:attrib=>x.attrib} %>
 
 </td><td><%=x.value%></td>
-  <td><%=link_to "X",{:action=>"deleteobjects",:id=>@source.id,:attrvals=>[{"object"=>x.object}]}%></td>
+  <td><%=link_to "X",{:action=>"deleteobjects",:id=>@source.id,:app_id=>@source.app.id,:attrvals=>[{"object"=>x.object}]}%></td>
   <%if x.attrib_type == 'blob.url' and x.value!="/blobs/original/missing.png"%><td><img src="<%=x.value%>"/></td><%end%>
   </tr>
 <%
