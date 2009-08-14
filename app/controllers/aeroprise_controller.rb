@@ -15,7 +15,12 @@ class AeropriseController < ApplicationController
     
     ovdata = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"needsattention",
         :user_id=>@user.id, :source_id=>@source.id})
-    ovdata.update_attribute(:value, "1")
+    if ovdata
+      ovdata.update_attribute(:value, "1")
+    else
+      ObjectValue.create(:object=>sr_id, :attrib=>"needsattention",
+        :user_id=>@user.id, :source_id=>@source.id, :value => "1", :update_type=>"query")
+    end
      
     # ping the user
     result = @user.ping(app_source_url(:app_id=>@source.app.name, :id => @source.name))
@@ -25,7 +30,9 @@ class AeropriseController < ApplicationController
     logger.debug result.body
     
     "OK sr_needs_attention"
-  rescue
+  rescue =>e
+    logger.debug "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
+    logger.debug e.backtrace.join("\n")
     "ERROR sr_needs_attention"
   end
   
