@@ -64,7 +64,7 @@ class AppsController < ApplicationController
   end
   
   def refresh # execute a refresh on all sources associated with an app 
-    @sources=Source.find_all_by_app_id @app.id,:order=>:priority
+    @sources=Source.find_all_by_app_id @app.id
     @sources.each do |src|
       src.refresh(@current_user, session)
     end

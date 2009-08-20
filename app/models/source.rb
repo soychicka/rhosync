@@ -51,6 +51,7 @@ class Source < ActiveRecord::Base
     else # if source_adapter is nil it will
       @source_adapter=nil
     end
+    @source_adapter
   end
   
   def ask(current_user,question)
@@ -145,10 +146,29 @@ class Source < ActiveRecord::Base
     # query,sync,finalize are atomic
     begin  
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
-      start=Time.new
-      source_adapter.query 
-      #raise StandardError
-      tlog(start,"query",self.id)
+      
+      # look for source adapter page method. if so do paged query 
+      # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
+      if defined? source_adapter.page  
+        source_adapter.page(0)  # grab the zero-th page synchronously
+        # then do the rest in background using the page_query.rb script
+        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
+        p "Executing background job: #{cmd} #{current_user.id.to_s}"
+        begin 
+          Bj.submit cmd,:tag => current_user.id.to_s
+        rescue
+          p "Failed to execute"
+        end
+        #raise StandardError
+        tlog(start,"page",self.id)
+        start=Time.new
+      else       
+        start=Time.new
+        source_adapter.query 
+        #raise StandardError
+        tlog(start,"query",self.id)
+      end        
+      
       start=Time.new
       source_adapter.sync
       tlog(start,"sync",self.id)

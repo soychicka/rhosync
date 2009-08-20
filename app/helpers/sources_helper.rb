@@ -130,11 +130,12 @@ module SourcesHelper
       remove_dupe_pendings(credential)
       pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
+      p "Finalizing with #{pending_to_query}"
       ActiveRecord::Base.connection.execute(pending_to_query)
       # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
       #update_pendings
     end
-    self.refreshtime=Time.new # timestamp    
+    self.refreshtime=Time.new if defined? self.refreshtime # timestamp    
   end
 
   # helper function to come up with the string used for the name_value_list
