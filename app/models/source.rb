@@ -54,6 +54,19 @@ class Source < ActiveRecord::Base
     @source_adapter
   end
   
+  # used by dosync and backpages
+  def setup_credential_adapter(current_user,session)
+    logger.info "Logged in as: "+ current_user.login if current_user  
+    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
+    self.credential=usersub.credential if usersub # this variable is available in your source adapter
+    initadapter(self.credential,session)   
+    
+    if source_adapter.nil? 
+      slog(nil,"Couldn't set up source adapter due to missing or invalid class")
+      return
+    end 
+  end
+  
   def ask(current_user,question)
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
@@ -87,20 +100,11 @@ class Source < ActiveRecord::Base
       @result+=user.ping(callback_url) # this will ping all clients owned by that user
     end
   end
-
+  
   def dosync(current_user, session=nil)
 
     @current_user=current_user
-    logger.info "Logged in as: "+ current_user.login if current_user
-    
-    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
-    self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential,session)   
-    
-    if source_adapter.nil? 
-      slog(nil,"Couldn't set up source adapter due to missing or invalid class")
-      return
-    end 
+    setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
     begin
       start=Time.new
@@ -180,6 +184,22 @@ class Source < ActiveRecord::Base
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
+  end
+  
+  # used by background job for paged query (page_query.rb script)
+  # queries the second (1-th) through last page
+  def backpages
+    logger.debug "Current user #{self.current_user.id}"
+    setup_credential_adapter(self.current_user,nil)  
+    pagenum=1  # zero-th page fetch is done by RhoSync server in foreground
+    result=1
+    @source=self
+    while result 
+      result=source_adapter.page(pagenum)
+      source_adapter.sync
+      pagenum=pagenum+1
+    end
+    finalize_query_records(credential)
   end
   
   def before_validate

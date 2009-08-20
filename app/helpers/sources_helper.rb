@@ -121,14 +121,15 @@ module SourcesHelper
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
-  def finalize_query_records(credential)
+  def finalize_query_records(credential,source_id=nil)
+    source_id||=id
     # first delete the existing query records
     ActiveRecord::Base.transaction do
-      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
+      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+source_id.to_s
       (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
       ObjectValue.delete_all delete_cmd
       remove_dupe_pendings(credential)
-      pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
+      pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+source_id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       p "Finalizing with #{pending_to_query}"
       ActiveRecord::Base.connection.execute(pending_to_query)
