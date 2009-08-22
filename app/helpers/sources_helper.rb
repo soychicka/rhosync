@@ -67,7 +67,7 @@ module SourcesHelper
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      p "Refreshing source #{name} #{id}  because the data is old"
+      p "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
       return true
     end
     
@@ -137,6 +137,7 @@ module SourcesHelper
       #update_pendings
     end
     self.refreshtime=Time.new if defined? self.refreshtime # timestamp    
+    self.save
   end
 
   # helper function to come up with the string used for the name_value_list

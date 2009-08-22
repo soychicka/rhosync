@@ -17,14 +17,15 @@ class Customer < SourceAdapter
     parsed.each { |item|@result[item["customer"]["id"].to_s]=item["customer"] } if parsed
     @result
   end
-  
+
+
   def page(num)
     letter='A'
     num.times {letter=letter.next}
-    p "Page #{letter}"
     if letter.size>1
       nil
     else
+      p "Page #{letter}"
       parsed=nil
       open("http://rhostore.heroku.com/customers.json?firstletter=#{letter}") do |f|
         parsed=JSON.parse(f.read)

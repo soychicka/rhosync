@@ -41,10 +41,11 @@ class Source < ActiveRecord::Base
     end
     if not self.adapter.blank? 
       begin
+        p "Creating class for #{self.adapter}"
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
-        @source_adapter.session = session
-      rescue
-        msg="Failure to create adapter from class #{self.adapter}"
+        @source_adapter.session = session if session
+      rescue Exception=>e
+        msg="Failure to create adapter from class #{self.adapter}: #{e.inspect.to_s}"
         p msg
         slog(nil,msg)
       end
@@ -56,15 +57,16 @@ class Source < ActiveRecord::Base
   
   # used by dosync and backpages
   def setup_credential_adapter(current_user,session)
-    logger.info "Logged in as: "+ current_user.login if current_user  
+    logger.debug "Logged in as: "+ current_user.login if current_user  
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential,session)   
+    source_adapter=initadapter(self.credential,session)   
     
     if source_adapter.nil? 
       slog(nil,"Couldn't set up source adapter due to missing or invalid class")
       return
     end 
+    source_adapter
   end
   
   def ask(current_user,question)
@@ -104,7 +106,7 @@ class Source < ActiveRecord::Base
   def dosync(current_user, session=nil)
 
     @current_user=current_user
-    setup_credential_adapter(current_user,session)
+    source_adapter=setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
     begin
       start=Time.new
@@ -189,17 +191,47 @@ class Source < ActiveRecord::Base
   # used by background job for paged query (page_query.rb script)
   # queries the second (1-th) through last page
   def backpages
-    logger.debug "Current user #{self.current_user.id}"
-    setup_credential_adapter(self.current_user,nil)  
+    # first detect if some background (backpages) job is already working against this source and user
+    logger.info "Backpages called"
+=begin
+    lock=ObjectValue.find_by_source_id_and_user_id_and_update_type id,self.current_user.id,"lock"
+    if lock 
+      logger.info "Background job already running for source #{id} and user #{current_user.id}"
+      return # cant do another background job
+    end  
+    # otherwise create a lock and do the query
+    lock=ObjectValue.new(:source_id=>id,:user_id=>user_id,:update_type=>"lock")
+    lock.save
+=end
+
+    source_adapter=setup_credential_adapter(current_user,nil)
+    # make sure to use @client and @session_id variable in your code that is edited into each source!
+    begin
+      start=Time.new
+      source_adapter.login  # should set up @session_id
+      tlog(start,"login",self.id)  # log how long it takes to do the login
+    rescue Exception=>e
+      logger.info "Failed to login"
+      slog(e,"can't login",self.id,"login")
+      raise e
+    end
+    
     pagenum=1  # zero-th page fetch is done by RhoSync server in foreground
     result=1
     @source=self
+    result=1
+
     while result 
+      logger.info "Calling page #{pagenum}"      
       result=source_adapter.page(pagenum)
+      logger.info "Syncing #{pagenum}"      
       source_adapter.sync
       pagenum=pagenum+1
     end
     finalize_query_records(credential)
+=begin    
+    lock.delete
+=end
   end
   
   def before_validate

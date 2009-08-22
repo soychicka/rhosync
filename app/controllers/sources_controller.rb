@@ -113,8 +113,11 @@ class SourcesController < ApplicationController
         @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
                                                  source_id = #{@source.id} and update_type = 'query'"
       else
+        p "Retrieving records"
         # no client_id, just show everything
-        @object_values=ObjectValue.find_by_sql object_values_sql('query')
+        cmd=object_values_sql('query')
+        @object_values=ObjectValue.find_by_sql cmd
+        p "Find command #{cmd}: #{@object_values.size.to_s}"
       end
       @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
       p "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
@@ -566,6 +569,6 @@ protected
   def object_values_sql(utype)
     objectvalues_cmd="select * from object_values where update_type='#{utype}' and source_id=#{@source.id}"
     objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
-    objectvalues_cmd << " order by object,attrib"
+    objectvalues_cmd << " order by object"
   end
 end

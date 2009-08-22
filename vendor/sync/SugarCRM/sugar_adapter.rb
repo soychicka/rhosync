@@ -23,7 +23,7 @@ class SugarAdapter < SourceAdapter
     begin
       @client = SOAP::WSDLDriverFactory.new(url).create_rpc_driver
     rescue RuntimeError => e
-      logger.info "Failed to create WSDL driver: " + e.to_s
+      p "Failed to create WSDL driver: " + e.to_s
     end
     @client.options['protocol.http.receive_timeout'] = 3600 
   end
@@ -61,8 +61,29 @@ class SugarAdapter < SourceAdapter
     @count = @client.get_entries_count(@session_id,@module_name,@query_filter,deleted).result_count
     puts "@count =#{@count}"
     
-    @result = @client.get_entry_list(@session_id,@module_name,@query_filter,@order_by,offset,@select_fields,max_results,deleted);
+    @result = @client.get_entry_list(@session_id,@module_name,@query_filter,@order_by,offset,@select_fields,max_results,deleted)  
+  end
   
+  # this gets a page at a time of information from the SugarCRM backend
+  def page(num)
+    puts "SugarCRM #{@module_name} page"
+    letter='A'
+    num.times {letter=letter.next}
+    if letter.size>1
+      nil
+    else
+      p "Page #{letter}"
+    
+      offset = 0
+      max_results = '10000' # if set to 0 or '', this doesn't return all the results
+      deleted = 0 # whether you want to retrieve deleted records, too
+  
+      @query_filter="#{@module_name.downcase}.name like '#{letter}%'"
+      p "Querying #{@query_filter}"
+      @count = @client.get_entries_count(@session_id,@module_name,@query_filter,deleted).result_count
+      puts "@count =#{@count}"
+      @result = @client.get_entry_list(@session_id,@module_name,@query_filter,@order_by,offset,@select_fields,max_results,deleted)
+    end
   end
   
   def sugar_to_generic_results(sugar_result)
