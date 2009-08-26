@@ -89,4 +89,22 @@ SugarQuotes:
   adapter: SugarQuotes
   limit: 100
 
+Customer:
+  id: 22
+  name: Customer
+  app_id: 3
+  adapter: Customer
+  url: http://rhostore.heroku.com/customers.json
+  limit: 100
+
+Product:
+  id: 23
+  name: Product
+  app_id: 3
+  adapter: Product
+  url: http://rhostore.heroku.com/products.json
+  limit: 100
+
+
+
 

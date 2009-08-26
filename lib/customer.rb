@@ -32,6 +32,7 @@ class Customer < SourceAdapter
     url
   end
 
+=begin REENABLE THIS IF YOU WANT TO DO PAGED QUERY
   def page(num)
     letter='A'
     num.times {letter=letter.next}
@@ -49,6 +50,7 @@ class Customer < SourceAdapter
       @result
     end
   end
+=end 
  
   def sync
     # TODO: write code here that converts the data you got back from query into an @result object
