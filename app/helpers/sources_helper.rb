@@ -107,13 +107,16 @@ module SourcesHelper
   end
   
   # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-  def update_pendings  
+  # now only used by dosearch method on sources controller
+  def update_pendings(credential,check_existing=nil)
     conditions="source_id=#{id}"
     conditions << " and user_id=#{credential.user.id}" if credential
     objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
     objs.each do |obj|  
       begin
         pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
+        #pending_to_query=pending_to_query + " and pending_id not in (select id from object_values where update_type='query')" if check_existing
+        p "Finalizing records: #{pending_to_query}"
         ActiveRecord::Base.connection.execute(pending_to_query)
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
@@ -135,11 +138,29 @@ module SourcesHelper
       p "Finalizing with #{pending_to_query}"
       ActiveRecord::Base.connection.execute(pending_to_query)
       # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
+      #update_pendings(credential,nil) # if ever called here doesnt need to check for existing
+    end
+    self.refreshtime=Time.new if defined? self.refreshtime # timestamp    
+    self.save
+  end
+
+  def finalize_query_records(credential,source_id=nil)
+    source_id||=id
+    # first delete the existing query records
+    ActiveRecord::Base.transaction do
+
+      remove_dupe_pendings(credential)
+      pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+source_id.to_s
+      (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
+      p "Finalizing with #{pending_to_query}"
+      ActiveRecord::Base.connection.execute(pending_to_query)
+      # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
       #update_pendings
     end
     self.refreshtime=Time.new if defined? self.refreshtime # timestamp    
     self.save
   end
+
 
   # helper function to come up with the string used for the name_value_list
   # name_value_list =  [ { "name" => "name", "value" => "rhomobile" },

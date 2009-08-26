@@ -1,4 +1,4 @@
-<h2>Editing Source Adapter </h2>
+<h2>Editing Source</h2>
 
 <% form_for(@source,:url=>{:action=>:update}) do |f| %>
   <table>
@@ -17,7 +17,8 @@
 <%= f.submit "Update Source" %>
 <%end%>
 <%=link_to 'Show records', app_source_path(@app, @source) %>&nbsp;
-<%=link_to 'Force refresh',{:action=>'show',:id=>@source.id,:app_id=>@source.app.id,:refresh=>1}%>&nbsp;
+<%=link_to '(force refresh)',{:action=>'show',:id=>@source.id,:app_id=>@source.app.id,:refresh=>1}%>&nbsp;
+<%=link_to 'Search records',{:action=>'edit_search',:id=>@source.id,:app_id=>@source.app.id}%>&nbsp;
 <%=link_to 'View Log',{:action=>'viewlog',:id=>@source}%>
 
 <p>

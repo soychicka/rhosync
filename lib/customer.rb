@@ -8,16 +8,29 @@ class Customer < SourceAdapter
   def login
   end
  
-  def query
+  def query(conditions=nil,order=nil)
     parsed=nil
-    open("http://rhostore.heroku.com/customers.json") do |f|
+    url="http://rhostore.heroku.com/customers.json"
+    url=url+"?"+hashtourl(conditions) if conditions
+    p "Searching with #{url}"
+    open(url) do |f|
       parsed=JSON.parse(f.read)
     end
     @result={}
     parsed.each { |item|@result[item["customer"]["id"].to_s]=item["customer"] } if parsed
     @result
   end
-
+  
+  def hashtourl(conditions)
+    url=""
+    first=true
+    conditions.keys.each do |condition|
+      url=url+"&" if not first
+      url=url+condition+"="+conditions[condition]
+      first=nil
+    end
+    url
+  end
 
   def page(num)
     letter='A'

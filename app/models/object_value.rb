@@ -16,8 +16,6 @@
 #  blob_file_name    :string(255)   
 #  blob_content_type :string(255)   
 #  blob_file_size    :integer(4)    
-#
-
 class ObjectValue < ActiveRecord::Base
   set_primary_key :id
   belongs_to :source

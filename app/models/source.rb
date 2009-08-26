@@ -19,8 +19,6 @@
 #  queuesync    :boolean(1)    
 #  limit        :string(255)   
 #  callback_url :string(255)   
-#
-
 class Source < ActiveRecord::Base
   include SourcesHelper
   
@@ -69,21 +67,29 @@ class Source < ActiveRecord::Base
     source_adapter
   end
   
-  def ask(current_user,question)
-    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
-    self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential)
-    start=Time.new
-    result=source_adapter.ask question
-    tlog(start,"ask",self.id)
-    result
+  # executes synchronous search for records that meet specified criteria of conditions returned in specified order
+  # calls source adapter query method with conditions and order
+  def dosearch(current_user,session=nil,conditions=nil,order=nil)
+    @current_user=current_user
+    source_adapter=setup_credential_adapter(current_user,session)
+    begin
+      source_adapter.login  # should set up @session_id
+    rescue Exception=>e
+      p "Failed to login #{e}"
+    end   
+    clear_pending_records(self.credential)
+    begin  
+      p "Calling query with conditions: #{conditions.inspect.to_s}"
+      source_adapter.query conditions,order
+      source_adapter.sync
+      @object_values=ObjectValue.find_by_sql "select * from object_values where update_type is null"
+      p "Retrieved records size: #{@object_values.size}"
+      update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+    rescue Exception=>e
+      p "Failed to sync #{e}"
+    end 
   end
-
-  def do_callback
-    current_user=User.find_by_login params[:login]
-    refresh(current_user)
-  end
- 
+   
   def refresh(current_user, session, url=nil)
     if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
@@ -94,17 +100,8 @@ class Source < ActiveRecord::Base
       dosync(current_user, session)
     end
   end
-
-  def ping
-    # this is the URL for the show method
-    @result=""
-    users.each do |user|
-      @result+=user.ping(callback_url) # this will ping all clients owned by that user
-    end
-  end
   
-  def dosync(current_user, session=nil)
-
+  def dosync(current_user,session=nil)
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
@@ -117,7 +114,6 @@ class Source < ActiveRecord::Base
       slog(e,"can't login",self.id,"login")
       raise e
     end
-    
     # first grab out all ObjectValues of updatetype="qparms"
     # put those together into a qparms hash
     # qparms is nil if there is no such hash
@@ -152,11 +148,10 @@ class Source < ActiveRecord::Base
     # query,sync,finalize are atomic
     begin  
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
-      
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
-      if defined? source_adapter.page  
-        source_adapter.page(0)  # grab the zero-th page synchronously
+      if defined? source_adapter.page 
+        source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
         cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
         p "Executing background job: #{cmd} #{current_user.id.to_s}"
@@ -170,7 +165,7 @@ class Source < ActiveRecord::Base
         start=Time.new
       else       
         start=Time.new
-        source_adapter.query 
+        source_adapter.query
         #raise StandardError
         tlog(start,"query",self.id)
       end        
@@ -182,7 +177,7 @@ class Source < ActiveRecord::Base
       finalize_query_records(@credential)
       tlog(start,"finalize",self.id)
     rescue Exception=>e
-      p "Failed to sync"
+      p "Failed to sync: #{e}"
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
@@ -216,11 +211,9 @@ class Source < ActiveRecord::Base
       raise e
     end
     
-    pagenum=1  # zero-th page fetch is done by RhoSync server in foreground
-    result=1
+    pagenum=0  
+    result=true
     @source=self
-    result=1
-
     while result 
       logger.info "Calling page #{pagenum}"      
       result=source_adapter.page(pagenum)
@@ -232,6 +225,30 @@ class Source < ActiveRecord::Base
 =begin    
     lock.delete
 =end
+  end
+  
+  
+  def ask(current_user,question)
+    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
+    self.credential=usersub.credential if usersub # this variable is available in your source adapter
+    initadapter(self.credential)
+    start=Time.new
+    result=source_adapter.ask question
+    tlog(start,"ask",self.id)
+    result
+  end
+
+  def do_callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
+
+  def ping
+    # this is the URL for the show method
+    @result=""
+    users.each do |user|
+      @result+=user.ping(callback_url) # this will ping all clients owned by that user
+    end
   end
   
   def before_validate
@@ -250,5 +267,7 @@ class Source < ActiveRecord::Base
   def self.find_by_permalink(link)
     Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
   end
+  
+
 
 end

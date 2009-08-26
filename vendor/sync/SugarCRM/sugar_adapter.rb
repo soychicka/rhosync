@@ -51,17 +51,26 @@ class SugarAdapter < SourceAdapter
     end
   end
 
-  def query
-    puts "SugarCRM #{@module_name} query"
-    
+  def query(conditions,order)
+    puts "SugarCRM #{@module_name} query with conditions: #{conditions.inspect.to_s}" if conditions
     offset = 0
     max_results = '10000' # if set to 0 or '', this doesn't return all the results
     deleted = 0 # whether you want to retrieve deleted records, too
-  
+    @query_filter=hash_to_whereclause(conditions)
     @count = @client.get_entries_count(@session_id,@module_name,@query_filter,deleted).result_count
-    puts "@count =#{@count}"
-    
+    puts "@count =#{@count} for #{@query_filter}" 
     @result = @client.get_entry_list(@session_id,@module_name,@query_filter,@order_by,offset,@select_fields,max_results,deleted)  
+  end
+  
+  def hash_to_whereclause(conditions)
+    whereclause=''
+    first=true
+    conditions.keys.each do |x|
+      (whereclause=whereclause+' and ') if !first
+      whereclause=whereclause+"(#{x}='#{conditions[x]}')"
+      first=nil
+    end
+    whereclause
   end
   
   # this gets a page at a time of information from the SugarCRM backend

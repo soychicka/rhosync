@@ -56,71 +56,23 @@ class SourcesController < ApplicationController
     @result
   end
   
-  # PUSH CAPABILITY: 
-  # IF you wish to have device pinged when the queued sync is complete 
+  # shows ALL data from backend, refreshing data when necessary (if data is empty or "stale")
+  # use search method if you wish to request specific data
+  # IF you wish to have device pinged when by ping method for important events
   # THEN supply params["device_pin"] and params["device_type"] 
   def show
     if params["id"] == "rho_credential"
       render :text => "[]" and return
-    end
-   
+    end  
     @app=@source.app
     if !check_access(@app)  
       render :action=>"noaccess"
     else
-      usersub=@app.memberships.find_by_user_id(current_user.id) if current_user
-      @source.credential=usersub.credential if usersub # this variable is available in your source adapter    
-      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
-
-      # if client_id is provided, return only relevant objects for that client
-      if params[:client_id]
-        @client = setup_client(params[:client_id])
-        @ack_token = params[:ack_token]
-        @first_request=false
-        @resend_token=nil
-        
-        # setup the conditions to handle the client request
-        if @ack_token
-          logger.debug "[sources_controller] Received ack_token,
-                          ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
-        else
-          # get last token if available, otherwise it's the first request
-          # for a given source
-          @resend_token=@client.last_sync_token
-          if @resend_token.nil?
-            @first_request=true
-            logger.debug "[sources_controller] First request for source"
-          end
-        end 
-        
-        # generate new token for the next set of data
-        @token=@resend_token ? @resend_token : get_new_token
-        # get the list of objects
-        # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
-        if @source.queuesync and @source.needs_refresh
-          @object_values=[]
-        else
-          @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,params[:p_size],@first_request)
-        end
-        # set token depending on records returned
-        # if we sent zero records, we need to keep track so the client 
-        # doesn't receive the last page again
-        @token=nil if @object_values.nil? or @object_values.length == 0
-        
-        logger.debug "[sources_controller] Finished processing objects for client,
-                        token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
-                        updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
-        @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
-                                                 source_id = #{@source.id} and update_type = 'query'"
-      else
-        p "Retrieving records"
-        # no client_id, just show everything
-        cmd=object_values_sql('query')
-        @object_values=ObjectValue.find_by_sql cmd
-        p "Find command #{cmd}: #{@object_values.size.to_s}"
+      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id) 
+        @source.credential=usersub.credential  # this variable is available in your source adapter 
       end
-      @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
-      p "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
+      build_object_values(params[:client_id],params[:ack_token],params[:p_size])
       respond_to do |format|
         format.html 
         format.xml  { render :xml => @object_values}
@@ -129,30 +81,97 @@ class SourcesController < ApplicationController
     end
   end
   
-  # quick synchronous simple query that doesn't hit the database
+  def edit_search
+    @source=Source.find_by_permalink params[:id]
+    @app=@source.app  
+  end
+ 
+  # queries for specific data from backend
   # parameters:
-  #   question
-  def ask
+  #  order- hash of values to be sent to the backend adapter to effect a query
+  #  offset - optional argument of how far into the query we are, NONZERO VALUE MEANS USE CURRENT CACHE
+  #  limit - optional number of rows to return
+  #  conditions - hash of name-values for query
+  def search
+    @source=Source.find_by_permalink params[:id]
     @app=@source.app
-    @token=get_new_token
-    if params[:question]
-      @object_values=@source.ask(@current_user,params)
-      @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
+    if !check_access(@app)  
+      render :action=>"noaccess"
     else
-      raise "You need to provide a question to answer"
-    end
+      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id) 
+        @source.credential=usersub.credential  # this variable is available in your source adapter 
+      end   
+      if params[:conditions].is_a?(Array)
+        conditions=nvlist_to_hash(params[:conditions]) 
+      else
+        conditions=params[:conditions]
+      end
 
-    @object_values.collect! { |x|
-       x.id = x.hash_from_data(x.attrib,x.object,x.update_type,x.source_id,x.user_id,x.value)
-       x.db_operation = 'insert'
-       x.update_type = 'query'
-       x
-    }
-    respond_to do |format|
-      format.html { render :action=>"show"}
-      format.xml  { render :action=>"show"}
-      format.json { render :action=>"show"}
+      p "Searching for #{conditions.inspect.to_s}"
+      @source.dosearch(@current_user,session,conditions,params[:order]) if !params[:offset] or params[:offset].to_i<1
+      build_object_values(params[:client_id],params[:ack_token],params[:p_size],params[:offset],params[:limit])
+      respond_to do |format|
+        format.html { render :template=>"sources/show.html.erb"}
+        format.xml  { render :xml => @object_values}
+        format.json
+      end
     end
+  end
+
+  def nvlist_to_hash(nvlist)
+    attrvals={}
+    nvlist.each { |nv| attrvals[nv["name"]]=nv["value"] if nv["name"] and nv["value"] and nv["name"].size>0}
+    attrvals
+  end
+ 
+  def build_object_values(client_id=nil,ack_token=nil,p_size=nil,offset=0,limit=nil)
+
+    # if client_id is provided, return only relevant objects for that client
+    if client_id
+      @client = setup_client(client_id)
+      @ack_token = ack_token
+      @first_request=false
+      @resend_token=nil
+
+      # setup the conditions to handle the client request
+      if @ack_token
+        logger.debug "[sources_controller] Received ack_token,
+        ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+      else
+        # get last token if available, otherwise it's the first request
+        # for a given source
+        @resend_token=@client.last_sync_token
+        if @resend_token.nil?
+          @first_request=true
+          logger.debug "[sources_controller] First request for source"
+        end
+      end
+
+      # generate new token for the next set of data
+      @token=@resend_token ? @resend_token : get_new_token
+      # get the list of objects
+      # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
+      if @source.queuesync and @source.needs_refresh
+        @object_values=[]
+      else
+        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request)
+      end
+      # set token depending on records returned
+      # if we sent zero records, we need to keep track so the client
+      # doesn't receive the last page again
+      @token=nil if @object_values.nil? or @object_values.length == 0
+
+      logger.debug "[sources_controller] Finished processing objects for client,
+      token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
+      updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
+      source_id = #{@source.id} and update_type = 'query'"
+    else
+      # no client_id, just show everything
+      @object_values=ObjectValue.find_by_sql object_values_sql('query')
+    end
+    @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
+
   end
 
 
@@ -556,6 +575,33 @@ class SourcesController < ApplicationController
   def viewlog
     @logs=SourceLog.find :all, :conditions=>{:source_id=>@source.id},:order=>"updated_at desc"
   end
+  
+  # quick synchronous simple query that doesn't hit the database
+  # parameters:
+  #   question
+  def ask
+    @app=@source.app
+    @token=get_new_token
+    if params[:question]
+      @object_values=@source.ask(@current_user,params)
+      @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
+    else
+      raise "You need to provide a question to answer"
+    end
+
+    @object_values.collect! { |x|
+       x.id = x.hash_from_data(x.attrib,x.object,x.update_type,x.source_id,x.user_id,x.value)
+       x.db_operation = 'insert'
+       x.update_type = 'query'
+       x
+    }
+    respond_to do |format|
+      format.html { render :action=>"show"}
+      format.xml  { render :action=>"show"}
+      format.json { render :action=>"show"}
+    end
+  end
+  
 
 protected
   def get_new_token

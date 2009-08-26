@@ -7,13 +7,13 @@ class Product < SourceAdapter
   def initialize(source,credential)
     super(source,credential)
     @baseurl="http://rhostore.heroku.com"
-    #@baseurl="http://localhost:3001"
+    #@baseurl="http://localhost:3001"  # use something like this for testing locally
   end
  
   def login
   end
  
-  def query
+  def query(conditions=nil,order=nil)
     parsed=nil
     open(@baseurl+"/products.json") do |f|
       parsed=JSON.parse(f.read)
