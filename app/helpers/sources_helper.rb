@@ -116,7 +116,7 @@ module SourcesHelper
       begin
         pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
         #pending_to_query=pending_to_query + " and pending_id not in (select id from object_values where update_type='query')" if check_existing
-        p "Finalizing records: #{pending_to_query}"
+        p "Finalizing record: #{pending_to_query}"
         ActiveRecord::Base.connection.execute(pending_to_query)
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
@@ -300,7 +300,7 @@ module SourcesHelper
   # and the current state of the object_values table
   # since we do a delete_all in rhosync refresh, 
   # only delete and insert are required
-  def process_objects_for_client(source,client,token,ack_token,resend_token,p_size=nil,first_request=false)
+  def process_objects_for_client(source,client,token,ack_token,resend_token,p_size=nil,first_request=false,ov_table=nil)
     
     # default page size of 10000
     page_size = p_size.nil? ? 10000 : p_size.to_i
@@ -309,8 +309,10 @@ module SourcesHelper
     user_condition="= #{current_user.id}" if current_user and current_user.id
     user_condition ||= "is NULL"
     
+    ov_table||="object_values"  # will use a temp table (e.g. "subset_values") if we have a search with offset and limit
+    
     # Setup the join conditions
-    object_value_join_conditions = "from object_values ov left join client_maps cm on \
+    object_value_join_conditions = "from #{ov_table} ov left join client_maps cm on \
                                     ov.id = cm.object_value_id and \
                                     cm.client_id = '#{client.id}'"
     object_value_conditions = "#{object_value_join_conditions} \

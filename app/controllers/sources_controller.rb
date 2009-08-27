@@ -108,8 +108,20 @@ class SourcesController < ApplicationController
       end
 
       p "Searching for #{conditions.inspect.to_s}"
-      @source.dosearch(@current_user,session,conditions,params[:order]) if !params[:offset] or params[:offset].to_i<1
-      build_object_values(params[:client_id],params[:ack_token],params[:p_size],params[:offset],params[:limit])
+      
+      tablename="object_values"
+      if !params[:offset] or params[:offset].to_i<1   # # if there's no offset or offset is zero, do a new search
+         @source.dosearch(@current_user,session,conditions,params[:order])
+         if params[:limit] and params[:limit].to_i>0# there's a limit to how much we want returned, so create temporary table
+           tablename="subset_values"
+           create_subset_table(tablename,params[:order],0,params[:limit]) # starting from first row
+         end
+      else  # nonzero offset work, create temporary result table with the subset
+        tablename="subset_values"
+        create_subset_table(tablename,params[:order],params[:offset],params[:limit])
+      end
+      
+      build_object_values(params[:client_id],params[:ack_token],params[:p_size],tablename)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}
         format.xml  { render :xml => @object_values}
@@ -124,8 +136,8 @@ class SourcesController < ApplicationController
     attrvals
   end
  
-  def build_object_values(client_id=nil,ack_token=nil,p_size=nil,offset=0,limit=nil)
-
+  def build_object_values(client_id=nil,ack_token=nil,p_size=nil,tablename=nil)
+    tablename||="object_values"
     # if client_id is provided, return only relevant objects for that client
     if client_id
       @client = setup_client(client_id)
@@ -154,7 +166,7 @@ class SourcesController < ApplicationController
       if @source.queuesync and @source.needs_refresh
         @object_values=[]
       else
-        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request)
+        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,ov_table)
       end
       # set token depending on records returned
       # if we sent zero records, we need to keep track so the client
@@ -164,11 +176,11 @@ class SourcesController < ApplicationController
       logger.debug "[sources_controller] Finished processing objects for client,
       token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
       updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
-      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
+      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM #{ov_table} where user_id = #{current_user.id} and
       source_id = #{@source.id} and update_type = 'query'"
     else
       # no client_id, just show everything
-      @object_values=ObjectValue.find_by_sql object_values_sql('query')
+      @object_values=ObjectValue.find_by_sql object_values_sql('query',tablename)
     end
     @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
 
@@ -612,8 +624,26 @@ protected
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
   
-  def object_values_sql(utype)
-    objectvalues_cmd="select * from object_values where update_type='#{utype}' and source_id=#{@source.id}"
+  # creates subset of ObjectValues table in specified order
+  # can limit the number of rows
+  # and optionally has offset as well (must have limit to allow offset)
+  def create_subset_table(tablename=nil,order=nil,limit=nil,offset=nil)
+    if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
+      tablename||="subset_values"
+      order||="created_at" # default to created_at if nothing else supplied
+      objectvalues_cmd="insert into #{tablename} select * from object_values where update_type='#{utype}' and source_id=#{@source.id}"
+      objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
+      objectvalues_cmd << " order by #{order}"
+      objectvalues_cmd << " limit #{limit}" if limit
+      objectvalues_cmd << " offset #{offset}" if limit and offset
+    else
+    end
+    ActiveRecord::Base.connection.execute objectvalues_cmd
+  end
+  
+  def object_values_sql(utype,ov_table=nil)
+    ov_table||="object_values"
+    objectvalues_cmd="select * from #{ov_table} where update_type='#{utype}' and source_id=#{@source.id}"
     objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
     objectvalues_cmd << " order by object"
   end
