@@ -100,7 +100,7 @@ module SourcesHelper
         p dupemsg
         logger.info dupemsg
         obj.pending_id=obj.pending_id+1  
-        ObjectValue.delete(prev.id)
+        # DONT DELETE OBJECT VALUE ANYMORE (incrementing pending ID should let us keep it around): ObjectValue.delete(prev.id)
       end
       prev=obj
     end

@@ -12,7 +12,7 @@ class Customer < SourceAdapter
     parsed=nil
     conditions=nil if conditions and conditions.size<1
     url="http://rhostore.heroku.com/customers.json"
-    url=url+"?#{hashtourl(conditions)}" if conditions
+    url=url+"?conditions=#{hashtourl(conditions)}" if conditions
     if conditions and order
       url=url+"&" 
     else
