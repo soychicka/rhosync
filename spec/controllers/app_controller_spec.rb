@@ -152,7 +152,7 @@ describe AppsController do
     it "should destroy the requested app" do
       App.should_receive(:find).with("37").and_return(mock_app)
       mock_app.should_receive(:destroy)
-      delete :destroy, :id => "37"
+      delete :destroy, :link => "37"
     end
   
     it "should redirect to the apps list" do

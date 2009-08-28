@@ -73,7 +73,7 @@ describe AccessControlTestController do
               end
             else
               it "returns 'Access denied' and a 406 (Access Denied) status code" do
-                response.should have_text("HTTP Basic: Access denied.\n")
+                response.should have_text("You are not logged in.\n")
                 response.code.to_s.should == '401'
               end
             end
