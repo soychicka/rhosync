@@ -139,7 +139,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value"
+    t.text     "value",             :limit => 255
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -184,7 +184,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.integer  "queuesync"
+    t.boolean  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end
@@ -206,6 +206,8 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
+    t.string   "password_reset_code"
+    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

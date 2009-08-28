@@ -2,6 +2,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
   # Be sure to include AuthenticatedTestHelper in spec/spec_helper.rb instead
 # Then, you can remove it from this and the units test.
 include AuthenticatedTestHelper
+include AuthenticatedSystem
 
 #
 # A test controller with and without access controls
@@ -73,8 +74,8 @@ describe AccessControlTestController do
               end
             else
               it "returns 'Access denied' and a 406 (Access Denied) status code" do
-                response.should have_text("You are not logged in.\n")
-                response.code.to_s.should == '401'
+                response.should have_text("You are not logged in.")
+                response.code.to_s.should == '406'
               end
             end
 
