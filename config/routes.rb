@@ -29,7 +29,8 @@ ActionController::Routing::Routes.draw do |map|
                      
   src_member = { :createobjects => :post, 
                  :updateobjects => :post, 
-                 :deleteobjects => :post, 
+                 :deleteobjects => :post,
+                 :search => [:get, :post],
                  :ask => :post, 
                  :ping => :get,
                  :ping_user => :get,
