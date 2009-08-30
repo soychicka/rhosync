@@ -17,10 +17,8 @@
 #  blob_content_type :string(255)   
 #  blob_file_size    :integer(4)    
 class ObjectValue < ActiveRecord::Base
-  set_primary_key :id
   belongs_to :source
-  has_many :clients, :through => :client_maps
-  has_many :client_maps
+  has_many :clients
   has_attached_file :blob
   
   attr_accessor :db_operation
@@ -45,5 +43,31 @@ class ObjectValue < ActiveRecord::Base
   
   def self.hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
     "#{object}#{attrib}#{update_type}#{source_id}#{user_id}#{value}#{random}".hash.to_i.abs
+  end
+  
+  
+  # Returns the OAV list for a given user/source
+  # If conditions are provided, return a subset of OAVs
+  def self.search_by_conditions(utype,source_id,user_id=nil,conditions=nil)
+    sql = ""
+    user_str = user_id.nil? ? '' : " and user_id = #{user_id}"
+    if conditions
+      counter = 0
+      sql << "select * from object_values where object in "
+      conditions.each do |key,val|
+        sql << " (select object from object_values where (value like '#{val}%' 
+                  and attrib = '#{key}') and source_id = #{source_id} 
+                  and update_type = '#{utype}' #{user_str}) "
+                  
+        sql <<  " and object in " if counter < conditions.length-1
+        counter += 1
+      end
+      sql << " order by object,attrib"
+    else
+      sql << "select * from object_values where update_type='#{utype}' and source_id=#{source_id} #{user_str}"
+      sql << " order by object"
+    end
+    puts "sql: #{sql.inspect}"
+    ObjectValue.find_by_sql sql
   end
 end

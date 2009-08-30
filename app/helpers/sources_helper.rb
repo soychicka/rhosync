@@ -252,6 +252,55 @@ module SourcesHelper
     qparms
   end
   
+  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil)
+    # if client_id is provided, return only relevant objects for that client
+    if client_id
+      @client = setup_client(client_id)
+      @ack_token = ack_token
+      @first_request=false
+      @resend_token=nil
+
+      # setup the conditions to handle the client request
+      if @ack_token
+        logger.debug "[sources_controller] Received ack_token,
+        ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+      else
+        # get last token if available, otherwise it's the first request
+        # for a given source
+        @resend_token=@client.last_sync_token
+        if @resend_token.nil?
+          @first_request=true
+          logger.debug "[sources_controller] First request for source"
+        end
+      end
+
+      # generate new token for the next set of data
+      @token=@resend_token ? @resend_token : get_new_token
+      # get the list of objects
+      # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
+      if @source.queuesync and @source.needs_refresh
+        @object_values=[]
+      else
+        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request)
+      end
+      # set token depending on records returned
+      # if we sent zero records, we need to keep track so the client
+      # doesn't receive the last page again
+      @token=nil if @object_values.nil? or @object_values.length == 0
+
+      logger.debug "[sources_controller] Finished processing objects for client,
+      token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
+      updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+      
+      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
+                                               source_id = #{@source.id} and update_type = '#{utype}'"
+    else
+      # no client_id, just show everything (optionally based on search conditions)
+      @object_values=ObjectValue.search_by_conditions(utype,@source.id,current_user.id,conditions)
+    end
+    @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
+  end
+  
   def setup_client(client_id)
     # setup client & user association if it doesn't exist
     if client_id and client_id != 'client_id'

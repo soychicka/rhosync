@@ -25,7 +25,7 @@ Rails::Initializer.run do |config|
   # config.gem "bj"
   # config.gem "hpricot", :version => '0.6', :source => "http://code.whytheluckystiff.net"
   # config.gem "aws-s3", :lib => "aws/s3"
-  config.gem "rubyist-aasm", :lib => "aasm", :source => "http://gems.github.com"
+  config.gem 'rubyist-aasm', :version => '>= 2.1.1', :lib => 'aasm', :source => "http://gems.github.com"
   config.gem "httpclient", :version => "2.1.2"
   config.gem "soap4r", :lib => "soap/mapping"
   config.gem "uuidtools", :version => ">=2.0.0"

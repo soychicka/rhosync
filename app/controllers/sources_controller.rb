@@ -5,8 +5,6 @@ require 'net/http'
 require 'net/https'
 require 'source_adapter'
 
-require 'source_adapter.rb'
-
 class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
@@ -72,7 +70,7 @@ class SourcesController < ApplicationController
         @source.credential=usersub.credential  # this variable is available in your source adapter 
       end
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
-      build_object_values(params[:client_id],params[:ack_token],params[:p_size])
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions])
       respond_to do |format|
         format.html 
         format.xml  { render :xml => @object_values}
@@ -109,94 +107,13 @@ class SourcesController < ApplicationController
 
       p "Searching for #{conditions.inspect.to_s}"
       
-      tablename="object_values"
-      if !params[:offset] or params[:offset].to_i<1   # # if there's no offset or offset is zero, do a new search
-         @source.dosearch(@current_user,session,conditions,params[:order])
-         if params[:limit] and params[:limit].to_i>0# there's a limit to how much we want returned, so create temporary table
-           tablename="subset_values"
-           create_subset_table(tablename,params[:order],0,params[:limit]) # starting from first row
-         end
-      else  # nonzero offset work, create temporary result table with the subset
-        tablename="subset_values"
-        create_subset_table(tablename,params[:order],params[:offset],params[:limit])
-      end
+      @source.dosearch(@current_user,session,conditions,params[:order])
       
-      build_object_values(params[:client_id],params[:ack_token],params[:p_size],tablename)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}
         format.json { render :template=>"sources/show.json.erb"}
       end
-    end
-  end
-
-  def nvlist_to_hash(nvlist)
-    attrvals={}
-    nvlist.each { |nv| attrvals[nv["name"]]=nv["value"] if nv["name"] and nv["value"] and nv["name"].size>0}
-    attrvals
-  end
- 
-  def build_object_values(client_id=nil,ack_token=nil,p_size=nil,tablename=nil)
-    tablename||="object_values"
-    # if client_id is provided, return only relevant objects for that client
-    if client_id
-      @client = setup_client(client_id)
-      @ack_token = ack_token
-      @first_request=false
-      @resend_token=nil
-
-      # setup the conditions to handle the client request
-      if @ack_token
-        logger.debug "[sources_controller] Received ack_token,
-        ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
-      else
-        # get last token if available, otherwise it's the first request
-        # for a given source
-        @resend_token=@client.last_sync_token
-        if @resend_token.nil?
-          @first_request=true
-          logger.debug "[sources_controller] First request for source"
-        end
-      end
-
-      # generate new token for the next set of data
-      @token=@resend_token ? @resend_token : get_new_token
-      # get the list of objects
-      # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
-      if @source.queuesync and @source.needs_refresh
-        @object_values=[]
-      else
-        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,tablename)
-      end
-      # set token depending on records returned
-      # if we sent zero records, we need to keep track so the client
-      # doesn't receive the last page again
-      @token=nil if @object_values.nil? or @object_values.length == 0
-
-      logger.debug "[sources_controller] Finished processing objects for client,
-      token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
-      updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
-      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM #{tablename} where user_id = #{current_user.id} and
-      source_id = #{@source.id} and update_type = 'query'"
-    else
-      # no client_id, just show everything
-      @object_values=ObjectValue.find_by_sql object_values_sql('query',tablename)
-    end
-    @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
-
-  end
-
-
-  # return the metadata for the specified source
-  # ONLY FOR SUBSCRIBERS/ADMIN
-  def attributes
-    check_access(@source.app)
-    # get the distinct list of attributes that is available
-    @attributes=ObjectValue.find_by_sql "select distinct(attrib) from object_values where source_id="+@source.id
-
-    respond_to do |format|
-      format.html
-      format.xml  { render :xml => @attributes}
-      format.json { render :json => @attributes}
     end
   end
   
@@ -254,63 +171,36 @@ class SourcesController < ApplicationController
   #   a hash of the object_values table ID columns as keys and the updated_at times as values
   def createobjects
     @app=App.find_by_permalink(params[:app_id]) if params[:app_id]
-    if params[:id]=="rho_credential" # its trying to create a credential on the fly
-      @sub=Membership.find_or_create_by_user_id_and_app_id current_user.id,@app.id  # find the just created membership subscription
-      
-      # create new credential
-      unless @sub.credential
-        @sub.credential = Credential.create 
-      end
-      
-      urlattribs=params[:attrvals].select {|av| av["attrib"]=="url"}
-      @sub.credential.url=urlattribs[0]["value"] if urlattribs.present?
-    
-      loginattribs=params[:attrvals].select {|av| av["attrib"]=="login"}
-      @sub.credential.login=loginattribs[0]["value"] if loginattribs.present?
-          
-      passwordattribs=params[:attrvals].select {|av| av["attrib"]=="password"}
-      @sub.credential.password=passwordattribs[0]["value"] if passwordattribs.present?
+    @source=Source.find_by_permalink(params[:id]) if params[:id]
+    check_access(@source.app)
+    objects={}
+    @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
 
-      tokenattribs=params[:attrvals].select {|av| av["attrib"]=="token"}      
-      @sub.credential.token=tokenattribs[0]["value"] if tokenattribs.present?
-    
-      @sub.credential.save
-      @sub.save
-      
-      objects = []
-    else  # just put the (noncredential) data into ObjectValues to get picked up by the backend source adapter
-      @source=Source.find_by_permalink(params[:id]) if params[:id]
-      check_access(@source.app)
-      objects={}
-      @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
-
-      newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
-      params[:attrvals].each do |x| # for each hash in the array
-        # note that there should NOT be an object value for new records
-        o=ObjectValue.new
-        o.object=x["object"]
-        o.attrib=x["attrib"]
-        o.value=x["value"]
-        if x["object"]=="qparms"
-          cleanup_update_type("qparms",current_user.id)  # delete the existing qparms objects
-          newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
-          o.update_type="qparms"
-        else
-          o.update_type="create"
-        end
-        o.source=@source
-        o.user_id=current_user.id
-        
-        if x["attrib_type"] and x["attrib_type"] == 'blob'
-          o.blob = params[:blob]
-          o.blob.instance_write(:file_name, x["value"])
-        end
-        o.save
-        # add the created ID + created_at time to the list
-        objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
+    newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
+    params[:attrvals].each do |x| # for each hash in the array
+      # note that there should NOT be an object value for new records
+      o=ObjectValue.new
+      o.object=x["object"]
+      o.attrib=x["attrib"]
+      o.value=x["value"]
+      if x["object"]=="qparms"
+        cleanup_update_type("qparms",current_user.id)  # delete the existing qparms objects
+        newqparms=nil  # subsequent qparms objects just add to the qparms objectvalue triples
+        o.update_type="qparms"
+      else
+        o.update_type="create"
       end
+      o.source=@source
+      o.user_id=current_user.id
+      
+      if x["attrib_type"] and x["attrib_type"] == 'blob'
+        o.blob = params[:blob]
+        o.blob.instance_write(:file_name, x["value"])
+      end
+      o.save
+      # add the created ID + created_at time to the list
+      objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
     end
-    @object_values = ObjectValue.find_by_sql object_values_sql('create')
     respond_to do |format|
       if params[:no_redirect]
         format.html { 
@@ -326,9 +216,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
-  #rescue SourceAdapterLoginException
-  #  logout_killing_session!
-  #  render :nothing=>true, :status => 401
+  rescue SourceAdapterLoginException
+   logout_killing_session!
+   render :nothing=>true, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -533,6 +423,7 @@ class SourcesController < ApplicationController
   def destroy
     @source.destroy
     @app=App.find_by_permalink params[:app_id]
+    flash[:notice] = 'Source was successfully deleted.'
     respond_to do |format|
       format.html { redirect_to :controller=>"apps",:action=>"edit",:id=>@app.id }
       format.xml  { head :ok }
@@ -588,27 +479,9 @@ protected
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
   
-  # creates subset of ObjectValues table in specified order
-  # can limit the number of rows
-  # and optionally has offset as well (must have limit to allow offset)
-  def create_subset_table(tablename=nil,order=nil,limit=nil,offset=nil)
-    if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
-      tablename||="subset_values"
-      order||="created_at" # default to created_at if nothing else supplied
-      objectvalues_cmd="insert into #{tablename} select * from object_values where update_type='#{utype}' and source_id=#{@source.id}"
-      objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
-      objectvalues_cmd << " order by #{order}"
-      objectvalues_cmd << " limit #{limit}" if limit
-      objectvalues_cmd << " offset #{offset}" if limit and offset
-    else
-    end
-    ActiveRecord::Base.connection.execute objectvalues_cmd
-  end
-  
-  def object_values_sql(utype,ov_table=nil)
-    ov_table||="object_values"
-    objectvalues_cmd="select * from #{ov_table} where update_type='#{utype}' and source_id=#{@source.id}"
-    objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
-    objectvalues_cmd << " order by object"
+  def nvlist_to_hash(nvlist)
+    attrvals={}
+    nvlist.each { |nv| attrvals[nv["name"]]=nv["value"] if nv["name"] and nv["value"] and nv["name"].size>0}
+    attrvals
   end
 end

@@ -31,7 +31,7 @@ class ClientMap < ActiveRecord::Base
     return objs_to_return.collect! {|x| x.db_operation = 'insert'; x}
   end
   
-  # determine if there are any objects to delete on the client based on the current object_values stable contents
+  # determine if there are any objects to delete on the client based on the current object_values table contents
   # used by the check_for_changes_for_client
   def self.check_delete_objects(client_id)
     objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on \

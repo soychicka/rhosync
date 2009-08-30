@@ -46,6 +46,7 @@ class SessionsController < ApplicationController
         end
       end
     end
+    render :status => 200
   end
 
   def create
