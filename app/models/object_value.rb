@@ -48,7 +48,7 @@ class ObjectValue < ActiveRecord::Base
   
   # Returns the OAV list for a given user/source
   # If conditions are provided, return a subset of OAVs
-  def self.search_by_conditions(utype,source_id,user_id=nil,conditions=nil)
+  def self.get_sql_by_conditions(utype,source_id,user_id=nil,conditions=nil)
     sql = ""
     user_str = user_id.nil? ? '' : " and user_id = #{user_id}"
     if conditions
@@ -68,6 +68,6 @@ class ObjectValue < ActiveRecord::Base
       sql << " order by object"
     end
     puts "sql: #{sql.inspect}"
-    ObjectValue.find_by_sql sql
+    sql
   end
 end

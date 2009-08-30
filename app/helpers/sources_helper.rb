@@ -296,7 +296,7 @@ module SourcesHelper
                                                source_id = #{@source.id} and update_type = '#{utype}'"
     else
       # no client_id, just show everything (optionally based on search conditions)
-      @object_values=ObjectValue.search_by_conditions(utype,@source.id,current_user.id,conditions)
+      @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions)
     end
     @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
   end
