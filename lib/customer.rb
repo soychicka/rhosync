@@ -13,12 +13,7 @@ class Customer < SourceAdapter
     conditions=nil if conditions and conditions.size<1
     url="http://rhostore.heroku.com/customers.json"
     url=url+"?#{hashtourl(conditions)}" if conditions
-    if conditions and order
-      url=url+"&" 
-    else
-      url=url+"?"
-    end
-    url=url+"order=#{order}" if order
+    url=url+"&order=#{order}" if order
     p "Searching with #{url}"
     open(url) do |f|
       parsed=JSON.parse(f.read)
