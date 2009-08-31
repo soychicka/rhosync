@@ -32,9 +32,11 @@ class Customer < SourceAdapter
     url=""
     first=true
     conditions.keys.each do |condition|
-      url=url+"&" if not first
-      url=url+"conditions[#{condition}]=#{conditions[condition]}"
-      first=nil
+      if condition.length > 0
+        url=url+"&" if not first
+        url=url+"conditions[#{condition}]=#{conditions[condition]}"
+        first=nil
+      end
     end
     url
   end
