@@ -19,7 +19,6 @@ class ApplicationController < ActionController::Base
 
   # register this particular device and associated user as interested in queued sync
   def register_client(client)
-    debugger
     p 'Registering Client: ' + client.inspect
     if @current_user and not params["device_pin"].blank?
       client.pin = params["device_pin"]

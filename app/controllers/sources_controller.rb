@@ -124,8 +124,7 @@ class SourcesController < ApplicationController
       build_object_values(params[:client_id],params[:ack_token],params[:p_size],tablename)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}
-        format.xml  { render :xml => @object_values}
-        format.json
+        format.json { render :template=>"sources/show.json.erb"}
       end
     end
   end
@@ -166,7 +165,7 @@ class SourcesController < ApplicationController
       if @source.queuesync and @source.needs_refresh
         @object_values=[]
       else
-        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,ov_table)
+        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,tablename)
       end
       # set token depending on records returned
       # if we sent zero records, we need to keep track so the client
@@ -176,7 +175,7 @@ class SourcesController < ApplicationController
       logger.debug "[sources_controller] Finished processing objects for client,
       token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
       updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
-      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM #{ov_table} where user_id = #{current_user.id} and
+      @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM #{tablename} where user_id = #{current_user.id} and
       source_id = #{@source.id} and update_type = 'query'"
     else
       # no client_id, just show everything
@@ -418,41 +417,6 @@ class SourcesController < ApplicationController
   end
 
   def newobject
-  end
-
-  def load_all
-    # NOTE: THIS DOES NOT WORK FROM OUR SAVING FORMAT RIGHT NOW! (the one that save_all does)
-    # it only works from the YAML format in db/migrate/sources.yml
-    # this is a very well reported upon Ruby/YAML issue
-    @sources=YAML::load_file params[:yaml_file]
-    p @sources
-    @sources.keys.each do |x|
-      source=Source.new(@sources[x])
-      source.save
-    end
-    flash[:notice]="Loaded sources"
-    redirect_to :action=>"index"
-  end
-
-  def pick_save
-    # go to the view to pick the file
-    @app=App.find_by_permalink params[:app_id] if params[:app_id]
-  end
-
-  def save_all
-    if params[:app_id].nil?
-      @app=App.find_by_admin request.headers['login']
-    else
-      @app=App.find_by_permalink params[:app_id] 
-      @sources=@app.sources if @app
-    end
-    File.open(params[:yaml_file],'w') do |out|
-      @sources.each do |x|
-        YAML.dump(x,out)
-      end
-    end
-    flash[:notice]="Saved sources"
-    redirect_to :action=>"index"
   end
   
   # GET /sources
