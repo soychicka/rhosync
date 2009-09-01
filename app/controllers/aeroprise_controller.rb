@@ -76,11 +76,11 @@ class AeropriseController < ApplicationController
       worklog << record
     end
 
+    user = User.find_by_login(user_id)
+    
     # serialize array of hashes and update 
     record_object_value(:object=>sr_id, :attrib=>"workinfo",
-      :user_id=>user_id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
-    
-    user = User.find_by_login(user_id)
+      :user_id=>user.id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
     
     # ping the user
     result = user.ping(app_source_url(:app_id=>@source.app.name, :id => @source.name))
@@ -107,7 +107,7 @@ class AeropriseController < ApplicationController
     if (status=='deployed' && active_state=='online')
       if @srd.nil?
         # start background job to try to get this SRD for each user
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>@app.name, :id => @source.name)}"
+        Bj.submit "ruby script/runner ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
       end
     end
     
@@ -115,7 +115,7 @@ class AeropriseController < ApplicationController
     if (status=='expired' || active_state=='offline')
       if @srd
         # start background job to try to remove this SRD for each user that has it
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>@app.name, :id => @source.name)}"
+        Bj.submit "ruby script/runner ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
       end
     end
         

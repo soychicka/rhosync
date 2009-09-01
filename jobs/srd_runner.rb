@@ -6,6 +6,7 @@ require 'rubyarapi'
 require 'aeroprise'
 require 'base64'
 require 'aeroprise_srd'
+require 'aeroprise_srd_record'
 
 File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
@@ -55,20 +56,24 @@ begin
       # try to get this srd for them
       srd = api.get_srds(srd_id)
       
-      # add this srd to their data
-      AeropriseSrd.create(srd)
+      # destroy all OLD OVAs for this user on the object
+      ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>srd_id)
+      
+      # re-add this srd to their data
+      AeropriseSrdRecord.create(srd, source.id, user.id) if srd
       
       #notify
       ping(user)
     end
   elsif action == 'remove'
-    # title is a required field for each srd
-    ovdata = ObjectValue.find(:all, :conditions => {:attrib=>"title", :source_id=>source.id, :update_type=>'query'})
+    # title is a required field for each srd, this gives us a row per SRD
+    ovdata = ObjectValue.find(:all, :conditions => {:attrib=>"title", :source_id=>source.id, :update_type=>'query', :object=>srd_id})
     
     ovdata.each do |datum|
       user = ovdata.user
+      
       # destroy all OVAs for this user on the object
-      ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>ovdata.object})
+      ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>ovdata.object)
       
       #notify
       ping(user)
