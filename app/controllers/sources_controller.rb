@@ -107,7 +107,7 @@ class SourcesController < ApplicationController
 
       p "Searching for #{conditions.inspect.to_s}"
       
-      @source.dosearch(@current_user,session,conditions,params[:order])
+      @source.dosearch(@current_user,session,conditions,params[:limit],params[:offset])
       
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions)
       respond_to do |format|

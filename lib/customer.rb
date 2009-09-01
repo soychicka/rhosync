@@ -8,12 +8,11 @@ class Customer < SourceAdapter
   def login
   end
  
-  def query(conditions=nil,order=nil)
+  def query(conditions=nil,limit=nil,offset=nil)
     parsed=nil
     conditions=nil if conditions and conditions.size<1
     url="http://rhostore.heroku.com/customers.json"
     url=url+"?#{hashtourl(conditions)}" if conditions
-    url=url+"&order=#{order}" if order
     p "Searching with #{url}"
     open(url) do |f|
       parsed=JSON.parse(f.read)
