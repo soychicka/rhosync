@@ -41,7 +41,7 @@ class SourcesController < ApplicationController
   # defaults to no message, 1/2 second vibrate
   # also provides callback URL of this source's show method but allows for overriding this callback
   def ping_user
-    p "Pinging user #{params[:login]}"
+    logger.debug "Pinging user #{params[:login]}"
     user=User.find_by_login params[:login] if params[:login]
     if user.nil?
       logger.info "Failed to find user to notify: #{params[:login]}"
@@ -117,7 +117,7 @@ class SourcesController < ApplicationController
         @object_values=ObjectValue.find_by_sql object_values_sql('query')
       end
       @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
-      p "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
+      logger.debug "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
       respond_to do |format|
         format.html 
         format.xml  { render :xml => @object_values}

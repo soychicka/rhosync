@@ -71,9 +71,19 @@ class Source < ActiveRecord::Base
   def refresh(current_user, session, url=nil)
     if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
-      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
-        :tag => current_user.id.to_s
-      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
+      command = "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}"
+      # this is how you look up jobs and see if they are done in Bj
+      # command embeds the user_id
+      jobs = Bj.table.job.find(:all, :conditions => { :command => command })
+      jobs.each do |job|
+         if !job.finished?
+           logger.debug "Pending job already exists for user #{current_user.login}, source #{name}"
+           return
+         end
+      end
+
+      Bj.submit command, :tag => current_user.id.to_s
+      logger.debug "Queued up task for user #{current_user.login}, source #{name}"
     else # go ahead and do it right now
       dosync(current_user, session)
     end

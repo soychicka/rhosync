@@ -4,7 +4,7 @@ logfile = File.open("log/bj-sync_and_ping.log", "a+")
 logger = Logger.new(logfile)
 
 logger.debug "******* BEGIN *********"
-logger.debug "#{Time.now} starting sync_and_ping_user #{ARGV.inspect.to_s}"
+logger.debug "#{Time.now} #{Process.pid} starting sync_and_ping_user #{ARGV.inspect.to_s}"
 
 # usage: sync_and_ping_user.rb 2 AeropriseSrd http://rhosync.example.com/sources/10/show
 current_user=User.find(ARGV[0])
