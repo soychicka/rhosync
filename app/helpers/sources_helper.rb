@@ -86,86 +86,79 @@ module SourcesHelper
       slog(e, "Failed to delete existing records ",self.id)
     end
   end
-  
+
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
   def remove_dupe_pendings(credential)
     pendings_cmd = "select id,pending_id,object,attrib,value from object_values where update_type is null and source_id="+id.to_s
-    (pendings_cmd << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential  
+    (pendings_cmd << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential
     pendings_cmd << " order by pending_id"
     objs=ObjectValue.find_by_sql pendings_cmd
     prev=nil
-    objs.each do |obj|  # remove dupes
+    objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
-        dupemsg="Incrementing duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value}."
+        dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
         p dupemsg
         logger.info dupemsg
-        obj.pending_id=obj.pending_id+1  
-        # DONT DELETE OBJECT VALUE ANYMORE (incrementing pending ID should let us keep it around): ObjectValue.delete(prev.id)
+        ObjectValue.delete(prev.id)
       end
       prev=obj
     end
   end
-  
+
   # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-  # now only used by dosearch method on sources controller
-  def update_pendings(credential,check_existing=nil)
+  def update_pendings
     conditions="source_id=#{id}"
     conditions << " and user_id=#{credential.user.id}" if credential
     objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
-    objs.each do |obj|  
+    objs.each do |obj|
       begin
         pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
-        #pending_to_query=pending_to_query + " and pending_id not in (select id from object_values where update_type='query')" if check_existing
-        p "Finalizing record: #{pending_to_query}"
         ActiveRecord::Base.connection.execute(pending_to_query)
-      rescue ActiveRecord::StatementInvalid => ae
-        next
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
       end
-    end  
-    ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}" 
+    end
   end
 
-  def finalize_query_records(credential,source_id=nil)
-    source_id||=id
+  # presence or absence of credential determines whether we are using a "per user sandbox" or not
+  def finalize_query_records(credential)
     # first delete the existing query records
     ActiveRecord::Base.transaction do
+      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
+      (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
+      ObjectValue.delete_all delete_cmd
       remove_dupe_pendings(credential)
-      pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+source_id.to_s
+      pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
-      p "Finalizing with #{pending_to_query}"
       ActiveRecord::Base.connection.execute(pending_to_query)
       # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
       #update_pendings
     end
-    self.refreshtime=Time.new if defined? self.refreshtime # timestamp    
-    self.save
+    self.refreshtime=Time.new # timestamp
   end
 
-
   # helper function to come up with the string used for the name_value_list
-  # name_value_list =  [ { "name" => "name", "value" => "rhomobile" },
-  #                     { "name" => "industry", "value" => "software" } ]
+  # name_value_list = [ { "name" => "name", "value" => "rhomobile" },
+  # { "name" => "industry", "value" => "software" } ]
   def make_name_value_list(hash)
     if hash and hash.keys.size>0
       result="["
       hash.keys.each do |x|
         result << ("{'name' => '"+ x +"', 'value' => '" + hash[x] + "'},") if x and x.size>0 and hash[x]
       end
-      result=result[0...result.size-1]  # chop off last comma
+      result=result[0...result.size-1] # chop off last comma
       result += "]"
     end
   end
-    
+
   def process_update_type(utype)
-    start=Time.new  # start timing the operation
+    start=Time.new # start timing the operation
     objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     if objs # check that we got some object values back
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
-        if x.object  
-          objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
+        if x.object
+          objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype) # this has all the attribute value pairs now
           attrvalues={}
           attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
           blob_file=x.blob_file_name
@@ -192,16 +185,16 @@ module SourcesHelper
     end
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
   end
-  
+
   # for query parameters (update type of qparms) they get cleared on subsequent calls just for a given user (or credentials)
   def cleanup_update_type(utype,user_id=nil)
     cleanup_cmd="select distinct(object) as object from object_values where update_type='"+ utype +"'and source_id="+id.to_s
-    (cleanup_cmd << " and user_id="+ user_id.to_s) if user_id# if there is a user_id then just do delete and update based upon the records with that credential  
+    (cleanup_cmd << " and user_id="+ user_id.to_s) if user_id# if there is a user_id then just do delete and update based upon the records with that credential
     objs=ObjectValue.find_by_sql(cleanup_cmd)
-    
-    objs.each do |x| 
+
+    objs.each do |x|
       if x.object
-        objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype)  # this has all the attribute value pairs now
+        objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype) # this has all the attribute value pairs now
         objvals.each do |y|
           y.destroy
         end
@@ -209,11 +202,11 @@ module SourcesHelper
         msg="Missing object property on object value: " + x.inspect.to_s
         p msg
         slog(nil,msg)
-      end 
-    end   
+      end
+    end
   end
   
-  # grab out all ObjectValues of updatetype="Create" with object named "qparms" 
+  # grab out all ObjectValues of updatetype="Create" with object named "qparms"
   # for a specific user (user_id) and source (id)
   # put those together into a hash where each attrib is the key and each value is the value
   # return nil if there are no such objects
@@ -226,7 +219,7 @@ module SourcesHelper
       attrs.each do |x|
         qparms[x.attrib]=x.value
         if x.update_type == 'create'
-          x.update_attribute('update_type', 'qparms') 
+          x.update_attribute('update_type', 'qparms')
           x.save
         end
       end
