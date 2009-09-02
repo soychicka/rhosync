@@ -41,13 +41,14 @@ class ClientMap < ActiveRecord::Base
   end
   
   # get insert objects based on token status
-  def self.get_insert_objs_by_token_status(join_conditions,client_id,resend_token)
-    objs_to_return = ObjectValue.find_by_sql "select * #{join_conditions} where cm.ack_token = 0 \
-                                              and cm.object_value_id is not NULL \
-                                              and cm.db_operation != 'delete' \
-                                              and cm.client_id = '#{client_id}' \
-                                              and cm.token = #{resend_token} \
-                                              order by ov.object"
+  def self.get_insert_objs_by_token_status(client_id,resend_token)
+    objs_to_return = ObjectValue.find_by_sql "select * from object_values ov where id in
+                                              (select object_value_id from client_maps as cm
+                                                where cm.ack_token = 0
+                                                and cm.db_operation != 'delete'
+                                                and cm.client_id = '#{client_id}'
+                                                and cm.token = #{resend_token}
+                                                order by ov.object)"
     return objs_to_return.collect! {|x| x.db_operation = 'insert'; x}
   end
   

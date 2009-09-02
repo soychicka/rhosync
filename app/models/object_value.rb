@@ -45,6 +45,16 @@ class ObjectValue < ActiveRecord::Base
     "#{object}#{attrib}#{update_type}#{source_id}#{user_id}#{value}#{random}".hash.to_i.abs
   end
   
+  def self.record_object_value(oav)
+    ovdata = ObjectValue.find(:first, :conditions => {:object=>oav[:object], :attrib=>oav[:attrib], 
+                                  :user_id=>oav[:user_id], :source_id=>oav[:source_id]})
+    if ovdata
+      ovdata.delete
+    end
+    
+    ObjectValue.create(:object=>oav[:object], :attrib=>oav[:attrib],
+      :user_id=>oav[:user_id], :source_id=>oav[:source_id], :value=> oav[:value], :update_type=>"query")
+  end
   
   # Returns the OAV list for a given user/source
   # If conditions are provided, return a subset of OAVs
