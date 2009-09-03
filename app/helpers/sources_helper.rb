@@ -106,18 +106,25 @@ module SourcesHelper
   end
 
   # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-  def update_pendings
+  def update_pendings(credential,check_existing=true)
     conditions="source_id=#{id}"
     conditions << " and user_id=#{credential.user.id}" if credential
     objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
+    current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query'"
     objs.each do |obj|
       begin
-        pending_to_query="update object_values set update_type='query',id=pending_id where id="+obj.id.to_s+" and update_type is null"
-        ActiveRecord::Base.connection.execute(pending_to_query)
+        if check_existing and current_ids.index(obj.pending_id.to_s) == nil
+          ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where 
+                                                 id="+obj.id.to_s+" and update_type is null"
+          current_ids << obj.pending_id.to_s
+        end
       rescue Exception => e
         slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
       end
     end
+    self.refreshtime=Time.new
+    # TODO: This is bad... These collided but we can't update them, so we delete for now.
+    ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}" 
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
