@@ -137,3 +137,26 @@ describe SessionsController do
   end
 
 end
+
+# Client routes
+describe SessionsController do
+
+  before(:each) do
+    User.destroy_all
+
+    @app = mock_model(App, :autoregister => 1)
+    @user = mock_model(User, :login => "newguy", :password => "password")
+    App.stub!(:find).and_return(@app)
+    @app.should_receive(:authenticates?).and_return(false)
+    @app.should_receive(:autoregister).and_return(true)
+    @app.should_receive(:users).and_return([])
+    @app.should_receive(:save).and_return(true)
+    User.should_receive(:authenticate).and_return(false)
+  end
+
+  it "should autoregister user" do
+    post :client_login, :source => "foo", :app_id => "bar", :login => "newguy", :password => "password"
+    User.count.should be 1
+  end
+
+end

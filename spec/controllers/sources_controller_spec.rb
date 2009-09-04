@@ -6,7 +6,7 @@ describe SourcesController do
   fixtures :apps
 
   before(:each) do
-    current_user=login_as(:quentin)
+    login_as(:quentin)
   end
 
   def mock_source(stubs={})
@@ -250,9 +250,9 @@ describe SourcesController do
                              :source_id => 37)
       mock_source
 
-      Source.should_receive(:find_by_permalink).with(@mock_source.id).and_return(mock_source)
+      Source.should_receive(:find_by_permalink).with(@mock_source.id.to_s).and_return(mock_source)
 
-      get :show, :id => "37", :format => "json", :client_id => "some-client"
+      get :show, :id => @mock_source.id, :format => "json", :client_id => "some-client"
       assigns[:source].should == records
     end
 

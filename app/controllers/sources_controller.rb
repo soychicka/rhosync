@@ -11,13 +11,13 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
-  
+
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
   # if a :last_update parameter is supplied then only show data that has been
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
-  
+
   def callback
     current_user=User.find_by_login params[:login]
     @app=@source.app
@@ -25,9 +25,9 @@ class SourcesController < ApplicationController
        :tag => current_user.id.to_s
     render(:nothing=>true, :status=>200)
   end
-  
+
   # PUSH TO ALL QUEUED UP USERS: (see show method below for queueing mechanism
-  # this notifies all users and their devices that have "registered" interest 
+  # this notifies all users and their devices that have "registered" interest
   # in an queued sync completion or backend
   #  via a PAP push (BlackBerry BES, iPhone APN push, or SMS (Windows Mobile)
   def ping
@@ -35,8 +35,8 @@ class SourcesController < ApplicationController
     @source.callback_url=request.url[0...lastslash-1] if lastslash
     @result=@source.ping
   end
-  
-  # PUSH TO SPECIFIC USER: 
+
+  # PUSH TO SPECIFIC USER:
   # this pings JUST the specified user with the given message
   # defaults to no message, 1/2 second vibrate
   # also provides callback URL of this source's show method but allows for overriding this callback
@@ -55,37 +55,37 @@ class SourcesController < ApplicationController
     end
     @result
   end
-  
+
   # shows ALL data from backend, refreshing data when necessary (if data is empty or "stale")
   # use search method if you wish to request specific data
   # IF you wish to have device pinged when by ping method for important events
-  # THEN supply params["device_pin"] and params["device_type"] 
+  # THEN supply params["device_pin"] and params["device_type"]
   def show
     if params["id"] == "rho_credential"
       render :text => "[]" and return
-    end  
+    end
     @app=@source.app
-    if !check_access(@app)  
+    if !check_access(@app)
       render :action=>"noaccess"
     else
-      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id) 
-        @source.credential=usersub.credential  # this variable is available in your source adapter 
+      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
+        @source.credential=usersub.credential  # this variable is available in your source adapter
       end
-      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh 
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
       build_object_values(params[:client_id],params[:ack_token],params[:p_size])
       respond_to do |format|
-        format.html 
+        format.html
         format.xml  { render :xml => @object_values}
         format.json
       end
     end
   end
-  
+
   def edit_search
     @source=Source.find_by_permalink params[:id]
-    @app=@source.app  
+    @app=@source.app
   end
- 
+
   # queries for specific data from backend
   # parameters:
   #  order- hash of values to be sent to the backend adapter to effect a query
@@ -95,20 +95,20 @@ class SourcesController < ApplicationController
   def search
     @source=Source.find_by_permalink params[:id]
     @app=@source.app
-    if !check_access(@app)  
+    if !check_access(@app)
       render :action=>"noaccess"
     else
-      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id) 
-        @source.credential=usersub.credential  # this variable is available in your source adapter 
-      end   
+      if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
+        @source.credential=usersub.credential  # this variable is available in your source adapter
+      end
       if params[:conditions].is_a?(Array)
-        conditions=nvlist_to_hash(params[:conditions]) 
+        conditions=nvlist_to_hash(params[:conditions])
       else
         conditions=params[:conditions]
       end
 
       p "Searching for #{conditions.inspect.to_s}"
-      
+
       tablename="object_values"
       if !params[:offset] or params[:offset].to_i<1   # # if there's no offset or offset is zero, do a new search
          @source.dosearch(@current_user,session,conditions,params[:order])
@@ -120,7 +120,7 @@ class SourcesController < ApplicationController
         tablename="subset_values"
         create_subset_table(tablename,params[:order],params[:offset],params[:limit])
       end
-      
+
       build_object_values(params[:client_id],params[:ack_token],params[:p_size],tablename)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}
@@ -134,7 +134,7 @@ class SourcesController < ApplicationController
     nvlist.each { |nv| attrvals[nv["name"]]=nv["value"] if nv["name"] and nv["value"] and nv["name"].size>0}
     attrvals
   end
- 
+
   def build_object_values(client_id=nil,ack_token=nil,p_size=nil,tablename=nil)
     tablename||="object_values"
     # if client_id is provided, return only relevant objects for that client
@@ -199,12 +199,12 @@ class SourcesController < ApplicationController
       format.json { render :json => @attributes}
     end
   end
-  
+
   # generate a new client for this source
   def clientcreate
     @client = Client.new
     @client.user = current_user if current_user
-    
+
     respond_to do |format|
       if @client.save
         format.json { render :json => @client }
@@ -212,14 +212,14 @@ class SourcesController < ApplicationController
       end
     end
   end
-  
+
   # register client for for push notifications
   def clientregister
     @client = Client.find_by_client_id(params[:client_id])
     register_client(@client) if @client
     render :nothing => true, :status => 200
   end
-  
+
   # reset client_maps data
   def clientreset
     @client = Client.find_by_client_id(params[:client_id])
@@ -256,27 +256,27 @@ class SourcesController < ApplicationController
     @app=App.find_by_permalink(params[:app_id]) if params[:app_id]
     if params[:id]=="rho_credential" # its trying to create a credential on the fly
       @sub=Membership.find_or_create_by_user_id_and_app_id current_user.id,@app.id  # find the just created membership subscription
-      
+
       # create new credential
       unless @sub.credential
-        @sub.credential = Credential.create 
+        @sub.credential = Credential.create
       end
-      
+
       urlattribs=params[:attrvals].select {|av| av["attrib"]=="url"}
       @sub.credential.url=urlattribs[0]["value"] if urlattribs.present?
-    
+
       loginattribs=params[:attrvals].select {|av| av["attrib"]=="login"}
       @sub.credential.login=loginattribs[0]["value"] if loginattribs.present?
-          
+
       passwordattribs=params[:attrvals].select {|av| av["attrib"]=="password"}
       @sub.credential.password=passwordattribs[0]["value"] if passwordattribs.present?
 
-      tokenattribs=params[:attrvals].select {|av| av["attrib"]=="token"}      
+      tokenattribs=params[:attrvals].select {|av| av["attrib"]=="token"}
       @sub.credential.token=tokenattribs[0]["value"] if tokenattribs.present?
-    
+
       @sub.credential.save
       @sub.save
-      
+
       objects = []
     else  # just put the (noncredential) data into ObjectValues to get picked up by the backend source adapter
       @source=Source.find_by_permalink(params[:id]) if params[:id]
@@ -300,7 +300,7 @@ class SourcesController < ApplicationController
         end
         o.source=@source
         o.user_id=current_user.id
-        
+
         if x["attrib_type"] and x["attrib_type"] == 'blob'
           o.blob = params[:blob]
           o.blob.instance_write(:file_name, x["value"])
@@ -313,12 +313,12 @@ class SourcesController < ApplicationController
     @object_values = ObjectValue.find_by_sql object_values_sql('create')
     respond_to do |format|
       if params[:no_redirect]
-        format.html { 
+        format.html {
           flash[:notice]="Created objects"
           render :action=>"show",:id=>@source.id,:app_id=>@source.app.id
         }
       else
-        format.html { 
+        format.html {
           flash[:notice]="Created objects"
           redirect_to :action=>"show",:id=>@source.id,:app_id=>@source.app.id
         }
@@ -363,7 +363,7 @@ class SourcesController < ApplicationController
     end
 
     respond_to do |format|
-      format.html { 
+      format.html {
         flash[:notice]="Updated objects"
         redirect_to :action=>"show",:id=>@source.id,:app_id=>@source.app.id
       }
@@ -405,7 +405,7 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json { render :json => objects }
     end
-    
+
   rescue SourceAdapterLoginException
     logout_killing_session!
     render :nothing=>true, :status => 401
@@ -418,19 +418,19 @@ class SourcesController < ApplicationController
 
   def newobject
   end
-  
+
   # GET /sources
   # GET /sources.xml
   # this returns all sources that are associated with a given "app" as determine by the token
-  def index    
+  def index
     login=current_user.login
     if params[:app_id].nil?
       @app=App.find_by_admin login
     else
-      @app=App.find_by_permalink params[:app_id] 
+      @app=App.find_by_permalink params[:app_id]
     end
     @sources=@app.sources if @app
-        
+
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @sources }
@@ -441,7 +441,7 @@ class SourcesController < ApplicationController
   # GET /sources/new.xml
   def new
     @source = Source.new
-    
+
     @app=App.find_by_permalink params[:app_id] if params[:app_id]
     @source.app=@app
     if @app.sources.size > 0 # default the url,login and password
@@ -458,13 +458,13 @@ class SourcesController < ApplicationController
   # GET /sources/1/edit
   def edit
     if current_user.nil?
-      redirect_to :controller=>:sessions,:action=>:new 
+      redirect_to :controller=>:sessions,:action=>:new
     else
       p "Current user: " + current_user.login
     end
     @source=Source.find_by_permalink params[:id]
     @app=@source.app
-    @apps=Administration.find_all_by_user_id(current_user.id) 
+    @apps=Administration.find_all_by_user_id(current_user.id)
     render :action=>"edit"
   end
 
@@ -498,7 +498,7 @@ class SourcesController < ApplicationController
     error=nil
     src=Source.find_by_name params["source"]["name"]
     if src and src!=@source
-      error="Source name already exists. Please try a different name." 
+      error="Source name already exists. Please try a different name."
     else
       @app=App.find_by_permalink params["source"]["app_id"]
       @source.app=@app
@@ -510,9 +510,9 @@ class SourcesController < ApplicationController
           format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.id) }
           format.xml  { head :ok }
         else
-          if error 
+          if error
             flash[:notice]=error
-          else 
+          else
             begin  # call underlying save! so we can get some exceptions back to report
               # (update_attributes just calls save
               @source.save!
@@ -538,20 +538,20 @@ class SourcesController < ApplicationController
       format.xml  { head :ok }
     end
   end
-  
+
   def noaccess
   end
-  
+
   def test_createobjects
     respond_to do |format|
       format.html
     end
   end
-  
+
   def viewlog
     @logs=SourceLog.find :all, :conditions=>{:source_id=>@source.id},:order=>"updated_at desc"
   end
-  
+
   # quick synchronous simple query that doesn't hit the database
   # parameters:
   #   question
@@ -577,17 +577,17 @@ class SourcesController < ApplicationController
       format.json { render :action=>"show"}
     end
   end
-  
+
 
 protected
   def get_new_token
     ((Time.now.to_f - Time.mktime(2009,"jan",1,0,0,0,0).to_f) * 10**6).to_i
   end
-  
+
   def find_source
     @source=Source.find_by_permalink(params[:id]) if params[:id]
   end
-  
+
   # creates subset of ObjectValues table in specified order
   # can limit the number of rows
   # and optionally has offset as well (must have limit to allow offset)
@@ -604,7 +604,7 @@ protected
     end
     ActiveRecord::Base.connection.execute objectvalues_cmd
   end
-  
+
   def object_values_sql(utype,ov_table=nil)
     ov_table||="object_values"
     objectvalues_cmd="select * from #{ov_table} where update_type='#{utype}' and source_id=#{@source.id}"
