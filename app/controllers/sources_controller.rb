@@ -105,9 +105,9 @@ class SourcesController < ApplicationController
         conditions=params[:conditions]
       end
 
-      p "Searching for #{conditions.inspect.to_s}"
+      logger.debug "Searching for #{conditions.inspect.to_s}"
       
-      @source.dosearch(@current_user,session,conditions,params[:limit],params[:offset])
+      @source.dosearch(@current_user,session,conditions,params[:max_results],params[:offset])
       
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions)
       respond_to do |format|

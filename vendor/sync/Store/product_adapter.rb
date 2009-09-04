@@ -3,7 +3,7 @@ require 'product'
 # This adapter shows how you can use an ActiveResource model (in this case 'product')
 # as your rhodes object
 class ProductAdapter < SourceAdapter
-  def query
+  def query(conditions=nil,limit=nil,offset=nil)
     @result = Product.hashinate_all
     @result
   end
