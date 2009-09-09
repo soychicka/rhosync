@@ -68,11 +68,4 @@ class User < ActiveRecord::Base
     end
     @result
   end 
-
-  # checks for changes from all of the user's clients
-  def check_for_changes(source)
-    clients.each do |client|
-      source.check_for_changes_for_client(client)
-    end
-  end
 end

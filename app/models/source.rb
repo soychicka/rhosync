@@ -69,7 +69,7 @@ class Source < ActiveRecord::Base
   
   # executes synchronous search for records that meet specified criteria of conditions returned in specified order
   # calls source adapter query method with conditions and order
-  def dosearch(current_user,session=nil,conditions=nil,order=nil)
+  def dosearch(current_user,session=nil,conditions=nil,limit=nil,offset=nil)
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     begin
@@ -79,11 +79,9 @@ class Source < ActiveRecord::Base
     end   
     clear_pending_records(self.credential)
     begin  
-      p "Calling query with conditions: #{conditions.inspect.to_s}"
-      source_adapter.query conditions,order
+      p "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
+      source_adapter.query conditions,limit,offset
       source_adapter.sync
-      @object_values=ObjectValue.find_by_sql "select * from object_values where update_type is null"
-      p "Retrieved records size: #{@object_values.size}"
       update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
     rescue Exception=>e
       p "Failed to sync #{e}"

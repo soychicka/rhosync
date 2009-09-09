@@ -101,7 +101,7 @@ Product:
   id: 23
   name: Product
   app_id: 3
-  adapter: Product
+  adapter: ProductAdapter
   url: http://rhostore.heroku.com/products.json
   limit: 100
 
