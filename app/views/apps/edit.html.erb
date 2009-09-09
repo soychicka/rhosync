@@ -1,7 +1,7 @@
-<body onload="if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+<body onload="if (document.getElementsByName('app[anonymous]')[0].checked==true) {
    document.getElementById('subscribers').style.visibility='hidden';
 }
-else{ 
+else{
   document.getElementById('subscribers').style.visibility='visible';
 }">
 <h3>Editing Application</h3>
@@ -37,19 +37,19 @@ else{
 
 <% else %>
 
-<%=f.check_box :anonymous,:onchange=>"if (document.getElementsByName('app[anonymous]')[0].checked==true) {   
+<%=f.check_box :anonymous,:onchange=>"if (document.getElementsByName('app[anonymous]')[0].checked==true) {
    document.getElementById('subscribers').style.visibility='hidden';
 }
-else{ 
+else{
   document.getElementById('subscribers').style.visibility='visible';
 }"
 %>
-Anonymous (Allow All Users) 
+Anonymous (Allow All Users)
 <%=f.check_box :autoregister %> Auto-register
-<%=f.check_box :stop_subscriptions,:onchange=>"if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {   
+<%=f.check_box :stop_subscriptions,:onchange=>"if (document.getElementsByName('app[stop_subscriptions]')[0].checked==true) {
    document.getElementById('add_subscriber').style.visibility='hidden';
 }
-else{ 
+else{
   document.getElementById('add_subscriber').style.visibility='visible';
 }"
 %> Stop Subscriptions
@@ -67,13 +67,13 @@ else{
 <div id="add_subscriber">
 <%form_for(:subscribe, @app,:url=>{:controller=>"apps",:action=>"subscribe"})  do |f|%>
 <input type="hidden" name="app_id" value="<%=@app.id%>"/>
-<select name="subscriber">
+<select name="credential[subscriber]">
 <%@users.each do |user|%>
 <option value="<%=user.login%>"><%=user.login%></option>
 <%end%>
 </select>
 <div>
-<i>Credential URL <input name="url" size="40">&nbsp;Login <input name="login" size="12" />&nbsp;Password <input name="password" size="12" />&nbsp;Token<input name="token" /></i>
+  <i>Credential URL <input name="credential[url]" size="40">&nbsp;Login <input name="credential[login]" size="12" />&nbsp;Password <input name="credential[password]" size="12" />&nbsp;Token<input name="credential[token]" /></i>
 </div>
 <%=f.submit "Subscribe User" %>
 <%end%>

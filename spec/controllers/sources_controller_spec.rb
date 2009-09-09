@@ -51,8 +51,6 @@ describe SourcesController do
     @mock_records ||= mock_model(ObjectValue, stubs)
   end
 
-
-
   describe "responding to GET show" do
 
     it "should expose the requested source as @source" do

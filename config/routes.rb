@@ -9,33 +9,34 @@ ActionController::Routing::Routes.draw do |map|
   map.login '/login', :controller => 'sessions', :action => 'new'
   map.register '/register', :controller => 'users', :action => 'create'
   map.signup '/signup', :controller => 'users', :action => 'new'
-  
+
   # more for routes
   map.forgot_password '/forgot_password', :controller => 'users', :action => 'forgot_password'
   map.reset_password '/reset_password', :controller => 'users', :action => 'reset_password'
-  
+
   map.resources :users
   map.resource :session
 
   # 1.2-style routes
   map.connect 'apps/:app_id/sources/client_login', :controller => 'sessions', :action => 'client_login'
-  
+  map.connect 'apps/:app_id/subscribe', :controller => 'apps', :action => 'subscribe'
+
   # Pre 1.2-style routes
   map.connect 'apps/:app_id/sources/:id/client_login', :controller => 'sessions', :action => 'client_login'
-  
-  src_collection = { :clientcreate => :get, 
-                     :clientregister => :post, 
+
+  src_collection = { :clientcreate => :get,
+                     :clientregister => :post,
                      :clientreset => :get }
-                     
-  src_member = { :createobjects => :post, 
-                 :updateobjects => :post, 
+
+  src_member = { :createobjects => :post,
+                 :updateobjects => :post,
                  :deleteobjects => :post,
                  :search => [:get, :post],
-                 :ask => :post, 
+                 :ask => :post,
                  :ping => :get,
                  :ping_user => :get,
                  :refresh => :get,
-                 :clientcreate => :get, 
+                 :clientcreate => :get,
                  :clientreset => :get }
 
   map.resources :sources, :collection => src_collection, :member => src_member
@@ -61,7 +62,7 @@ ActionController::Routing::Routes.draw do |map|
 
   # Sample resource route with sub-resources:
   #   map.resources :products, :has_many => [ :comments, :sales ], :has_one => :seller
-  
+
   # Sample resource route with more complex sub-resources
   #   map.resources :products do |products|
   #     products.resources :comments

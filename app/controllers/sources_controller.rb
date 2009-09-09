@@ -64,7 +64,10 @@ class SourcesController < ApplicationController
     end
     @app=@source.app
     if !check_access(@app)
-      render :action=>"noaccess"
+      respond_to do |wants|
+        wants.html { render :action=>"noaccess" }
+        wants.xml  { render :xml => { :error => "No Access" } }
+      end
     else
       if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
         @source.credential=usersub.credential  # this variable is available in your source adapter
@@ -358,15 +361,21 @@ class SourcesController < ApplicationController
     render :action=>"edit"
   end
 
-  # POST /sources
-  # POST /sources.xml
+  # POST /apps/:app_id/sources
+  # POST /apps/:app_id/sources.xml
+  #
+  # Example xml request body:
+  # <source>
+  #   <name>product</name>
+  #   <adapter>product</adapter>
+  # </source>
   def create
     @source = Source.new(params[:source])
     error=nil
     if Source.find_by_name @source.name
       error="Source already exists. Please try a different name."
     end
-    @app=App.find_by_permalink params["source"]["app_id"]
+    @app=App.find_by_permalink params[:app_id]
     @source.app=@app
     respond_to do |format|
       if !error and @source.save

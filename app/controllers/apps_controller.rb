@@ -74,7 +74,7 @@ class AppsController < ApplicationController
         redirect_to :action=>:edit
       end
       wants.xml do
-        render :xml => @sources
+        render :xml => @sources, :status => :ok
       end
     end
   end
@@ -105,19 +105,28 @@ class AppsController < ApplicationController
     user=User.find_by_login login
     app.users << user  if user
     app.save
-    if (params[:url]) # we have a URL of a credential
+    if (@credential[:url]) # we have a URL of a credential
       @sub=Membership.find_by_user_id_and_app_id user.id,app.id  # find the just created membership subscription
       @sub.credential=Credential.new
-      @sub.credential.url=params[:url]
-      @sub.credential.login=params[:login]
-      @sub.credential.password=params[:password]
-      @sub.credential.token=params[:token]
+      @sub.credential.url=@credential[:url]
+      @sub.credential.login=@credential[:login]
+      @sub.credential.password=@credential[:password]
+      @sub.credential.token=@credential[:token]
       @sub.credential.save
       @sub.save
     end
   end
 
   # subscribe specified subscriber to specified app ID
+  #
+  # http://rhosync.local/apps/:app_id/subscribe?format=xml
+  # Example xml request body:
+  # <credential>
+  #   <subscriber>jose</subscriber>
+  #   <login>jose.gomez@koombea.com</login>
+  #   <password>62270767</password>
+  #   <url>http://www.pivotaltracker.com</url>
+  # </credential>
   def subscribe
     @app=App.find_by_permalink(params[:app_id])
     @app||=App.find(params[:id])
@@ -126,17 +135,21 @@ class AppsController < ApplicationController
       return
     end
     user=@current_user
-    if params[:subscriber]
-      @current_user=User.find_by_login params[:subscriber]
+    @credential = params[:credential]
+    if @credential[:subscriber]
+      @current_user=User.find_by_login @credential[:subscriber]
       user=@current_user
     else
       if @current_user.nil? or @current_user.login=="anonymous" # create the new user on the fly
-        redirect_to :controller=>"sessions/create",:login=>params[:login],:password=>params[:password],:email=>params[:email],:app_id=>params[:app_id]
+        redirect_to :controller=>"sessions/create",:login=>@credential[:login],:password=>@credential[:password],:email=>@credential[:email],:app_id=>params[:app_id]
         return
       end
     end
     add_user_to_app(user.login,@app)
-    redirect_to :action=>:edit,:id=>@app.id
+    respond_to do |wants|
+      wants.html { redirect_to :action=>:edit,:id=>@app.id }
+      wants.xml  { head :ok }
+    end
   end
 
   # unsubscribe subscriber to specified app ID
@@ -178,6 +191,12 @@ class AppsController < ApplicationController
 
   # POST /apps
   # POST /apps.xml
+  #
+  # Example xml request body:
+  # <app>
+  #   <description>Description for app</description>
+  #   <name>AppName</name>
+  # </app>
   def create
     error=nil
     @app = App.new(params[:app])

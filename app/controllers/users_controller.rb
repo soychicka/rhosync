@@ -5,6 +5,13 @@ class UsersController < ApplicationController
     @user = User.new
   end
 
+  # Example xml request body:
+  # <user>
+  #   <login>user</login>
+  #   <email>user@host.com</email>
+  #   <password>password</password>
+  #   <password_confirmation>password</password_confirmation>
+  # </user>
   def create
     logout_keeping_session!
     @user = User.new(params[:user])
