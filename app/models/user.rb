@@ -68,12 +68,5 @@ class User < ActiveRecord::Base
       p "Result of client ping: #{@result}" if @result
     end
     @result
-  end 
-
-  # checks for changes from all of the user's clients
-  def check_for_changes(source)
-    clients.each do |client|
-      source.check_for_changes_for_client(client)
-    end
   end
 end
