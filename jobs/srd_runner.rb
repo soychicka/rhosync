@@ -73,7 +73,7 @@ begin
       user = datum.user
       
       # destroy all OVAs for this user on the object
-      ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>ovdata.object)
+      ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>datum.object)
       
       #notify
       ping(user)
