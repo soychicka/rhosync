@@ -54,15 +54,17 @@ class ObjectValue < ActiveRecord::Base
   
   # Returns the OAV list for a given user/source
   # If conditions are provided, return a subset of OAVs
-  def self.get_sql_by_conditions(utype,source_id,user_id=nil,conditions=nil)
+  def self.get_sql_by_conditions(utype,source_id,user_id=nil,conditions=nil,by_source=nil)
     sql = ""
+    by_source_condition = "and ov.source_id=#{source_id}" if by_source
     user_str = user_id.nil? ? '' : " and user_id=#{user_id}"
     if conditions
       counter = 0
       sql << "select * from object_values where object in "
       conditions.each do |key,val|
         sql << " (select object from object_values where (value like '#{val}%' 
-                  and attrib='#{key}') and source_id=#{source_id} 
+                  and attrib='#{key}') 
+                  #{by_source_condition}
                   and update_type='#{utype}' #{user_str}) "                
         sql <<  " and object in " if counter < conditions.length-1
         counter += 1

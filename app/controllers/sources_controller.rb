@@ -117,7 +117,7 @@ class SourcesController < ApplicationController
 
       @source.dosearch(@current_user,session,conditions,params[:max_results],params[:offset])
 
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,true)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
       get_wrapped_list(@object_values)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}

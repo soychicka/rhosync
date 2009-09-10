@@ -45,9 +45,12 @@ class SourceAdapter
               unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id" or attrkey=="attrib_type"
                 obj[attrkey]=obj[attrkey].to_s if obj[attrkey].is_a? Fixnum
                 obj[attrkey]||=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
-                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
-                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                # allow override of source_id here
+                src_id = obj[:source_id]
+                src_id ||= @source.id
+                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
+                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey])          
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
                 if sql.size > max_sql_statement  # this should not really be necessary. its just for safety. we've seen errors with very large statements
                   sql.chop!
                   ActiveRecord::Base.connection.execute sql
@@ -69,11 +72,15 @@ class SourceAdapter
             attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
               unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
-                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")        
+                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")
+                
+                # allow override of source_id here
+                src_id = obj[:source_id]
+                src_id ||= @source.id
                 sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
-                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey],rand)
-                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,@source.id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + @source.id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
+                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
+                pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey])          
+                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
             end # for all keys in hash
