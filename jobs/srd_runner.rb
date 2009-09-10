@@ -23,8 +23,8 @@ callback_url  =ARGV[2]
 
 logger.debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 
-def ping(user)
-  result = user.ping(callback_url)
+def ping(user, url)
+  result = user.ping(url)
 
   logger.debug result.inspect.to_s
   logger.debug result.code
@@ -39,7 +39,6 @@ begin
   source = Source.find_by_name("AeropriseSrd")
   
   if action == 'add'
-    
     serverip = app.configurations.find(:first, :conditions => {:name => 'remedyip'})
     adminuser = app.configurations.find(:first, :conditions => {:name => 'adminuser'})
     pw = app.configurations.find(:first, :conditions => {:name => 'adminpw'})
@@ -63,7 +62,7 @@ begin
       AeropriseSrdRecord.create(srd, source.id, user.id) if srd
       
       #notify
-      ping(user)
+      ping(user, callback_url)
     end
   elsif action == 'remove'
     # title is a required field for each srd, this gives us a row per SRD
@@ -76,7 +75,7 @@ begin
       ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>datum.object)
       
       #notify
-      ping(user)
+      ping(user, callback_url)
     end
   end
 
