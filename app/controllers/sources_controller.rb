@@ -81,7 +81,7 @@ class SourcesController < ApplicationController
         if @version
           format.json { render :template => "sources/show.json_v#{@version}.erb" }
         else
-          format.json { render :json => @object_values }
+          format.json
         end
       end
     end
