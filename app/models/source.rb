@@ -265,7 +265,4 @@ class Source < ActiveRecord::Base
   def self.find_by_permalink(link)
     Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
   end
-  
-
-
 end

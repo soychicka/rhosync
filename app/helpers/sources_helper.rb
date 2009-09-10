@@ -234,7 +234,7 @@ module SourcesHelper
     qparms
   end
 
-  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil)
+  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil)
     # if client_id is provided, return only relevant objects for that client
     if client_id
       @client = setup_client(client_id)
@@ -278,7 +278,7 @@ module SourcesHelper
                                                source_id = #{@source.id} and update_type = '#{utype}'"
     else
       # no client_id, just show everything (optionally based on search conditions)
-      @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions)
+      @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions,by_source)
     end
     @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
   end
@@ -296,25 +296,51 @@ module SourcesHelper
     end
     @client
   end
+  
+  # wrap object-values by object and source
+  def wrap_object_values(ovlist)
+    list = {}
+    ovlist.each do |ov|
+      src_name = ov.source.nil? ? nil : ov.source.name
+      src_name ||= 'RhoDeleteSource'
+      obj_sym = ov.object.nil? ? nil : ov.object.to_sym
+      obj_sym ||= :rho_del_obj
+      av_hash = { :id => ov.id, 
+                  :db_operation => ov.db_operation,
+                  :attrib => ov.attrib,
+                  :value => ov.value }
+      if list[src_name]
+        if list[src_name][obj_sym]
+          list[src_name][obj_sym] << av_hash
+        else
+          list[src_name][obj_sym] = [av_hash]
+        end
+      else
+        list[src_name] = { obj_sym => [av_hash] }
+      end
+    end
+    list
+  end
 
   # creates an object_value list for a given client
   # based on that client's client_map records
   # and the current state of the object_values table
   # since we do a delete_all in rhosync refresh,
   # only delete and insert are required
-  def process_objects_for_client(source,client,token,ack_token,resend_token,p_size=nil,first_request=false,ov_table=nil)
+  def process_objects_for_client(source,client,token,ack_token,resend_token,p_size=nil,first_request=false,by_source=nil)
 
     # default page size of 10000
     page_size = p_size.nil? ? 10000 : p_size.to_i
     last_sync_time = Time.now
     objs_to_return = []
-    user_condition="= #{current_user.id}" if current_user and current_user.id
+    by_source_condition = "and ov.source_id=#{source.id}" if by_source
+    user_condition = "= #{current_user.id}" if current_user and current_user.id
     user_condition ||= "is NULL"
 
     # Setup the query conditions
     object_value_conditions = "from object_values ov
                                 where ov.update_type='query'
-                                and ov.source_id=#{source.id}
+                                #{by_source_condition}
                                 and ov.user_id #{user_condition}
                                 and id not in
                                   (select object_value_id

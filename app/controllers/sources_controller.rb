@@ -74,10 +74,15 @@ class SourcesController < ApplicationController
       end
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions])
+      get_wrapped_list(@object_values)
       respond_to do |format|
         format.html
-        format.xml  { render :xml => @object_values}
-        format.json
+        format.xml  { render :xml => @object_values }
+        if @version
+          format.json { render :template => "sources/show.json_v#{@version}.erb" }
+        else
+          format.json { render :json => @object_values }
+        end
       end
     end
   end
@@ -112,10 +117,15 @@ class SourcesController < ApplicationController
 
       @source.dosearch(@current_user,session,conditions,params[:max_results],params[:offset])
 
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,true)
+      get_wrapped_list(@object_values)
       respond_to do |format|
         format.html { render :template=>"sources/show.html.erb"}
-        format.json { render :template=>"sources/show.json.erb"}
+        if @version
+          format.json { render :template => "sources/show.json_v#{@version}.erb" }
+        else
+          format.json { render :template => "sources/show.json.erb" }
+        end
       end
     end
   end
@@ -492,5 +502,10 @@ protected
     attrvals={}
     nvlist.each { |nv| attrvals[nv["name"]]=nv["value"] if nv["name"] and nv["value"] and nv["name"].size>0}
     attrvals
+  end
+  
+  def get_wrapped_list(ovlist)
+    @version = params[:version]
+    @wrapped_list = wrap_object_values(ovlist) if @version
   end
 end
