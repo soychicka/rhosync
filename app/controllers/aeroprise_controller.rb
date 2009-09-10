@@ -103,8 +103,10 @@ class AeropriseController < ApplicationController
     @source = Source.find_by_name("AeropriseSrd")
     @srd = ObjectValue.find(:first, :conditions => {:object=>instance_id, :source_id=>@source.id})
 
+    logger.debug "Warning: unknown SRD #{instance_id}" if @srd.nil?
+    
     # if deployed and online, check if present. if not add and notify
-    if (status=='deployed' && active_state=='online')
+    if (status=='Deployed' && active_state=='Online')
       if @srd.nil?
         # start background job to try to get this SRD for each user
         Bj.submit "ruby script/runner ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
@@ -112,7 +114,7 @@ class AeropriseController < ApplicationController
     end
     
     # if expired or offline, check if present. if so, remove and notify
-    if (status=='expired' || active_state=='offline')
+    if (status=='Expired' || active_state=='Offline')
       if @srd
         # start background job to try to remove this SRD for each user that has it
         Bj.submit "ruby script/runner ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
