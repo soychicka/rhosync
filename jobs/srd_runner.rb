@@ -70,7 +70,7 @@ begin
     ovdata = ObjectValue.find(:all, :conditions => {:attrib=>"title", :source_id=>source.id, :update_type=>'query', :object=>srd_id})
     
     ovdata.each do |datum|
-      user = ovdata.user
+      user = datum.user
       
       # destroy all OVAs for this user on the object
       ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>ovdata.object)
