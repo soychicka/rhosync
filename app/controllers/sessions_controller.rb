@@ -23,7 +23,7 @@ class SessionsController < ApplicationController
       if user
         self.current_user = user
       else
-        render(:status => 401) and return
+        render(:nothing => true, :status => 401) and return
       end
     else
       user = User.authenticate(params[:login], params[:password])
@@ -39,14 +39,14 @@ class SessionsController < ApplicationController
             @app.users << user
             @app.save
           else
-            render :status => 401
+            render(:nothing => true, :status => 401) and return
           end
         rescue ActiveRecord::RecordInvalid
-          render :status => 401
+          render(:nothing => true, :status => 401) and return
         end
       end
     end
-    render :nothing => true, :status => 200
+    render(:nothing => true, :status => 200)
   end
 
   def create

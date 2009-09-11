@@ -75,16 +75,18 @@ class Source < ActiveRecord::Base
     begin
       source_adapter.login  # should set up @session_id
     rescue Exception=>e
-      p "Failed to login #{e}"
+      p "Failed to login #{e}"      
+      p e.backtrace.join("\n")
     end   
     clear_pending_records(self.credential)
     begin  
       p "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
-      source_adapter.query conditions,limit,offset
+      source_adapter.query(conditions,limit,offset)
       source_adapter.sync
       update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
     rescue Exception=>e
       p "Failed to sync #{e}"
+      p e.backtrace.join("\n")
     end 
   end
    
