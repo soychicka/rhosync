@@ -153,7 +153,7 @@ module SourcesHelper
       hash.keys.each do |x|
         result << ("{'name' => '"+ x +"', 'value' => '" + hash[x] + "'},") if x and x.size>0 and hash[x]
       end
-      result=result[0...result.size-1] # chop off last comma
+      result=result[0...result.size-1] if result.size > 1 # chop off last comma
       result += "]"
     end
   end
