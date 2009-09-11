@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090716233709) do
+ActiveRecord::Schema.define(:version => 20090911224727) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -139,7 +139,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
-    t.text     "value",             :limit => 255
+    t.text     "value"
     t.integer  "pending_id"
     t.string   "update_type"
     t.integer  "user_id"
@@ -197,7 +197,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
   end
 
   create_table "users", :force => true do |t|
-    t.string   "login",                     :limit => 40
+    t.string   "login"
     t.string   "name",                      :limit => 100, :default => ""
     t.string   "email",                     :limit => 100
     t.string   "crypted_password",          :limit => 40
