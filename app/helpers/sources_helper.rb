@@ -263,7 +263,7 @@ module SourcesHelper
       if @source.queuesync and @source.needs_refresh
         @object_values=[]
       else
-        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request)
+        @object_values=process_objects_for_client(@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,by_source)
       end
       # set token depending on records returned
       # if we sent zero records, we need to keep track so the client
