@@ -105,7 +105,7 @@ class AppsController < ApplicationController
     user=User.find_by_login login
     app.users << user  if user
     app.save
-    if (@credential[:url]) # we have a URL of a credential
+    if @credential && @credential[:url] # we have a URL of a credential
       @sub=Membership.find_by_user_id_and_app_id user.id,app.id  # find the just created membership subscription
       @sub.credential=Credential.new
       @sub.credential.url=@credential[:url]
@@ -136,7 +136,7 @@ class AppsController < ApplicationController
     end
     user=@current_user
     @credential = params[:credential]
-    if @credential[:subscriber]
+    if @credential && @credential[:subscriber]
       @current_user=User.find_by_login @credential[:subscriber]
       user=@current_user
     else
