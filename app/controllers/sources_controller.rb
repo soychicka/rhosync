@@ -382,10 +382,10 @@ class SourcesController < ApplicationController
   def create
     @source = Source.new(params[:source])
     error=nil
-    if Source.find_by_name @source.name
+    if Source.find_by_name(@source.name)
       error="Source already exists. Please try a different name."
     end
-    @app=App.find_by_permalink params[:app_id]
+    @app=App.find_by_permalink(params[:source][:app_id])
     @source.app=@app
     respond_to do |format|
       if !error and @source.save
