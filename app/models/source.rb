@@ -158,13 +158,11 @@ class Source < ActiveRecord::Base
         rescue
           p "Failed to execute"
         end
-        #raise StandardError
         tlog(start,"page",self.id)
         start=Time.new
       else       
         start=Time.new
         source_adapter.query
-        #raise StandardError
         tlog(start,"query",self.id)
       end        
       
@@ -175,7 +173,7 @@ class Source < ActiveRecord::Base
       finalize_query_records(@credential)
       tlog(start,"finalize",self.id)
     rescue Exception=>e
-      p "Failed to sync: #{e}"
+      p "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
