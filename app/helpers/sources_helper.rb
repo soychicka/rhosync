@@ -24,15 +24,17 @@ module SourcesHelper
   # determines if the logged in users is a subscriber of the current app or
   # admin of the current app
   def check_access(app)
-    logger.debug "Checking access for user "+@current_user.login
-    matches_login=app.users.select{ |u| u.login==@current_user.login}
-    matches_login << app.administrations.select { |a| a and a.user and a.user.login==@current_user.login } # let the administrators of the app in as well
-    if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
-      logger.info  "App is not anonymous and user was not found in subscriber list"
-      logger.info "User: " + current_user.login + " not allowed access."
-      username = current_user.login
-      username ||= "unknown"
-      result=nil
+    if @current_user
+      logger.debug "Checking access for user "+@current_user.login
+      matches_login=app.users.select{ |u| u.login==@current_user.login}
+      matches_login << app.administrations.select { |a| a and a.user and a.user.login==@current_user.login } # let the administrators of the app in as well
+      if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
+        logger.info  "App is not anonymous and user was not found in subscriber list"
+        logger.info "User: " + current_user.login + " not allowed access."
+        username = current_user.login
+        username ||= "unknown"
+        result=nil
+      end
     end
     result=@current_user
   end

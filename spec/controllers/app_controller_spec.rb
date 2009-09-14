@@ -150,9 +150,9 @@ describe AppsController do
   describe "responding to DELETE destroy" do
 
     it "should destroy the requested app" do
-      App.should_receive(:find).with("37").and_return(mock_app)
+      App.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>mock_app.id}]}).and_return(mock_app)
       mock_app.should_receive(:destroy)
-      delete :destroy, :link => "37", :id => @mock_app.id.to_s
+      delete :destroy, :link => mock_app.id, :id => @mock_app.id.to_s
     end
 
     it "should redirect to the apps list" do
