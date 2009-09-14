@@ -151,14 +151,15 @@ class Source < ActiveRecord::Base
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
       if defined? source_adapter.page 
-        source_adapter.page(0)
+  #      source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
         cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
         p "Executing background job: #{cmd} #{current_user.id.to_s}"
         begin 
           Bj.submit cmd,:tag => current_user.id.to_s
-        rescue
-          p "Failed to execute"
+        rescue =>e
+          p "Failed to execute #{e.to_s}"
+          p e.backtrace.join("\n")
         end
         tlog(start,"page",self.id)
         start=Time.new
@@ -177,6 +178,7 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       p "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
+      p e.backtrace.join("\n")
     end 
     source_adapter.logoff
   end
