@@ -33,4 +33,8 @@ class ApplicationController < ActionController::Base
     end
   end
   
+  def find_and_register_client
+    @client = Client.find_by_client_id(params[:client_id])
+    register_client(@client) if @client
+  end
 end

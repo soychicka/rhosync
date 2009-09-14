@@ -145,8 +145,7 @@ class SourcesController < ApplicationController
 
   # register client for for push notifications
   def clientregister
-    @client = Client.find_by_client_id(params[:client_id])
-    register_client(@client) if @client
+    find_and_register_client
     render :nothing => true, :status => 200
   end
 
