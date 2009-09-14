@@ -12,20 +12,13 @@ describe SourcesController do
   def mock_source(stubs={})
     time = Time.now.to_s
     stubs = {:url=>'',
-             :prolog=>'',
-             :epilog=>'',
-             :login=>true,
-             :createcall=>'',
-             :updatecall=>'',
-             :deletecall=>'',
-             :call=>'',
-             :sync=>'',
-             :query=>'',
-             :logoff=>'',
-             :initadapter=>true,
-             :source_adapter=>nil,
+             :name=>'SugarAccounts',
+             :login=>'',
+             :adapter=>nil,
              :refreshtime=>time,
              "refreshtime=".to_sym=>time,
+             :pollinterval=>300,
+             :limit=>100,
              :app_id=>2,
              "app_id".to_sym=>2,
              :save=>true} unless stubs.size > 0
@@ -41,14 +34,13 @@ describe SourcesController do
       :admin=>'quentin',
       :users=>[quentin,anton]
     }
-    stubs['app']||=mock_model(App,appstubs)
+    stubs[:app] = mock_model(App,appstubs)
 
-
-    @mock_source ||= mock_model(Source, stubs)
+    @mock_source = mock_model(Source, stubs)
   end
 
   def mock_records(stubs={})
-    @mock_records ||= mock_model(ObjectValue, stubs)
+    @mock_records = mock_model(ObjectValue, stubs)
   end
 
   describe "responding to GET show" do
@@ -83,7 +75,7 @@ describe SourcesController do
   describe "responding to GET edit" do
 
     it "should expose the requested source as @source" do
-      Source.should_receive(:find).with("37").and_return(mock_source)
+      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :edit, :id => "37"
       assigns[:source].should equal(mock_source)
     end
@@ -202,25 +194,25 @@ describe SourcesController do
 
   describe "responding to createobjects, deleteobjects, updateobjects" do
     it "should createobjects" do
-      Source.should_receive(:find).with("37").and_return(mock_source)
+      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :createobjects,:id => "37", :attrvals => [{"object"=>"temp1","attrib"=>"name","value"=>"rhomobile"}]
       response.should be_redirect
     end
 
     it "should updateobjects" do
-      Source.should_receive(:find).with("37").and_return(mock_source)
+      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :updateobjects,:id => "37", :attrvals => [{"object"=>"1","attrib"=>"name","value"=>"rhomobile"}]
       response.should be_redirect
     end
 
     it "should deleteobjects" do
-      Source.should_receive(:find).with("37").and_return(mock_source)
+      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :deleteobjects, :id => "37", :attrvals => [{"object"=>"1"}]
       response.should be_redirect
     end
 
     it "should refresh" do
-      Source.should_receive(:find).with("37").and_return(mock_source)
+      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :refresh, :id => "37"
       response.should be_redirect
     end
@@ -232,26 +224,6 @@ describe SourcesController do
     it "should return the created client" do
       get :clientcreate, :format => 'json'
       response.body.should =~ /(^[^\r\n]+?)([A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}(?:@[^\s]*)?|@[^\s]*|\s*$)/
-    end
-
-  end
-
-  describe "responding to GET show with client_id" do
-
-    it "should return full list on first sync" do
-      records = mock_records(:attrib => 'some-attrib',
-                             :object => 'some-object',
-                             :value => 'some-value',
-                             :updated_at => nil,
-                             :created_at => nil,
-                             :id => -359898525,
-                             :source_id => 37)
-      mock_source
-
-      Source.should_receive(:find_by_permalink).with(@mock_source.id.to_s).and_return(mock_source)
-
-      get :show, :id => @mock_source.id, :format => "json", :client_id => "some-client"
-      assigns[:source].should == records
     end
 
   end

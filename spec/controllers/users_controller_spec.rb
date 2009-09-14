@@ -38,13 +38,13 @@ describe UsersController do
     end.should_not change(User, :count)
   end
 
-  it 'requires email on signup' do
-    lambda do
-      create_user(:email => nil)
-      assigns[:user].errors.on(:email).should_not be_nil
-      response.should be_success
-    end.should_not change(User, :count)
-  end
+  # it 'requires email on signup' do
+  #   lambda do
+  #     create_user(:email => nil)
+  #     assigns[:user].errors.on(:email).should_not be_nil
+  #     response.should be_success
+  #   end.should_not change(User, :count)
+  # end
 
 
 
@@ -56,9 +56,9 @@ end
 
 describe UsersController do
   describe "route generation" do
-    it "should route users's 'index' action correctly" do
-      route_for(:controller => 'users', :action => 'index').should == "/users"
-    end
+    # it "should route users's 'index' action correctly" do
+    #   route_for(:controller => 'users', :action => 'index').should == "/users"
+    # end
 
     it "should route users's 'new' action correctly" do
       route_for(:controller => 'users', :action => 'new').should == "/signup"
@@ -68,21 +68,21 @@ describe UsersController do
       route_for(:controller => 'users', :action => 'create').should == "/register"
     end
 
-    it "should route users's 'show' action correctly" do
-      route_for(:controller => 'users', :action => 'show', :id => '1').should == "/users/1"
-    end
-
-    it "should route users's 'edit' action correctly" do
-      route_for(:controller => 'users', :action => 'edit', :id => '1').should == "/users/1/edit"
-    end
-
-    it "should route users's 'update' action correctly" do
-      route_for(:controller => 'users', :action => 'update', :id => '1', :method => :put).should == "/users/1"
-    end
-
-    it "should route users's 'destroy' action correctly" do
-      route_for(:controller => 'users', :action => 'destroy', :id => '1').should == "/users/1"
-    end
+    # it "should route users's 'show' action correctly" do
+    #   route_for(:controller => 'users', :action => 'show', :id => '1').should == "/users/1"
+    # end
+    #
+    # it "should route users's 'edit' action correctly" do
+    #       route_for(:controller => 'users', :action => 'edit', :id => '1').should == "/users/1/edit"
+    #     end
+    # 
+    #     it "should route users's 'update' action correctly" do
+    #       route_for(:controller => 'users', :action => 'update', :id => '1', :method => :put).should == "/users/1"
+    #     end
+    # 
+    #     it "should route users's 'destroy' action correctly" do
+    #       route_for(:controller => 'users', :action => 'destroy', :id => '1').should == "/users/1"
+    #     end
   end
 
   describe "route recognition" do

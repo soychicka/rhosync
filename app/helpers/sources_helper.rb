@@ -24,15 +24,17 @@ module SourcesHelper
   # determines if the logged in users is a subscriber of the current app or
   # admin of the current app
   def check_access(app)
-    logger.debug "Checking access for user "+@current_user.login
-    matches_login=app.users.select{ |u| u.login==@current_user.login}
-    matches_login << app.administrations.select { |a| a and a.user and a.user.login==@current_user.login } # let the administrators of the app in as well
-    if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
-      logger.info  "App is not anonymous and user was not found in subscriber list"
-      logger.info "User: " + current_user.login + " not allowed access."
-      username = current_user.login
-      username ||= "unknown"
-      result=nil
+    if @current_user
+      logger.debug "Checking access for user "+@current_user.login
+      matches_login=app.users.select{ |u| u.login==@current_user.login}
+      matches_login << app.administrations.select { |a| a and a.user and a.user.login==@current_user.login } # let the administrators of the app in as well
+      if !(app.anonymous==1) and (matches_login.nil? or matches_login.size == 0)
+        logger.info  "App is not anonymous and user was not found in subscriber list"
+        logger.info "User: " + current_user.login + " not allowed access."
+        username = current_user.login
+        username ||= "unknown"
+        result=nil
+      end
     end
     result=@current_user
   end
@@ -105,26 +107,33 @@ module SourcesHelper
     end
   end
 
-  # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-  def update_pendings(credential,check_existing=true)
+  # this function performs pending to final convert one at a time and is 
+  # robust to failures to to do a pending to final for a single object
+  def update_pendings(credential,check_existing=false)
     conditions="source_id=#{id}"
     conditions << " and user_id=#{credential.user.id}" if credential
-    objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
-    current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query'"
-    objs.each do |obj|
-      begin
-        if check_existing and current_ids.index(obj.pending_id.to_s) == nil
-          ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where
-                                                 id="+obj.id.to_s+" and update_type is null"
-          current_ids << obj.pending_id.to_s
+    ActiveRecord::Base.transaction do
+      objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
+      current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query'"
+      objs.each do |obj|
+        begin
+          # if check_existing, look for existing query object-attribute and delete it before replacement
+          if check_existing and current_ids.index(obj.pending_id.to_s) == nil
+            existing = ObjectValue.find :first, :conditions => "object='#{obj.object}' and attrib='#{obj.attrib}' and 
+                                                                update_type='query' and #{conditions}"
+            existing.destroy if existing
+            ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where
+                                                   id="+obj.id.to_s+" and update_type is null"
+            current_ids << obj.pending_id.to_s
+          end
+        rescue Exception => e
+          slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
         end
-      rescue Exception => e
-        slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
       end
+      self.refreshtime=Time.new
+      # TODO: This is bad... These collided but we can't update them, so we delete for now.
+      ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
     end
-    self.refreshtime=Time.new
-    # TODO: This is bad... These collided but we can't update them, so we delete for now.
-    ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
@@ -160,7 +169,8 @@ module SourcesHelper
 
   def process_update_type(utype)
     start=Time.new # start timing the operation
-    objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size 
+                                  from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
     if objs # check that we got some object values back
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
