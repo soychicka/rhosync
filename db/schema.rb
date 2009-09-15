@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090716233709) do
+ActiveRecord::Schema.define(:version => 20090911224727) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -184,7 +184,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.integer  "queuesync"
+    t.boolean  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end
@@ -197,7 +197,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
   end
 
   create_table "users", :force => true do |t|
-    t.string   "login",                     :limit => 40
+    t.string   "login"
     t.string   "name",                      :limit => 100, :default => ""
     t.string   "email",                     :limit => 100
     t.string   "crypted_password",          :limit => 40
@@ -206,6 +206,8 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
+    t.string   "password_reset_code"
+    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

@@ -68,5 +68,5 @@ class User < ActiveRecord::Base
       p "Result of client ping: #{@result}" if @result
     end
     @result
-  end
+  end 
 end

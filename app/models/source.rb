@@ -19,8 +19,6 @@
 #  queuesync    :boolean(1)    
 #  limit        :string(255)   
 #  callback_url :string(255)   
-#
-
 class Source < ActiveRecord::Base
   include SourcesHelper
   
@@ -41,33 +39,57 @@ class Source < ActiveRecord::Base
     end
     if not self.adapter.blank? 
       begin
+        p "Creating class for #{self.adapter}"
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
-        @source_adapter.session = session
-      rescue
-        msg="Failure to create adapter from class #{self.adapter}"
+        @source_adapter.session = session if session
+      rescue Exception=>e
+        msg="Failure to create adapter from class #{self.adapter}: #{e.inspect.to_s}"
         p msg
         slog(nil,msg)
       end
     else # if source_adapter is nil it will
       @source_adapter=nil
     end
+    @source_adapter
   end
   
-  def ask(current_user,question)
+  # used by dosync and backpages
+  def setup_credential_adapter(current_user,session)
+    logger.debug "Logged in as: "+ current_user.login if current_user  
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
     self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential)
-    start=Time.new
-    result=source_adapter.ask question
-    tlog(start,"ask",self.id)
-    result
+    source_adapter=initadapter(self.credential,session)   
+    
+    if source_adapter.nil? 
+      slog(nil,"Couldn't set up source adapter due to missing or invalid class")
+      return
+    end 
+    source_adapter
   end
-
-  def do_callback
-    current_user=User.find_by_login params[:login]
-    refresh(current_user)
+  
+  # executes synchronous search for records that meet specified criteria of conditions returned in specified order
+  # calls source adapter query method with conditions and order
+  def dosearch(current_user,session=nil,conditions=nil,limit=nil,offset=nil)
+    @current_user=current_user
+    source_adapter=setup_credential_adapter(current_user,session)
+    begin
+      source_adapter.login  # should set up @session_id
+    rescue Exception=>e
+      p "Failed to login #{e}"      
+      p e.backtrace.join("\n")
+    end   
+    clear_pending_records(self.credential)
+    begin  
+      p "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
+      source_adapter.query(conditions,limit,offset)
+      source_adapter.sync
+      update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+    rescue Exception=>e
+      p "Failed to sync #{e}"
+      p e.backtrace.join("\n")
+    end 
   end
- 
+   
   def refresh(current_user, session, url=nil)
     if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
@@ -88,28 +110,10 @@ class Source < ActiveRecord::Base
       dosync(current_user, session)
     end
   end
-
-  def ping
-    # this is the URL for the show method
-    @result=""
-    users.each do |user|
-      @result+=user.ping(callback_url) # this will ping all clients owned by that user
-    end
-  end
-
-  def dosync(current_user, session=nil)
-
+  
+  def dosync(current_user,session=nil)
     @current_user=current_user
-    logger.info "Logged in as: "+ current_user.login if current_user
-    
-    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
-    self.credential=usersub.credential if usersub # this variable is available in your source adapter
-    initadapter(self.credential,session)   
-    
-    if source_adapter.nil? 
-      slog(nil,"Couldn't set up source adapter due to missing or invalid class")
-      return
-    end 
+    source_adapter=setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
     begin
       start=Time.new
@@ -120,7 +124,6 @@ class Source < ActiveRecord::Base
       slog(e,"can't login",self.id,"login")
       raise e
     end
-    
     # first grab out all ObjectValues of updatetype="qparms"
     # put those together into a qparms hash
     # qparms is nil if there is no such hash
@@ -155,10 +158,26 @@ class Source < ActiveRecord::Base
     # query,sync,finalize are atomic
     begin  
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
-      start=Time.new
-      source_adapter.query 
-      #raise StandardError
-      tlog(start,"query",self.id)
+      # look for source adapter page method. if so do paged query 
+      # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
+      if defined? source_adapter.page 
+        source_adapter.page(0)
+        # then do the rest in background using the page_query.rb script
+        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
+        p "Executing background job: #{cmd} #{current_user.id.to_s}"
+        begin 
+          Bj.submit cmd,:tag => current_user.id.to_s
+        rescue
+          p "Failed to execute"
+        end
+        tlog(start,"page",self.id)
+        start=Time.new
+      else       
+        start=Time.new
+        source_adapter.query
+        tlog(start,"query",self.id)
+      end        
+      
       start=Time.new
       source_adapter.sync
       tlog(start,"sync",self.id)
@@ -166,10 +185,78 @@ class Source < ActiveRecord::Base
       finalize_query_records(@credential)
       tlog(start,"finalize",self.id)
     rescue Exception=>e
-      p "Failed to sync"
+      p "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
     end 
     source_adapter.logoff
+  end
+  
+  # used by background job for paged query (page_query.rb script)
+  # queries the second (1-th) through last page
+  def backpages
+    # first detect if some background (backpages) job is already working against this source and user
+    logger.info "Backpages called"
+=begin
+    lock=ObjectValue.find_by_source_id_and_user_id_and_update_type id,self.current_user.id,"lock"
+    if lock 
+      logger.info "Background job already running for source #{id} and user #{current_user.id}"
+      return # cant do another background job
+    end  
+    # otherwise create a lock and do the query
+    lock=ObjectValue.new(:source_id=>id,:user_id=>user_id,:update_type=>"lock")
+    lock.save
+=end
+
+    source_adapter=setup_credential_adapter(current_user,nil)
+    # make sure to use @client and @session_id variable in your code that is edited into each source!
+    begin
+      start=Time.new
+      source_adapter.login  # should set up @session_id
+      tlog(start,"login",self.id)  # log how long it takes to do the login
+    rescue Exception=>e
+      logger.info "Failed to login"
+      slog(e,"can't login",self.id,"login")
+      raise e
+    end
+    
+    pagenum=0  
+    result=true
+    @source=self
+    while result 
+      logger.info "Calling page #{pagenum}"      
+      result=source_adapter.page(pagenum)
+      logger.info "Syncing #{pagenum}"      
+      source_adapter.sync
+      pagenum=pagenum+1
+    end
+    finalize_query_records(credential)
+=begin    
+    lock.delete
+=end
+  end
+  
+  
+  def ask(current_user,question)
+    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
+    self.credential=usersub.credential if usersub # this variable is available in your source adapter
+    initadapter(self.credential)
+    start=Time.new
+    result=source_adapter.ask question
+    tlog(start,"ask",self.id)
+    result
+  end
+
+  def do_callback
+    current_user=User.find_by_login params[:login]
+    refresh(current_user)
+  end
+
+  def ping
+    # this is the URL for the show method
+    @result=""
+    users.each do |user|
+      @result+=user.ping(callback_url) # this will ping all clients owned by that user
+    end
   end
   
   def before_validate
@@ -188,5 +275,4 @@ class Source < ActiveRecord::Base
   def self.find_by_permalink(link)
     Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
   end
-
 end
