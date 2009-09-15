@@ -70,42 +70,34 @@ class Source < ActiveRecord::Base
   # executes synchronous search for records that meet specified criteria of conditions returned in specified order
   # calls source adapter query method with conditions and order
   def dosearch(current_user,session=nil,conditions=nil,limit=nil,offset=nil)
+    logger.debug "dosearch called"
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     begin
       source_adapter.login  # should set up @session_id
     rescue Exception=>e
-      p "Failed to login #{e}"      
-      p e.backtrace.join("\n")
-    end   
+      logger.debug "Failed to login #{e}"      
+      logger.debug e.backtrace.join("\n")
+      return
+    end
     clear_pending_records(self.credential)
     begin  
-      p "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
+      logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
       source_adapter.sync
       update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
     rescue Exception=>e
-      p "Failed to sync #{e}"
-      p e.backtrace.join("\n")
+      logger.debug "Failed to sync #{e}"
+      logger.debug e.backtrace.join("\n")
     end 
   end
    
   def refresh(current_user, session, url=nil)
     if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
       # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
-      command = "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}"
-      # this is how you look up jobs and see if they are done in Bj
-      # command embeds the user_id
-      jobs = Bj.table.job.find(:all, :conditions => { :command => command })
-      jobs.each do |job|
-         if !job.finished?
-           logger.debug "Pending job already exists for user #{current_user.login}, source #{name}"
-           return
-         end
-      end
-
-      Bj.submit command, :tag => current_user.id.to_s
-      logger.debug "Queued up task for user #{current_user.login}, source #{name}"
+      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
+        :tag => current_user.id.to_s
+      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
     else # go ahead and do it right now
       dosync(current_user, session)
     end
@@ -161,14 +153,15 @@ class Source < ActiveRecord::Base
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
       if defined? source_adapter.page 
-        source_adapter.page(0)
+  #      source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
         cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
         p "Executing background job: #{cmd} #{current_user.id.to_s}"
         begin 
           Bj.submit cmd,:tag => current_user.id.to_s
-        rescue
-          p "Failed to execute"
+        rescue =>e
+          p "Failed to execute #{e.to_s}"
+          p e.backtrace.join("\n")
         end
         tlog(start,"page",self.id)
         start=Time.new
@@ -187,6 +180,7 @@ class Source < ActiveRecord::Base
     rescue Exception=>e
       p "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
+      p e.backtrace.join("\n")
     end 
     source_adapter.logoff
   end

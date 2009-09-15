@@ -33,8 +33,7 @@ class ClientMap < ActiveRecord::Base
                                                 where cm.ack_token = 0
                                                 and cm.db_operation != 'delete'
                                                 and cm.client_id = '#{client_id}'
-                                                and cm.token = #{resend_token}
-                                                order by ov.object)"
+                                                and cm.token = #{resend_token})"
     return objs_to_return.collect! {|x| x.db_operation = 'insert'; x}
   end
   
