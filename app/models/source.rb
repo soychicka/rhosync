@@ -70,23 +70,25 @@ class Source < ActiveRecord::Base
   # executes synchronous search for records that meet specified criteria of conditions returned in specified order
   # calls source adapter query method with conditions and order
   def dosearch(current_user,session=nil,conditions=nil,limit=nil,offset=nil)
+    logger.debug "dosearch called"
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     begin
       source_adapter.login  # should set up @session_id
     rescue Exception=>e
-      p "Failed to login #{e}"      
-      p e.backtrace.join("\n")
-    end   
+      logger.debug "Failed to login #{e}"      
+      logger.debug e.backtrace.join("\n")
+      return
+    end
     clear_pending_records(self.credential)
     begin  
-      p "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
+      logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
       source_adapter.sync
       update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
     rescue Exception=>e
-      p "Failed to sync #{e}"
-      p e.backtrace.join("\n")
+      logger.debug "Failed to sync #{e}"
+      logger.debug e.backtrace.join("\n")
     end 
   end
    
