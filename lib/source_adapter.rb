@@ -35,7 +35,7 @@ class SourceAdapter
       if config.database_configuration[RAILS_ENV]["adapter"]=="mysql"
         max_sql_statement=64000
         p "MySQL optimized sync"
-        sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
+        sql="INSERT INTO object_values(pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
         count=0
         @result.keys.each do |objkey|
           obj=@result[objkey]   
@@ -48,13 +48,15 @@ class SourceAdapter
                 # allow override of source_id here
                 src_id = obj[:source_id]
                 src_id ||= @source.id
-                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
+                #ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                #sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                sql << "(" + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + "),"
+                
                 if sql.size > max_sql_statement  # this should not really be necessary. its just for safety. we've seen errors with very large statements
                   sql.chop!
                   ActiveRecord::Base.connection.execute sql
-                  sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
+                  sql="INSERT INTO object_values(pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
                 end
               end
             end
@@ -76,10 +78,10 @@ class SourceAdapter
                 # allow override of source_id here
                 src_id = obj[:source_id]
                 src_id ||= @source.id
-                sql="INSERT INTO object_values(id,pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
-                ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
+                sql="INSERT INTO object_values(pending_id,source_id,object,attrib,value,user_id,attrib_type) VALUES"
+                #ovid=ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey],rand)
                 pending_id = ObjectValue.hash_from_data(attrkey,objkey,nil,src_id,user_id,obj[attrkey])          
-                sql << "(" + ovid.to_s + "," + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
+                sql << "(" + pending_id.to_s + "," + src_id.to_s + ",'" + objkey + "','" + attrkey + "','" + obj[attrkey] + "'," + user_id.to_s + (attrib_type ? ",'#{attrib_type}'" : ',NULL') + ")"
                 ActiveRecord::Base.connection.execute sql
               end  
             end # for all keys in hash
