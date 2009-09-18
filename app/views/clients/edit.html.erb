@@ -2,6 +2,7 @@
 
 <% form_for(@client) do |f| %>
   <%= f.error_messages %>
+  <%= hidden_field_tag :client_type, @client.class.to_s.downcase -%>
   <p>
     <%= f.label :device_type %><br />
     <%= f.text_field :device_type %>

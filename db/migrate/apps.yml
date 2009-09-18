@@ -7,4 +7,9 @@ Siebel:
   id: 2
   name: Siebel
   description: sync data sources for Siebel
+  
+Store:
+  id: 3
+  name: Store
+  description: test store app based on http://rhostore.heroku.com
     

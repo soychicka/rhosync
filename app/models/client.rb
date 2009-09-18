@@ -20,12 +20,11 @@ class Client < ActiveRecord::Base
   has_many :object_values, :through => :client_maps
   set_inheritance_column "device_type"
   
-  attr_accessible :client_id, :last_sync_token, :updated_at, :carrier, :device_type, :deviceport, :manufacturer, :serverport,
-    :host, :model, :pin
+  attr_accessible :client_id, :last_sync_token, :updated_at, :carrier, :device_type, :deviceport, :manufacturer, :serverport, :host, :model, :pin
   
   def initialize(params=nil)
     super
-    self.client_id = UUID.random_create.to_s unless self.client_id
+    self.client_id = UUIDTools::UUID.random_create.to_s unless self.client_id
   end
 
   

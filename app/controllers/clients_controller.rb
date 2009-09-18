@@ -78,7 +78,7 @@ class ClientsController < ApplicationController
     @client = Client.find(params[:id])
 
     respond_to do |format|
-      if @client.update_attributes(params[:client])
+      if @client.update_attributes(params[params[:client_type].to_sym])
         p "@client is: #{@client.inspect}"
         flash[:notice] = 'Client was successfully updated.'
         format.html { redirect_to(@client) }
