@@ -21,6 +21,7 @@ class SessionsController < ApplicationController
     @app=App.find_by_permalink(params[:app_id])
 
     if @app.authenticates? # authentication has been delegated to the application?
+      logger.debug "calling app delegated authentication"
       user = @app.authenticate(params[:login], params[:password], session)
       if user
         self.current_user = user
