@@ -44,7 +44,7 @@ class SourceAdapter
             obj.keys.each do |attrkey|
               unless attrkey.blank? or obj[attrkey].blank? or attrkey=="id" or attrkey=="attrib_type"
                 obj[attrkey]=obj[attrkey].to_s if obj[attrkey].is_a? Fixnum
-                obj[attrkey]||=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
+                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 # allow override of source_id here
                 src_id = obj[:source_id]
                 src_id ||= @source.id
@@ -72,8 +72,7 @@ class SourceAdapter
             attrib_type = obj['attrib_type']
             obj.keys.each do |attrkey|
               unless attrkey.blank? or obj[attrkey].blank?  or attrkey=="id"
-                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")
-                
+                obj[attrkey]=obj[attrkey].gsub(/\'/,"''")  # handle apostrophes
                 # allow override of source_id here
                 src_id = obj[:source_id]
                 src_id ||= @source.id
