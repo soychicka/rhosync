@@ -1,71 +1,102 @@
 require File.dirname(__FILE__) + "/../../spec_helper"
 
+class SourceAdapter 
+  def inject_result(result) 
+    @result = result
+  end
+end
+
 describe SourceAdapter do 
   describe "sync" do 
     before do
       ObjectValue.all(&:destroy)
-      @user = Factory(:user)
-      
       @adapter = SourceAdapter.new
-      @adapter.stub(:current_user).and_return(nil)
-      @adapter.stub(:limit).and_return(nil)
-      @simple_hash = triplet("object-id", "attrib-name", "attrib-value")
-      
-      # This is a very temporary solution while the specs are written
-      # access to @result should be done with attr_reader
-      @adapter.instance_eval do 
-        def result=(result) 
-          @result = result
-        end
-      end
+      @default_stubs = {:current_user => nil, :limit => nil }
+      @adapter.stub(@default_stubs)
     end
     
-    describe "when source is given in initializer" do 
-      it "should ask for limit from source"  
-      it "should ask for current_user from source"
+    describe "(when source is given in initializer)" do 
+      before do 
+        @source = mock("Source", @default_stubs)
+        @adapter = SourceAdapter.new(@source)
+        @injected_result = triplets( triplet("51", "attrib", "value"),
+                                     triplet("52", "attrib", "value") )
+        @adapter.inject_result @injected_result
+      end
+      
+      it "should ask for limit from source" do 
+        @source.should_receive(:limit).at_least(1).and_return(expected_limit = 1)
+        do_sync
+        expected_limit.should < @injected_result.size
+        ObjectValue.all.size.should == expected_limit
+      end
+      
+      it "should ask for current_user from source" do 
+        @source.should_receive(:current_user).and_return(nil)
+        do_sync
+        ObjectValue.all.size.should == @injected_result.size
+      end
+      
       it "should use source.id for for source_id value"
     end
     
-    describe "when source is given in initializer is nil" do 
-      it "should ask for limit from self"
-      it "should ask for current_user from self"
+    describe "(when not initialized with source)" do
+      before do 
+        @injected_result = triplets( triplet("51", "attrib", "value"),
+                                     triplet("52", "attrib", "value") )
+        @adapter.inject_result @injected_result
+      end
+      
+      it "should ask for limit from self" do 
+        @adapter.should_receive(:limit).at_least(1).and_return(expected_limit = 1)
+        do_sync
+        expected_limit.should < @injected_result.size
+        ObjectValue.all.size.should == expected_limit
+      end
+      
+      it "should ask for current_user from self" do 
+        @adapter.should_receive(:current_user).and_return(nil)
+        do_sync
+        ObjectValue.all.size.should == @injected_result.size
+      end
+      
       it "should use self.id for for source_id value"
     end
     
     it "should work with String id:s" do 
-      @adapter.result = triplet(expected_object = "a-string", "name", "value")
+      @adapter.inject_result triplet(expected_object = "a-string", "name", "value")
       do_sync
       ObjectValue.first.object.should == expected_object
     end
     
     it "should ignore object_values named 'id'" do
-      @adapter.result = triplet("123", "id", "ignore me")
+      @adapter.inject_result triplet("123", "id", "ignore me")
       do_sync 
       ObjectValue.all.should be_empty
     end
     
     it "should ignore object_value where name is blank" do 
-      @adapter.result = triplet("123", "", "ignore me")
+      @adapter.inject_result triplet("123", "", "ignore me")
       do_sync 
       ObjectValue.all.should be_empty
       
-      @adapter.result = triplet("123", nil, "ignore me")
+      @adapter.inject_result triplet("123", nil, "ignore me")
       do_sync 
       ObjectValue.all.should be_empty
     end
     
     it "should ignore object_value where value is blank" do 
-      @adapter.result = triplet("123", "attrib-name", "")
+      @adapter.inject_result triplet("123", "attrib-name", "")
       do_sync 
       ObjectValue.all.should be_empty
       
-      @adapter.result = triplet("123", "attrib-name", nil)
+      @adapter.inject_result triplet("123", "attrib-name", nil)
       do_sync 
       ObjectValue.all.should be_empty
     end
     
     it "should use default source_id from @source" do 
-      @adapter.result = triplet("123", "attrib-name", "value")
+      @adapter.inject_result triplet("123", "attrib-name", "value")
       @adapter.stub(:id).and_return(expected_source_id = 321)
       do_sync
       ObjectValue.first.source_id.should == expected_source_id
@@ -76,28 +107,45 @@ describe SourceAdapter do
     end
     
     it "should not insert more items than the configured limit" do 
-      @adapter.result = triplet("51", "attrib", "value").merge(
-                        triplet("52", "attrib", "value")).merge(
-                        triplet("53", "attrib", "value")).merge(
-                        triplet("54", "attrib", "value"))
-                                
+      @adapter.inject_result triplets( 
+        triplet("51", "attrib", "value"),
+        triplet("52", "attrib", "value"),
+        triplet("53", "attrib", "value"),
+        triplet("54", "attrib", "value")
+      )
+                                      
       @adapter.stub(:limit).and_return(expected_sync_count = 3)
       do_sync
       ObjectValue.all.size.should == expected_sync_count
     end
     
     it "should save an object value" do
-      @adapter.result = @simple_hash
+      @adapter.inject_result triplet("object-id", "attrib-name", "attrib-value")
       do_sync
-      ObjectValue.all.size.should == @simple_hash.size
+      ObjectValue.all.size.should == 1
     end
     
     it "should store given id as ObjectValue.object" do 
-      @adapter.result = triplet(expected_object = "55", "attrib", "value")
+      @adapter.inject_result triplet(expected_object = "55", "attrib", "value")
       do_sync
       ObjectValue.first.object.should == expected_object
     end
     
+    it "should save the user id" do 
+      user = mock("User", :id => (expected_user_id = 1234))
+      
+      @adapter.stub(:current_user).and_return(user)
+      @adapter.inject_result triplet("object-id", "attrib-name", "attrib-value")
+      do_sync
+      ObjectValue.first.user_id.should == expected_user_id
+    end
+    
+    it "should allow user id to be nil" do 
+      @adapter.should_receive(:current_user).and_return(nil)
+      @adapter.inject_result triplet("object-id", "attrib-name", "attrib-value")
+      do_sync
+      ObjectValue.first.user_id.should be_nil
+    end
     
     def do_sync
       @adapter.sync
@@ -108,10 +156,12 @@ describe SourceAdapter do
       raise "Illegal triplet" unless args.size.even?
       pairs = {}
       args.each_slice(2) {|pair| pairs[pair[0]] = pair[1] }
-      
       {id => pairs}
     end
     
+    def triplets(*args) 
+      args.inject({}) { |merged, triplet| merged.merge(triplet) }
+    end
     
     it "should work with Fixnum id:s" do 
       pending "Feature request. Robin Spainhour"
@@ -125,7 +175,7 @@ describe SourceAdapter do
       pending "Feature request. Robin Spainhour"
     end
     
-    it "should validate the triplet helper" do
+    it "should test triplet helper (tests spec helper method)" do
       expected_triplet = {
         "123" => {
           "name" => "value", 
@@ -138,6 +188,22 @@ describe SourceAdapter do
               "other-name", "other-value").should == expected_triplet
     end
     
+    it "should test triplets helper (tests spec helper method)" do 
+      expected_triplet_hash = {
+        "123" => {
+          "name1" => "value1"
+        },
+        "456" => {
+          "name2" => "value2"
+        },
+        "789" => {
+          "name3" => "value3"
+        }
+      }
+      
+      triplets( triplet("123", "name1", "value1"),
+                triplet("456", "name2", "value2"),
+                triplet("789", "name3", "value3") ).should == expected_triplet_hash
+    end
   end
-  
 end
