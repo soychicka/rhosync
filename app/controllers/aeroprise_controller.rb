@@ -13,18 +13,6 @@ class AeropriseController < ApplicationController
   web_service_api AeropriseApi
   web_service_scaffold :invocation if Rails.env == 'development'
   
-  def record_object_value(oav)
-    ovdata = ObjectValue.find(:first, :conditions => {:object=>oav[:object], :attrib=>oav[:attrib],
-        :user_id=>oav[:user_id], :source_id=>oav[:source_id]})
-    
-    if ovdata
-      ovdata.delete
-    end
-    
-    ObjectValue.create(:object=>oav[:object], :attrib=>oav[:attrib],
-        :user_id=>oav[:user_id], :source_id=>oav[:source_id], :value => oav[:value], :update_type=>"query")    
-  end
-  
   def sr_needs_attention(login, sr_id)
     # toggle needs attention for this SR
     @source = Source.find_by_name("AeropriseRequest")
@@ -79,7 +67,7 @@ class AeropriseController < ApplicationController
     user = User.find_by_login(user_id)
     
     # serialize array of hashes and update 
-    record_object_value(:object=>sr_id, :attrib=>"workinfo",
+    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"workinfo",
       :user_id=>user.id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
     
     # ping the user
