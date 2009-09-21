@@ -64,6 +64,7 @@ class User < ActiveRecord::Base
   def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
     clients.each do |client|
+      # will fail if client.device_type is blank
       @result=client.ping(callback_url,message,vibrate,badge,sound)
       p "Result of client ping: #{@result}" if @result
     end
