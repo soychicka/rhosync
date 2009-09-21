@@ -13,6 +13,9 @@ describe SourceAdapter do
       @adapter = SourceAdapter.new
       @default_stubs = {:current_user => nil, :limit => nil }
       @adapter.stub(@default_stubs)
+      
+      @adapter.should_not_receive(:puts)
+      @adapter.should_not_receive(:p)
     end
     
     describe "(when source is given in initializer)" do 
