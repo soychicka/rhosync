@@ -26,6 +26,11 @@ class SourceAdapter
   # the inner hash is the set of attributes
   # you can choose to use or not use the parent class sync in your own RhoSync source adapters
   def sync
+    unless @result
+      Rails.logger.warn "You might have expected a synchronization but the @result attribute was 'nil'"
+      return
+    end
+    
     if @result.size>0 
       if @source.current_user.nil?
         user_id='NULL'

@@ -174,6 +174,17 @@ describe SourceAdapter do
       ObjectValue.first.value.should == attribute_value
     end
     
+    it "should fail gracefully if @result is missing" do
+      @adapter.inject_result nil
+      lambda {do_sync}.should_not raise_error
+    end
+    
+    it "should log warning if @result is missing" do
+      @adapter.inject_result nil
+      Rails.logger.should_receive(:warn)
+      do_sync
+    end
+    
     
     def do_sync
       @adapter.sync
@@ -192,10 +203,6 @@ describe SourceAdapter do
     end
     
     it "should work with Fixnum id:s" do 
-      pending "Feature request. Robin Spainhour"
-    end
-    
-    it "should fail gracefully if @result is missing" do
       pending "Feature request. Robin Spainhour"
     end
     
