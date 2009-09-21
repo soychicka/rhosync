@@ -16,10 +16,10 @@ require File.join(RAILS_ROOT, "config/environment")
 #require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
 logfile = File.open("log/bj-srd_runner.log", "a+")  
-logger = Logger.new(logfile)
+$logger = Logger.new(logfile)
 
 def log_debug(msg)
-  logger.debug msg
+  $logger.debug msg
   #puts msg
 end
 
@@ -36,12 +36,18 @@ log_debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 def ping(user, url)
   result = user.ping(url)
 
-  log_debug result.inspect.to_s
-  log_debug result.code
-  log_debug result.message
-  log_debug result.body
+  if result.blank?
+    log_debug "empty result"
+  else
+    log_debug result.inspect.to_s
+    log_debug result.code
+    log_debug result.message
+    log_debug result.body
+  end
   
   sleep 5
+  rescue
+  log_debug "exception in ping method wrapper"
 end
 
 begin
