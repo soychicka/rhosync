@@ -119,10 +119,23 @@ describe SourceAdapter do
       ObjectValue.all.size.should == expected_sync_count
     end
     
-    it "should save an object value" do
-      @adapter.inject_result triplet("object-id", "attrib-name", "attrib-value")
+    it "should save an ObjectValue" do
+      @adapter.inject_result triplet("object-id", "attrib-name", expected_value = "attrib-value")
       do_sync
       ObjectValue.all.size.should == 1
+    end
+    
+    
+    it "should save ObjectValue.value" do
+      @adapter.inject_result triplet("object-id", "attrib-name", expected_value = "attrib-value")
+      do_sync
+      ObjectValue.first.value.should == expected_value
+    end
+    
+    it "should save ObjectValue.attrib" do
+      @adapter.inject_result triplet("object-id", expected_attrib = "attrib-name", "attrib-value")
+      do_sync
+      ObjectValue.first.attrib.should == expected_attrib
     end
     
     it "should store given id as ObjectValue.object" do 
@@ -146,6 +159,15 @@ describe SourceAdapter do
       do_sync
       ObjectValue.first.user_id.should be_nil
     end
+    
+    it "should handle single quotes in attribute values" do
+      # This spec is needed as the implementation manually constructs SQL strings 
+      # for the inserts. 
+      @adapter.inject_result triplet("not-used", "not-used", attribute_value = "'")
+      do_sync
+      ObjectValue.first.value.should == attribute_value
+    end
+    
     
     def do_sync
       @adapter.sync
