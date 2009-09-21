@@ -34,10 +34,11 @@ callback_url  =ARGV[2]
 log_debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 
 def ping(user, url)
+  log_debug "pinging #{user.login}"
   result = user.ping(url)
 
   if result.blank?
-    log_debug "empty result"
+    log_debug "empty result, failed"
   else
     log_debug result.inspect.to_s
     log_debug result.code
@@ -67,8 +68,10 @@ begin
     api = Rubyarapi.new(login,password,serverip.value)
     
     # iterate over all users
+    log_debug "interating over #{app.users.size} users"
     app.users.each do |user|
 
+      log_debug "impersonating #{user.login}"
       api.impersonate(user.login)
       
       # try to get this srd for them
@@ -78,9 +81,13 @@ begin
       # destroy all OLD OVAs for this user on the object
       ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>srd_id)
       
-      # re-add this srd to their data
-      AeropriseBase.api=api
-      AeropriseSrdRecord.create([srd_id, srd], source.id, user.id) if srd
+      if srd
+        log_debug "adding srd to user's list"
+        # re-add this srd to their data
+        AeropriseBase.api=api
+        AeropriseBase.logger = $logger
+        AeropriseSrdRecord.create([srd_id, srd], source.id, user.id) 
+      end
       
       #notify
       ping(user, callback_url)
