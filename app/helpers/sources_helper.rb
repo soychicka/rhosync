@@ -46,7 +46,7 @@ module SourcesHelper
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
     (count_updates << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential
     if (ObjectValue.count_by_sql count_updates ) > 0
-      p "Refreshing source #{name} #{id} because there are some non-query object values"
+      logger.info "Refreshing source #{name} #{id} because there are some non-query object values"
       return true
     end
 
@@ -55,7 +55,7 @@ module SourcesHelper
     count_query_objs="select count(*) from object_values where update_type='query' and source_id="+id.to_s
     (count_query_objs << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential
     if (ObjectValue.count_by_sql count_query_objs ) <= 0
-      p "Refreshing source #{name} #{id} because there is no data stored in object values"
+      logger.info "Refreshing source #{name} #{id} because there is no data stored in object values"
       return true
     end
 
@@ -69,7 +69,7 @@ module SourcesHelper
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      p "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
+      logger.info "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
       return true
     end
 
@@ -99,7 +99,6 @@ module SourcesHelper
     objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
         dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
-        p dupemsg
         logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
@@ -171,6 +170,7 @@ module SourcesHelper
     start=Time.new # start timing the operation
     objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size 
                                   from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    res = nil
     if objs # check that we got some object values back
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
@@ -188,8 +188,13 @@ module SourcesHelper
             name_value_list=eval(nvlist)
             params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
             cmd="source_adapter." +utype +params
-            p "Executing" + cmd
-            eval cmd
+            logger.info "Executing" + cmd
+            res = eval cmd
+            if res and res.is_a?(String)
+              tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
+              tmp_object.update_attributes(:objectid => res)
+              tmp_object.save
+            end
           end
         else
           msg="Missing object property on object value: " + x.inspect.to_s
@@ -201,6 +206,7 @@ module SourcesHelper
       slog(nil,msg)
     end
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
+    res
   end
 
   # for query parameters (update type of qparms) they get cleared on subsequent calls just for a given user (or credentials)
@@ -217,7 +223,7 @@ module SourcesHelper
         end
       else
         msg="Missing object property on object value: " + x.inspect.to_s
-        p msg
+        logger.info msg
         slog(nil,msg)
       end
     end
@@ -310,6 +316,7 @@ module SourcesHelper
   # wrap object-values by object and source
   def wrap_object_values(ovlist)
     list = {}
+    temp_count = @client.client_temp_objects.count
     ovlist.each do |ov|
       src_name = ov.source.nil? ? nil : ov.source.name
       src_name ||= 'RhoDeleteSource'
@@ -321,15 +328,23 @@ module SourcesHelper
                   :value => ov.value }
       if list[src_name]
         if list[src_name][obj_sym]
-          list[src_name][obj_sym] << av_hash
+          list[src_name][obj_sym][:av_hash] << av_hash
         else
-          list[src_name][obj_sym] = [av_hash]
+          list[src_name][obj_sym] = { :oo => get_old_objid(ov.object,temp_count), :av_hash => [av_hash] }
         end
       else
-        list[src_name] = { obj_sym => [av_hash] }
+        list[src_name] = { obj_sym => { :oo => get_old_objid(ov.object,temp_count), :av_hash => [av_hash] } }
       end
     end
     list
+  end
+  
+  # get the 'oo' field for the client response
+  def get_old_objid(newobject,temp_count)
+    if temp_count > 0
+      old_obj = @client.client_temp_objects.find_by_objectid(newobject)
+      old_obj.nil? ? nil : old_obj.temp_objectid
+    end
   end
 
   # creates an object_value list for a given client

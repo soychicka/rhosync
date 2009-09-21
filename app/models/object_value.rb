@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: object_values
 #
@@ -7,7 +7,7 @@
 #  source_id         :integer(4)    
 #  object            :string(255)   
 #  attrib            :string(255)   
-#  value             :text(255)     
+#  value             :text          
 #  pending_id        :integer(4)    
 #  update_type       :string(255)   
 #  user_id           :integer(4)    
@@ -16,22 +16,16 @@
 #  blob_file_name    :string(255)   
 #  blob_content_type :string(255)   
 #  blob_file_size    :integer(4)    
+#  attrib_type       :string(255)   
+#
+   
 class ObjectValue < ActiveRecord::Base
   belongs_to :source
   has_many :clients
+  has_many :client_temp_objects
   has_attached_file :blob
   
   attr_accessor :db_operation
-  
-  # def before_save
-  #     if self.pending_id.nil?
-  #       self.id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value,rand.to_s)
-  #       self.pending_id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value)  
-  #       p "Object Value ID: " + self.id.to_s
-  #     else
-  #       p "Record exists: " + self.inspect.to_s
-  #     end  
-  #   end
 
   def hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
     self.class.hash_from_data(attrib,object,update_type,source_id,user_id,value,random)

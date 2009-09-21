@@ -11,7 +11,10 @@ class ProductAdapter < SourceAdapter
   def create(name_value_list)
     attrvals = {}
     name_value_list.each { |nv| attrvals[nv["name"].to_sym] = nv["value"] }
-    Product.create(attrvals)
+    res = Product.create(attrvals)
+    
+    # returning id to trigger save in rhosync client_temp_objects table
+    res.id.to_s
   end
 
   def update(name_value_list)

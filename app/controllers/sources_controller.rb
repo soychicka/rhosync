@@ -153,11 +153,7 @@ class SourcesController < ApplicationController
   def clientreset
     @client = Client.find_by_client_id(params[:client_id])
     if @client
-      ActiveRecord::Base.transaction do
-        ClientMap.delete_all(:client_id => @client.client_id)
-        @client.last_sync_token=nil
-        @client.save
-      end
+      @client.reset
     end
     render :nothing=> true, :status => 200
   end
@@ -208,6 +204,9 @@ class SourcesController < ApplicationController
       if x["attrib_type"] and x["attrib_type"] == 'blob'
         o.blob = params[:blob]
         o.blob.instance_write(:file_name, x["value"])
+      end
+      unless @client.client_temp_objects.exists?(:temp_objectid => x['object'])
+        @client.client_temp_objects.create!(:temp_objectid => x['object']) 
       end
       o.save
       # add the created ID + created_at time to the list
