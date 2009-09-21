@@ -103,7 +103,13 @@ describe SourceAdapter do
     end
     
     it "should override default source_id when given as object_value" do 
-      pending "Cannot figure out how such a @result hash would look. Robin Spainhour"
+      pending "This spec will not work. I doubt this part of the SourceAdapter implementation has ever been run"
+      
+      @adapter.inject_result triplet("123", 
+                                     "attrib-name", "value", 
+                                     :source_id, expected_source_id = 1234)
+      do_sync
+      ObjectValue.first.source_id.should == expected_source_id
     end
     
     it "should not insert more items than the configured limit" do 
