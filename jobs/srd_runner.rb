@@ -89,7 +89,7 @@ begin
         AeropriseSrdRecord.create([srd_id, srd], source.id, user.id)
 
         # set them all to type query
-        ObjectValue.update_all("update_type='query'", "object=#{srd_id} and user_id=#{user.id} and source_id=#{source.id}")
+        ObjectValue.update_all("update_type='query'", "object='#{srd_id}' and user_id=#{user.id} and source_id=#{source.id}")
       end
       
       #notify
