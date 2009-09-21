@@ -185,6 +185,11 @@ describe SourceAdapter do
       do_sync
     end
     
+    it "should not fail if limit is missing" do 
+      @adapter.inject_result triplet("object-id", "atrrib", "value")
+      @adapter.should_receive(:limit).and_return(nil)
+      lambda {do_sync}.should_not raise_error
+    end
     
     def do_sync
       @adapter.sync
@@ -203,10 +208,6 @@ describe SourceAdapter do
     end
     
     it "should work with Fixnum id:s" do 
-      pending "Feature request. Robin Spainhour"
-    end
-    
-    it "should fail gracefully if limit is missing" do 
       pending "Feature request. Robin Spainhour"
     end
     
