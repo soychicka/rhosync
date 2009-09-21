@@ -109,7 +109,7 @@ class AeropriseController < ApplicationController
     if (status=='Deployed' && active_state=='Online')
       if @srd.nil?
         # start background job to try to get this SRD for each user
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
+        Bj.submit "ruby ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
       end
     end
     
@@ -117,7 +117,7 @@ class AeropriseController < ApplicationController
     if (status=='Expired' || active_state=='Offline')
       if @srd
         # start background job to try to remove this SRD for each user that has it
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
+        Bj.submit "ruby ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
       end
     end
         
