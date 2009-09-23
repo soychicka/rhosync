@@ -96,6 +96,7 @@ ActiveRecord::Schema.define(:version => 20090921184016) do
     t.string "objectid"
     t.string "temp_objectid"
     t.string "token"
+    t.text   "error"
   end
 
   create_table "clients", :id => false, :force => true do |t|

@@ -7,8 +7,8 @@
 #  client_id     :string(255)   
 #  objectid      :string(255)   
 #  temp_objectid :string(255)   
-#  created_at    :datetime      
-#  updated_at    :datetime      
+#  token         :string(255)   
+#  error         :text          
 #
 
 class ClientTempObject < ActiveRecord::Base

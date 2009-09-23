@@ -5,6 +5,7 @@ class CreateClientTempObjects < ActiveRecord::Migration
       t.string :objectid
       t.string :temp_objectid
       t.string :token
+      t.text   :error
     end
   end
 

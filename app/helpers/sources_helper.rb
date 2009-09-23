@@ -341,10 +341,12 @@ module SourcesHelper
   
   # get the 'oo' field for the client response
   def get_old_objid(newobject,temp_count)
+    old_obj = nil
     if temp_count > 0
       old_obj = @client.client_temp_objects.find_by_objectid(newobject)
-      old_obj.nil? ? nil : old_obj.temp_objectid
+      old_obj.update_attribute(:token, @token) if old_obj and not old_obj.token
     end
+    old_obj.nil? ? nil : old_obj.temp_objectid
   end
 
   # creates an object_value list for a given client

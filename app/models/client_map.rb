@@ -23,6 +23,7 @@ class ClientMap < ActiveRecord::Base
       ActiveRecord::Base.connection.execute "update client_maps set ack_token=1 where token='#{ack_token}'"
       ActiveRecord::Base.connection.execute "delete from client_maps where token='#{ack_token}'
                                              and db_operation='delete'"
+      ActiveRecord::Base.connection.execute "delete from client_temp_objects where token='#{ack_token}'"                                       
     end
   end
 
