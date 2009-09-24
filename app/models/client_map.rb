@@ -55,10 +55,17 @@ class ClientMap < ActiveRecord::Base
   def self.get_delete_objs_for_client(token,page_size,client_id)
     objs_to_return = []
     ActiveRecord::Base.transaction do
-      objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
-                                              cm.object_value_id = ov.id
-                                              where cm.client_id='#{client_id}' and ov.id is NULL
-                                              and cm.dirty=0 order by ov.object limit #{page_size}"
+      if ActiveRecord::Base.connection.adapter_name.downcase == "oracle"
+        objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
+                                                cm.object_value_id = ov.id
+                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                and cm.dirty=0 and ROWNUM <= #{page_size} order by ov.object"
+      else
+        objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
+                                                cm.object_value_id = ov.id
+                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                and cm.dirty=0 order by ov.object limit #{page_size}"
+      end
       objs_to_delete.each do |map|
         objs_to_return << new_delete_obj(map.object_value_id)
         # update this client_map record with a dirty flag and the token, 
