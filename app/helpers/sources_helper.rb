@@ -146,8 +146,6 @@ module SourcesHelper
       pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
-      # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-      #update_pendings
     end
     self.refreshtime=Time.new # timestamp
   end
@@ -189,11 +187,17 @@ module SourcesHelper
             params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
             cmd="source_adapter." +utype +params
             logger.info "Executing" + cmd
-            res = eval cmd
-            if res and res.is_a?(String)
-              tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
-              tmp_object.update_attributes(:objectid => res)
-              tmp_object.save
+            res = nil
+            tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
+            begin
+              res = eval cmd
+              if res and res.is_a?(String) and tmp_object
+                tmp_object.update_attributes(:objectid => res, :source_id => id)
+              end
+            rescue SourceAdapterException => sae
+              if tmp_object
+                tmp_object.update_attributes(:error => "#{sae.class}:#{sae}", :source_id => id)
+              end
             end
           end
         else
@@ -260,8 +264,7 @@ module SourcesHelper
 
       # setup the conditions to handle the client request
       if @ack_token
-        logger.debug "[sources_controller] Received ack_token,
-        ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+        logger.debug "[sources_controller] Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
       else
         # get last token if available, otherwise it's the first request
         # for a given source
@@ -314,39 +317,52 @@ module SourcesHelper
   end
   
   # wrap object-values by object and source
-  def wrap_object_values(ovlist)
+  def wrap_object_values(ovlist,token)
+    @count = 0
     list = {}
     temp_count = @client.client_temp_objects.count
+    
+    # process the ovlist (this will also include successful create objects)
     ovlist.each do |ov|
       src_name = ov.source.nil? ? nil : ov.source.name
       src_name ||= 'RhoDeleteSource'
       obj_sym = ov.object.nil? ? nil : ov.object.to_sym
       obj_sym ||= :rho_del_obj
-      av_hash = { :id => ov.id, 
-                  :db_operation => ov.db_operation,
-                  :attrib => ov.attrib,
-                  :value => ov.value }
+      old_obj = nil
+      av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value }
+                  
+      if temp_count > 0
+        # find the temp_obj that corresponds to the successful create
+        tmp_obj = @client.client_temp_objects.find(:first, :conditions => {:objectid => ov.object, :error => nil})
+      end
+      old_objid = tmp_obj.temp_objectid if tmp_obj
       if list[src_name]
         if list[src_name][obj_sym]
-          list[src_name][obj_sym][:av_hash] << av_hash
+          list[src_name][obj_sym][:av] << av_hash
         else
-          list[src_name][obj_sym] = { :oo => get_old_objid(ov.object,temp_count), :av_hash => [av_hash] }
+          list[src_name][obj_sym] = { :oo => old_objid, :av => [av_hash] }
+          @count +=1
         end
       else
-        list[src_name] = { obj_sym => { :oo => get_old_objid(ov.object,temp_count), :av_hash => [av_hash] } }
+        list[src_name] = { obj_sym => { :oo => old_objid, :av => [av_hash] } }
       end
     end
-    list
-  end
-  
-  # get the 'oo' field for the client response
-  def get_old_objid(newobject,temp_count)
-    old_obj = nil
-    if temp_count > 0
-      old_obj = @client.client_temp_objects.find_by_objectid(newobject)
-      old_obj.update_attribute(:token, @token) if old_obj and not old_obj.token
+    error_objs = ClientTempObject.find(:all, :conditions => "client_id = '#{@client.client_id}' and error is not NULL")
+    
+    error_objs.each do |err_obj|
+      src_name = err_obj.source.nil? ? nil : err_obj.source.name
+      if list[src_name]
+        list[src_name][err_obj.temp_objectid.to_sym] = { :oo => err_obj.temp_objectid, :e => err_obj.error }
+        @count +=1
+      else
+        list[src_name] = { err_obj.temp_objectid.to_sym => { :oo => err_obj.temp_objectid, :e => err_obj.error } }
+        @count +=1
+      end
+      
+      # make sure to set token, this may be the only object in the list
+      @token = err_obj.token unless @token
     end
-    old_obj.nil? ? nil : old_obj.temp_objectid
+    list
   end
 
   # creates an object_value list for a given client
@@ -384,7 +400,7 @@ module SourcesHelper
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
       logger.debug "[sources_helper] resending token, resend_token: #{resend_token.inspect}"
-      objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id)
+      objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id,resend_token)
       client.update_attributes({:updated_at => last_sync_time, :last_sync_token => resend_token})
       objs_to_return.concat( ClientMap.get_insert_objs_by_token_status(client.id,resend_token) )
     else
@@ -395,6 +411,9 @@ module SourcesHelper
 
       # find delete records
       objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id) )
+      
+      # process temp objects for this client
+      ClientMap.process_create_objs_for_client(client.id,source.id,token)
 
       # find + save insert records
       objs_to_insert = ObjectValue.find_by_sql object_value_query

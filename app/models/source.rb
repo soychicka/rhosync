@@ -25,6 +25,7 @@ class Source < ActiveRecord::Base
   include SourcesHelper
   
   has_many :object_values
+  has_many :client_temp_objects
   has_many :source_logs
   has_many :source_notifies
   has_many :users, :through => :source_notifies
@@ -124,9 +125,10 @@ class Source < ActiveRecord::Base
     qparms=qparms_from_object(current_user.id)
     # must do it before the create processing below!
     begin 
-      res = process_update_type('create')
-      logger.debug "RESULT FROM CREATE IS: #{res.inspect}"
+      process_update_type('create')
       cleanup_update_type('create')
+    rescue SourceAdapterException => sae
+      cleanup_update_type('create',nil,sae)
     rescue Exception=>e
       slog(e, "Failed to create",self.id,"create")
       raise e

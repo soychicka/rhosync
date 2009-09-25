@@ -14,7 +14,7 @@ class ProductAdapter < SourceAdapter
     res = Product.create(attrvals)
     
     # returning id to trigger save in rhosync client_temp_objects table
-    res.id.to_s
+    res.id.to_s 
   end
 
   def update(name_value_list)

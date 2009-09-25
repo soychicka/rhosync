@@ -92,11 +92,12 @@ ActiveRecord::Schema.define(:version => 20090921184016) do
   add_index "client_maps", ["token"], :name => "client_map_tok"
 
   create_table "client_temp_objects", :force => true do |t|
-    t.string "client_id"
-    t.string "objectid"
-    t.string "temp_objectid"
-    t.string "token"
-    t.text   "error"
+    t.string  "client_id"
+    t.string  "objectid"
+    t.string  "temp_objectid"
+    t.integer "source_id"
+    t.string  "token"
+    t.text    "error"
   end
 
   create_table "clients", :id => false, :force => true do |t|
@@ -158,8 +159,6 @@ ActiveRecord::Schema.define(:version => 20090921184016) do
     t.integer  "blob_file_size"
     t.string   "attrib_type"
   end
-
-  add_index "object_values", ["source_id", "user_id", "update_type"], :name => "by_source_user_type"
 
   create_table "source_logs", :force => true do |t|
     t.string   "error"

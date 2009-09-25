@@ -25,7 +25,7 @@ class ObjectValue < ActiveRecord::Base
   has_many :client_temp_objects
   has_attached_file :blob
   
-  attr_accessor :db_operation
+  attr_accessor :db_operation, :oo
 
   def hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
     self.class.hash_from_data(attrib,object,update_type,source_id,user_id,value,random)
@@ -67,7 +67,6 @@ class ObjectValue < ActiveRecord::Base
       sql << "select * from object_values where update_type='#{utype}' and source_id=#{source_id} #{user_str}"
     end
     sql << " order by object,attrib"
-    puts "sql: #{sql.inspect}"
     sql
   end
 end

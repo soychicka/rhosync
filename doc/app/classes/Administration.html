@@ -5,7 +5,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>Module: ApplicationHelper</title>
+  <title>Class: Administration</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Script-Type" content="text/javascript" />
   <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
@@ -49,19 +49,25 @@
     <div id="classHeader">
         <table class="header-table">
         <tr class="top-aligned-row">
-          <td><strong>Module</strong></td>
-          <td class="class-name-in-header">ApplicationHelper</td>
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">Administration</td>
         </tr>
         <tr class="top-aligned-row">
             <td><strong>In:</strong></td>
             <td>
-                <a href="../files/app/helpers/application_helper_rb.html">
-                app/helpers/application_helper.rb
+                <a href="../files/app/models/administration_rb.html">
+                app/models/administration.rb
                 </a>
         <br />
             </td>
         </tr>
 
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                ActiveRecord::Base
+            </td>
+        </tr>
         </table>
     </div>
   <!-- banner header -->
@@ -73,10 +79,20 @@
   <div id="contextContent">
 
     <div id="description">
-      <p>
-Methods added to this helper will be available to all templates in the
-application.
+      <h2>Schema Information</h2>
+<p>
+Schema version: 20090921184016
 </p>
+<p>
+Table name: administrations
+</p>
+<pre>
+ id         :integer(4)    not null, primary key
+ app_id     :integer(4)
+ user_id    :integer(4)
+ created_at :datetime
+ updated_at :datetime
+</pre>
 
     </div>
 

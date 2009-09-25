@@ -14,4 +14,5 @@
 class ClientTempObject < ActiveRecord::Base
   belongs_to :client
   belongs_to :object_value
+  belongs_to :source
 end
