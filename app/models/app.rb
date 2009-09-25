@@ -32,7 +32,11 @@ class App < ActiveRecord::Base
   end
 
   def self.find_by_permalink(link)
-    App.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
+    if link.is_a? String
+      App.find(:first, :conditions => ["name =:link", {:link=> link}])
+    else
+      App.find(:first, :conditions => ["id =:link", {:link=> link}])
+    end
   end
 
   def authenticates?

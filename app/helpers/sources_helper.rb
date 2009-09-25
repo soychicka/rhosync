@@ -348,6 +348,7 @@ module SourcesHelper
     user_condition ||= "is NULL"
     
     # Setup the query conditions       
+    mssql_limit = ""
    if ActiveRecord::Base.connection.adapter_name.downcase == "oracle"
         
     object_value_conditions = "from object_values ov 
@@ -359,6 +360,17 @@ module SourcesHelper
                                    from client_maps 
                                    where client_id='#{client.id}')
 				and ROWNUM <= #{page_size} 
+                                order by ov.object,ov.id"
+   elsif  ActiveRecord::Base.connection.adapter_name.downcase == "sqlserver"
+    mssql_limit = "top #{page_size}"
+    object_value_conditions = "from object_values ov 
+                                where ov.update_type='query' 
+                                and ov.source_id=#{source.id} 
+                                and ov.user_id #{user_condition} 
+                                and id not in
+                                  (select object_value_id 
+                                   from client_maps 
+                                   where client_id='#{client.id}') 
                                 order by ov.object,ov.id"
    else
     object_value_conditions = "from object_values ov 
@@ -372,10 +384,10 @@ module SourcesHelper
                                 order by ov.object,ov.id
                                 limit #{page_size}"
    end
-    object_value_query = "select * #{object_value_conditions}"
+    object_value_query = "select #{mssql_limit} * #{object_value_conditions}"
 
     # setup fields to insert in client_maps table
-    object_insert_query = "select '#{client.id}',id,'insert','#{token}' #{object_value_conditions}"
+    object_insert_query = "select #{mssql_limit} '#{client.id}',id,'insert','#{token}' #{object_value_conditions}"
 
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
