@@ -339,12 +339,14 @@ module SourcesHelper
       if list[src_name]
         if list[src_name][obj_sym]
           list[src_name][obj_sym][:av] << av_hash
+          @count +=1
         else
           list[src_name][obj_sym] = { :oo => old_objid, :av => [av_hash] }
           @count +=1
         end
       else
         list[src_name] = { obj_sym => { :oo => old_objid, :av => [av_hash] } }
+        @count +=1
       end
     end
     error_objs = ClientTempObject.find(:all, :conditions => "client_id = '#{@client.client_id}' and error is not NULL")
