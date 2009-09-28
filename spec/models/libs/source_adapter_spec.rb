@@ -78,6 +78,12 @@ describe SourceAdapter do
       ObjectValue.all.should be_empty
     end
     
+    it "should ignore object_values named 'attrib_type'" do
+      @adapter.inject_result triplet("123", "attrib_type", "ignore me")
+      do_sync 
+      ObjectValue.all.should be_empty
+    end
+    
     it "should ignore object_value where name is blank" do 
       @adapter.inject_result triplet("123", "", "ignore me")
       do_sync 
@@ -184,7 +190,13 @@ describe SourceAdapter do
     
     it "should log warning if @result is missing" do
       @adapter.inject_result nil
-      Rails.logger.should_receive(:warn)
+      Rails.logger.should_receive(:warn).with(SourceAdapter::MSG_NIL_RESULT_ATTRIB)
+      do_sync
+    end
+    
+    it "should log at debug level when result is empty" do 
+      @adapter.inject_result({ }) 
+      Rails.logger.should_receive(:debug).with(SourceAdapter::MSG_NO_OBJECTS)
       do_sync
     end
     
