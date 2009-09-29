@@ -217,7 +217,7 @@ module SourcesHelper
         end
       else
         msg="Missing object property on object value: " + x.inspect.to_s
-        p msg
+        logger.debug msg
         slog(nil,msg)
       end
     end

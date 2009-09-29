@@ -7,6 +7,7 @@ logger.debug "******* BEGIN *********"
 logger.debug "#{Time.now} #{Process.pid} starting sync_and_ping_user #{ARGV.inspect.to_s}"
 
 # usage: sync_and_ping_user.rb 2 AeropriseSrd http://rhosync.example.com/sources/10/show
+
 current_user=User.find(ARGV[0])
 source=Source.find_by_permalink(ARGV[1])
 callback_url=ARGV[2]

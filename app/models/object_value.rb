@@ -29,9 +29,9 @@ class ObjectValue < ActiveRecord::Base
     if self.pending_id.nil?
       self.id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value,rand.to_s)
       self.pending_id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value)  
-      p "Object Value ID: " + self.id.to_s
+      logger.debug "Object Value ID: " + self.id.to_s
     else
-      p "Record exists: " + self.inspect.to_s
+      logger.debug "Record exists: " + self.inspect.to_s
     end  
   end
 
@@ -75,7 +75,7 @@ class ObjectValue < ActiveRecord::Base
       sql << "select * from object_values where update_type='#{utype}' and source_id=#{source_id} #{user_str}"
     end
     sql << " order by object,attrib"
-    puts "sql: #{sql.inspect}"
+    logger.debug "sql: #{sql.inspect}"
     sql
   end
 end

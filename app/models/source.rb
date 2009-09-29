@@ -178,9 +178,9 @@ class Source < ActiveRecord::Base
       finalize_query_records(@credential)
       tlog(start,"finalize",self.id)
     rescue Exception=>e
-      p "Failed to query,sync: #{e.to_s}"
+      logger.debug "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
-      p e.backtrace.join("\n")
+      logger.debug e.backtrace.join("\n")
     end 
     source_adapter.logoff
   end
@@ -265,12 +265,17 @@ class Source < ActiveRecord::Base
   def to_param
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
   end
-  
+
+	# TODO: this is a bit wierd we need to test in this way  
   def self.find_by_permalink(link)
-    if link.is_a? String 
-      Source.find(:first, :conditions => ["name =:link", {:link=> link}])
+    if link.is_a? String
+    	if link.length > 2
+      	Source.find(:first, :conditions => ["name = ?", link])
+      else
+      	Source.find(link.to_i)
+      end
     else
-      Source.find(:first, :conditions => ["id =:link", {:link=> link}])
+      Source.find(link)
     end
   end
 end
