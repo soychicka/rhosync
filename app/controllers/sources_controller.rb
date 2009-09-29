@@ -80,7 +80,6 @@ class SourcesController < ApplicationController
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
       @count = @count.nil? ? @object_values.length : @count
-      puts "wrapped_list: #{@wrapped_list.inspect}"
       handle_show_format
     end
   end
