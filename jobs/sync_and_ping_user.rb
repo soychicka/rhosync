@@ -1,4 +1,4 @@
-
+require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
 logfile = File.open("log/bj-sync_and_ping.log", "a+")  
 logger = Logger.new(logfile)
@@ -33,7 +33,7 @@ rescue SourceAdapterLoginException
   # delete all other jobs for this user, otherwise we will get multiple login failures signalled to device
   ActiveRecord::Base.connection.execute("delete from bj_job where tag=#{current_user.id}")
   logger.debug "deleted all other jobs tagged with #{current_user.id}"
-rescue => Exception e
+rescue => e
   logger.debug e.inspect.to_s
   logger.debug e.backtrace.join("\n")
 end
