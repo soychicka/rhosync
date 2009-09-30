@@ -9,7 +9,11 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(:version => 20090924235148) do
+=======
+ActiveRecord::Schema.define(:version => 20090921184016) do
+>>>>>>> 1-4-tmpobjects
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -91,6 +95,15 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
   add_index "client_maps", ["client_id"], :name => "client_map_c_id"
   add_index "client_maps", ["token"], :name => "client_map_tok"
 
+  create_table "client_temp_objects", :force => true do |t|
+    t.string  "client_id"
+    t.string  "objectid"
+    t.string  "temp_objectid"
+    t.integer "source_id"
+    t.string  "token"
+    t.text    "error"
+  end
+
   create_table "clients", :id => false, :force => true do |t|
     t.string   "client_id",       :limit => 36
     t.datetime "created_at"
@@ -150,8 +163,6 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
     t.string   "attrib_type"
   end
 
-  add_index "object_values", ["source_id", "user_id", "update_type"], :name => "by_source_user_type"
-
   create_table "source_logs", :force => true do |t|
     t.string   "error"
     t.string   "message"
@@ -183,7 +194,7 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.boolean  "queuesync"
+    t.integer  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end
@@ -205,8 +216,6 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
     t.datetime "updated_at"
     t.string   "remember_token",            :limit => 40
     t.datetime "remember_token_expires_at"
-    t.string   "password_reset_code"
-    t.datetime "expires_at"
   end
 
   add_index "users", ["login"], :name => "index_users_on_login", :unique => true

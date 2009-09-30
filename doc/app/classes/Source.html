@@ -78,6 +78,34 @@
 
   <div id="contextContent">
 
+    <div id="description">
+      <h2>Schema Information</h2>
+<p>
+Schema version: 20090921184016
+</p>
+<p>
+Table name: sources
+</p>
+<pre>
+ id           :integer(4)    not null, primary key
+ name         :string(255)
+ url          :string(255)
+ login        :string(255)
+ password     :string(255)
+ created_at   :datetime
+ updated_at   :datetime
+ refreshtime  :datetime
+ adapter      :string(255)
+ app_id       :integer(4)
+ pollinterval :integer(4)
+ priority     :integer(4)
+ incremental  :integer(4)
+ queuesync    :integer(4)
+ limit        :string(255)
+ callback_url :string(255)
+</pre>
+
+    </div>
 
 
    </div>
@@ -86,7 +114,19 @@
       <h3 class="section-bar">Methods</h3>
 
       <div class="name-list">
-      <a href="#M000026">save_to_yaml</a>&nbsp;&nbsp;
+      <a href="#M000069">ask</a>&nbsp;&nbsp;
+      <a href="#M000068">backpages</a>&nbsp;&nbsp;
+      <a href="#M000073">before_save</a>&nbsp;&nbsp;
+      <a href="#M000072">before_validate</a>&nbsp;&nbsp;
+      <a href="#M000070">do_callback</a>&nbsp;&nbsp;
+      <a href="#M000065">dosearch</a>&nbsp;&nbsp;
+      <a href="#M000067">dosync</a>&nbsp;&nbsp;
+      <a href="#M000075">find_by_permalink</a>&nbsp;&nbsp;
+      <a href="#M000063">initadapter</a>&nbsp;&nbsp;
+      <a href="#M000071">ping</a>&nbsp;&nbsp;
+      <a href="#M000066">refresh</a>&nbsp;&nbsp;
+      <a href="#M000064">setup_credential_adapter</a>&nbsp;&nbsp;
+      <a href="#M000074">to_param</a>&nbsp;&nbsp;
       </div>
     </div>
 
@@ -94,6 +134,13 @@
 
 
     <!-- if includes -->
+    <div id="includes">
+      <h3 class="section-bar">Included Modules</h3>
+
+      <div id="includes-list">
+        <span class="include-name"><a href="SourcesHelper.html">SourcesHelper</a></span>
+      </div>
+    </div>
 
     <div id="section">
 
@@ -101,37 +148,515 @@
 
 
 
+    <div id="attribute-list">
+      <h3 class="section-bar">Attributes</h3>
+
+      <div class="name-list">
+        <table>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">credential</td>
+          <td class="context-item-value">&nbsp;[RW]&nbsp;</td>
+          <td class="context-item-desc"></td>
+        </tr>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">current_user</td>
+          <td class="context-item-value">&nbsp;[RW]&nbsp;</td>
+          <td class="context-item-desc"></td>
+        </tr>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">source_adapter</td>
+          <td class="context-item-value">&nbsp;[RW]&nbsp;</td>
+          <td class="context-item-desc"></td>
+        </tr>
+        </table>
+      </div>
+    </div>
       
 
 
     <!-- if method_list -->
     <div id="methods">
-      <h3 class="section-bar">Public Instance methods</h3>
+      <h3 class="section-bar">Public Class methods</h3>
 
-      <div id="method-M000026" class="method-detail">
-        <a name="M000026"></a>
+      <div id="method-M000075" class="method-detail">
+        <a name="M000075"></a>
 
         <div class="method-heading">
-          <a href="#M000026" class="method-signature">
-          <span class="method-name">save_to_yaml</span><span class="method-args">()</span>
+          <a href="#M000075" class="method-signature">
+          <span class="method-name">find_by_permalink</span><span class="method-args">(link)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000075-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000075-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 260</span>
+260:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">find_by_permalink</span>(<span class="ruby-identifier">link</span>)
+261:     <span class="ruby-constant">Source</span>.<span class="ruby-identifier">find</span>(<span class="ruby-identifier">:first</span>, <span class="ruby-identifier">:conditions</span> =<span class="ruby-operator">&gt;</span> [<span class="ruby-value str">&quot;id =:link or name =:link&quot;</span>, {<span class="ruby-identifier">:link=</span><span class="ruby-operator">&gt;</span> <span class="ruby-identifier">link</span>}])
+262:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-bar">Public Instance methods</h3>
+
+      <div id="method-M000069" class="method-detail">
+        <a name="M000069"></a>
+
+        <div class="method-heading">
+          <a href="#M000069" class="method-signature">
+          <span class="method-name">ask</span><span class="method-args">(current_user,question)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000069-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000069-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 224</span>
+224:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">ask</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">question</span>)
+225:     <span class="ruby-identifier">usersub</span>=<span class="ruby-identifier">app</span>.<span class="ruby-identifier">memberships</span>.<span class="ruby-identifier">find_by_user_id</span>(<span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">id</span>) <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">current_user</span>
+226:     <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>=<span class="ruby-identifier">usersub</span>.<span class="ruby-identifier">credential</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">usersub</span> <span class="ruby-comment cmt"># this variable is available in your source adapter</span>
+227:     <span class="ruby-identifier">initadapter</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>)
+228:     <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+229:     <span class="ruby-identifier">result</span>=<span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">ask</span> <span class="ruby-identifier">question</span>
+230:     <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;ask&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+231:     <span class="ruby-identifier">result</span>
+232:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000068" class="method-detail">
+        <a name="M000068"></a>
+
+        <div class="method-heading">
+          <a href="#M000068" class="method-signature">
+          <span class="method-name">backpages</span><span class="method-args">()</span>
           </a>
         </div>
       
         <div class="method-description">
           <p>
-useful to be able to have the source adapter code available for viewing in
-YAML files
+used by background job for paged query (page_query.rb script) queries the
+second (1-th) through last page
 </p>
           <p><a class="source-toggle" href="#"
-            onclick="toggleCode('M000026-source');return false;">[Source]</a></p>
-          <div class="method-source-code" id="M000026-source">
+            onclick="toggleCode('M000068-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000068-source">
 <pre>
-   <span class="ruby-comment cmt"># File app/models/source.rb, line 5</span>
-5:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">save_to_yaml</span>
-6:     <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-identifier">name</span><span class="ruby-operator">+</span><span class="ruby-value str">'.yml'</span>,<span class="ruby-value str">'w'</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">out</span><span class="ruby-operator">|</span>
-7:       <span class="ruby-identifier">out</span>.<span class="ruby-identifier">puts</span> <span class="ruby-identifier">to_yaml</span>
-8:     <span class="ruby-keyword kw">end</span>
-9:   <span class="ruby-keyword kw">end</span>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 195</span>
+195:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">backpages</span>
+196:     <span class="ruby-comment cmt"># first detect if some background (backpages) job is already working against this source and user</span>
+197:     <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-value str">&quot;Backpages called&quot;</span>
+198:     <span class="ruby-identifier">source_adapter</span>=<span class="ruby-identifier">setup_credential_adapter</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-keyword kw">nil</span>)
+199:     <span class="ruby-comment cmt"># make sure to use @client and @session_id variable in your code that is edited into each source!</span>
+200:     <span class="ruby-keyword kw">begin</span>
+201:       <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+202:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">login</span>  <span class="ruby-comment cmt"># should set up @session_id</span>
+203:       <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;login&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)  <span class="ruby-comment cmt"># log how long it takes to do the login</span>
+204:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+205:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-value str">&quot;Failed to login&quot;</span>
+206:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>,<span class="ruby-value str">&quot;can't login&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>,<span class="ruby-value str">&quot;login&quot;</span>)
+207:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+208:     <span class="ruby-keyword kw">end</span>
+209:     
+210:     <span class="ruby-identifier">pagenum</span>=<span class="ruby-value">0</span>  
+211:     <span class="ruby-identifier">result</span>=<span class="ruby-keyword kw">true</span>
+212:     <span class="ruby-ivar">@source</span>=<span class="ruby-keyword kw">self</span>
+213:     <span class="ruby-keyword kw">while</span> <span class="ruby-identifier">result</span> 
+214:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-node">&quot;Calling page #{pagenum}&quot;</span>      
+215:       <span class="ruby-identifier">result</span>=<span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">page</span>(<span class="ruby-identifier">pagenum</span>)
+216:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-node">&quot;Syncing #{pagenum}&quot;</span>      
+217:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">sync</span>
+218:       <span class="ruby-identifier">pagenum</span>=<span class="ruby-identifier">pagenum</span><span class="ruby-operator">+</span><span class="ruby-value">1</span>
+219:     <span class="ruby-keyword kw">end</span>
+220:     <span class="ruby-identifier">finalize_query_records</span>(<span class="ruby-identifier">credential</span>)
+221:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000073" class="method-detail">
+        <a name="M000073"></a>
+
+        <div class="method-heading">
+          <a href="#M000073" class="method-signature">
+          <span class="method-name">before_save</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000073-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000073-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 251</span>
+251:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">before_save</span>
+252:     <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">pollinterval</span><span class="ruby-operator">||=</span><span class="ruby-value">300</span>
+253:     <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">priority</span><span class="ruby-operator">||=</span><span class="ruby-value">3</span>
+254:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000072" class="method-detail">
+        <a name="M000072"></a>
+
+        <div class="method-heading">
+          <a href="#M000072" class="method-signature">
+          <span class="method-name">before_validate</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000072-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000072-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 247</span>
+247:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">before_validate</span>
+248:     <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">initadapter</span>
+249:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000070" class="method-detail">
+        <a name="M000070"></a>
+
+        <div class="method-heading">
+          <a href="#M000070" class="method-signature">
+          <span class="method-name">do_callback</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000070-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000070-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 234</span>
+234:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">do_callback</span>
+235:     <span class="ruby-identifier">current_user</span>=<span class="ruby-constant">User</span>.<span class="ruby-identifier">find_by_login</span> <span class="ruby-identifier">params</span>[<span class="ruby-identifier">:login</span>]
+236:     <span class="ruby-identifier">refresh</span>(<span class="ruby-identifier">current_user</span>)
+237:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000065" class="method-detail">
+        <a name="M000065"></a>
+
+        <div class="method-heading">
+          <a href="#M000065" class="method-signature">
+          <span class="method-name">dosearch</span><span class="method-args">(current_user,session=nil,conditions=nil,limit=nil,offset=nil)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+executes synchronous search for records that meet specified criteria of
+conditions returned in specified order calls source adapter query method
+with conditions and order
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000065-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000065-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/source.rb, line 75</span>
+75:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">dosearch</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">session</span>=<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">conditions</span>=<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">limit</span>=<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">offset</span>=<span class="ruby-keyword kw">nil</span>)
+76:     <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-value str">&quot;dosearch called&quot;</span>
+77:     <span class="ruby-ivar">@current_user</span>=<span class="ruby-identifier">current_user</span>
+78:     <span class="ruby-identifier">source_adapter</span>=<span class="ruby-identifier">setup_credential_adapter</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">session</span>)
+79:     <span class="ruby-keyword kw">begin</span>
+80:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">login</span>  <span class="ruby-comment cmt"># should set up @session_id</span>
+81:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+82:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-node">&quot;Failed to login #{e}&quot;</span>      
+83:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span>.<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+84:       <span class="ruby-keyword kw">return</span>
+85:     <span class="ruby-keyword kw">end</span>
+86:     <span class="ruby-identifier">clear_pending_records</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>)
+87:     <span class="ruby-keyword kw">begin</span>  
+88:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-node">&quot;Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}&quot;</span>
+89:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">query</span>(<span class="ruby-identifier">conditions</span>,<span class="ruby-identifier">limit</span>,<span class="ruby-identifier">offset</span>)
+90:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">sync</span>
+91:       <span class="ruby-identifier">update_pendings</span>(<span class="ruby-ivar">@credential</span>,<span class="ruby-keyword kw">true</span>)  <span class="ruby-comment cmt"># copy over records that arent already in the sandbox (second arg says check for existing)</span>
+92:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+93:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-node">&quot;Failed to sync #{e}&quot;</span>
+94:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span>.<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+95:     <span class="ruby-keyword kw">end</span> 
+96:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000067" class="method-detail">
+        <a name="M000067"></a>
+
+        <div class="method-heading">
+          <a href="#M000067" class="method-signature">
+          <span class="method-name">dosync</span><span class="method-args">(current_user,session=nil)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000067-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000067-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 109</span>
+109:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">dosync</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">session</span>=<span class="ruby-keyword kw">nil</span>)
+110:     <span class="ruby-ivar">@current_user</span>=<span class="ruby-identifier">current_user</span>
+111:     <span class="ruby-identifier">source_adapter</span>=<span class="ruby-identifier">setup_credential_adapter</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">session</span>)
+112:     <span class="ruby-comment cmt"># make sure to use @client and @session_id variable in your code that is edited into each source!</span>
+113:     <span class="ruby-keyword kw">begin</span>
+114:       <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+115:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">login</span>  <span class="ruby-comment cmt"># should set up @session_id</span>
+116:       <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;login&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)  <span class="ruby-comment cmt"># log how long it takes to do the login</span>
+117:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+118:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-value str">&quot;Failed to login&quot;</span>
+119:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>,<span class="ruby-value str">&quot;can't login&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>,<span class="ruby-value str">&quot;login&quot;</span>)
+120:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+121:     <span class="ruby-keyword kw">end</span>
+122:     <span class="ruby-comment cmt"># first grab out all ObjectValues of updatetype=&quot;qparms&quot;</span>
+123:     <span class="ruby-comment cmt"># put those together into a qparms hash</span>
+124:     <span class="ruby-comment cmt"># qparms is nil if there is no such hash</span>
+125:     <span class="ruby-identifier">qparms</span>=<span class="ruby-identifier">qparms_from_object</span>(<span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">id</span>)
+126:     <span class="ruby-comment cmt"># must do it before the create processing below!</span>
+127:     <span class="ruby-keyword kw">begin</span> 
+128:       <span class="ruby-identifier">process_update_type</span>(<span class="ruby-value str">'create'</span>)
+129:       <span class="ruby-identifier">cleanup_update_type</span>(<span class="ruby-value str">'create'</span>)
+130:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">SourceAdapterException</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">sae</span>
+131:       <span class="ruby-identifier">cleanup_update_type</span>(<span class="ruby-value str">'create'</span>,<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">sae</span>)
+132:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+133:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>, <span class="ruby-value str">&quot;Failed to create&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>,<span class="ruby-value str">&quot;create&quot;</span>)
+134:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+135:     <span class="ruby-keyword kw">end</span> 
+136: 
+137:     <span class="ruby-keyword kw">begin</span>
+138:       <span class="ruby-identifier">process_update_type</span>(<span class="ruby-value str">'update'</span>)
+139:       <span class="ruby-identifier">cleanup_update_type</span>(<span class="ruby-value str">'update'</span>)
+140:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+141:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>, <span class="ruby-value str">&quot;Failed to update&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>,<span class="ruby-value str">&quot;update&quot;</span>)
+142:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+143:     <span class="ruby-keyword kw">end</span>
+144:     
+145:     <span class="ruby-keyword kw">begin</span>
+146:       <span class="ruby-identifier">process_update_type</span>(<span class="ruby-value str">'delete'</span>)
+147:       <span class="ruby-identifier">cleanup_update_type</span>(<span class="ruby-value str">'delete'</span>)
+148:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+149:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>, <span class="ruby-value str">&quot;Failed to delete&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>,<span class="ruby-value str">&quot;delete&quot;</span>)
+150:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+151:     <span class="ruby-keyword kw">end</span>
+152:         
+153:     <span class="ruby-identifier">clear_pending_records</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>)
+154: 
+155:     <span class="ruby-comment cmt"># query,sync,finalize are atomic</span>
+156:     <span class="ruby-keyword kw">begin</span>  
+157:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">qparms</span>=<span class="ruby-identifier">qparms</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">qparms</span>  <span class="ruby-comment cmt"># note that we must have an attribute called qparms in the source adapter for this to work!</span>
+158:       <span class="ruby-comment cmt"># look for source adapter page method. if so do paged query </span>
+159:       <span class="ruby-comment cmt"># see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries</span>
+160:       <span class="ruby-keyword kw">if</span> <span class="ruby-keyword kw">defined?</span> <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">page</span> 
+161:         <span class="ruby-comment cmt">#source_adapter.page(0)</span>
+162:         <span class="ruby-comment cmt"># then do the rest in background using the page_query.rb script</span>
+163:         <span class="ruby-identifier">cmd</span>=<span class="ruby-node">&quot;ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}&quot;</span>
+164:         <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-node">&quot;Executing background job: #{cmd} #{current_user.id.to_s}&quot;</span>
+165:         <span class="ruby-keyword kw">begin</span> 
+166:           <span class="ruby-constant">Bj</span>.<span class="ruby-identifier">submit</span> <span class="ruby-identifier">cmd</span>,<span class="ruby-identifier">:tag</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">id</span>.<span class="ruby-identifier">to_s</span>
+167:         <span class="ruby-keyword kw">rescue</span> =<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+168:           <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">error</span> <span class="ruby-node">&quot;Failed to execute #{e.to_s}&quot;</span>
+169:           <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">error</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span>.<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+170:         <span class="ruby-keyword kw">end</span>
+171:         <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;page&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+172:         <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+173:       <span class="ruby-keyword kw">else</span>       
+174:         <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+175:         <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">query</span>
+176:         <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;query&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+177:       <span class="ruby-keyword kw">end</span>        
+178:       
+179:       <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+180:       <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">sync</span>
+181:       <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;sync&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+182:       <span class="ruby-identifier">start</span>=<span class="ruby-constant">Time</span>.<span class="ruby-identifier">new</span>
+183:       <span class="ruby-identifier">finalize_query_records</span>(<span class="ruby-ivar">@credential</span>)
+184:       <span class="ruby-identifier">tlog</span>(<span class="ruby-identifier">start</span>,<span class="ruby-value str">&quot;finalize&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+185:     <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+186:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">error</span> <span class="ruby-node">&quot;Failed to query,sync: #{e.to_s}&quot;</span>
+187:       <span class="ruby-identifier">slog</span>(<span class="ruby-identifier">e</span>,<span class="ruby-value str">&quot;Failed to query,sync&quot;</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+188:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">error</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span>.<span class="ruby-identifier">join</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+189:     <span class="ruby-keyword kw">end</span> 
+190:     <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">logoff</span>
+191:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000063" class="method-detail">
+        <a name="M000063"></a>
+
+        <div class="method-heading">
+          <a href="#M000063" class="method-signature">
+          <span class="method-name">initadapter</span><span class="method-args">(credential,session)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000063-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000063-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/source.rb, line 36</span>
+36:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">initadapter</span>(<span class="ruby-identifier">credential</span>,<span class="ruby-identifier">session</span>)
+37:     <span class="ruby-comment cmt">#create a source adapter with methods on it if there is a source adapter class identified</span>
+38:     <span class="ruby-keyword kw">if</span> (<span class="ruby-identifier">credential</span> <span class="ruby-keyword kw">and</span> <span class="ruby-identifier">credential</span>.<span class="ruby-identifier">url</span>.<span class="ruby-identifier">blank?</span>) <span class="ruby-keyword kw">and</span> (<span class="ruby-operator">!</span><span class="ruby-identifier">credential</span> <span class="ruby-keyword kw">and</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">url</span>.<span class="ruby-identifier">blank?</span>)
+39:       <span class="ruby-identifier">msg</span>= <span class="ruby-value str">&quot;Need to to have a URL for the source in either a user credential or globally&quot;</span>
+40:       <span class="ruby-identifier">slog</span>(<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">msg</span>,<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">id</span>)
+41:       <span class="ruby-identifier">raise</span> <span class="ruby-identifier">msg</span>
+42:     <span class="ruby-keyword kw">end</span>
+43:     <span class="ruby-keyword kw">if</span> <span class="ruby-keyword kw">not</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">adapter</span>.<span class="ruby-identifier">blank?</span> 
+44:       <span class="ruby-keyword kw">begin</span>
+45:         <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">info</span> <span class="ruby-node">&quot;Creating class for #{self.adapter}&quot;</span>
+46:         <span class="ruby-ivar">@source_adapter</span>=(<span class="ruby-constant">Object</span>.<span class="ruby-identifier">const_get</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">adapter</span>)).<span class="ruby-identifier">new</span>(<span class="ruby-keyword kw">self</span>,<span class="ruby-identifier">credential</span>) 
+47:         <span class="ruby-ivar">@source_adapter</span>.<span class="ruby-identifier">session</span> = <span class="ruby-identifier">session</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">session</span>
+48:       <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span>=<span class="ruby-operator">&gt;</span><span class="ruby-identifier">e</span>
+49:         <span class="ruby-identifier">msg</span>=<span class="ruby-node">&quot;Failure to create adapter from class #{self.adapter}: #{e.inspect.to_s}&quot;</span>
+50:         <span class="ruby-identifier">p</span> <span class="ruby-identifier">msg</span>
+51:         <span class="ruby-identifier">slog</span>(<span class="ruby-keyword kw">nil</span>,<span class="ruby-identifier">msg</span>)
+52:       <span class="ruby-keyword kw">end</span>
+53:     <span class="ruby-keyword kw">else</span> <span class="ruby-comment cmt"># if source_adapter is nil it will</span>
+54:       <span class="ruby-ivar">@source_adapter</span>=<span class="ruby-keyword kw">nil</span>
+55:     <span class="ruby-keyword kw">end</span>
+56:     <span class="ruby-ivar">@source_adapter</span>
+57:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000071" class="method-detail">
+        <a name="M000071"></a>
+
+        <div class="method-heading">
+          <a href="#M000071" class="method-signature">
+          <span class="method-name">ping</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000071-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000071-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 239</span>
+239:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">ping</span>
+240:     <span class="ruby-comment cmt"># this is the URL for the show method</span>
+241:     <span class="ruby-ivar">@result</span>=<span class="ruby-value str">&quot;&quot;</span>
+242:     <span class="ruby-identifier">users</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">user</span><span class="ruby-operator">|</span>
+243:       <span class="ruby-ivar">@result</span><span class="ruby-operator">+=</span><span class="ruby-identifier">user</span>.<span class="ruby-identifier">ping</span>(<span class="ruby-identifier">callback_url</span>) <span class="ruby-comment cmt"># this will ping all clients owned by that user</span>
+244:     <span class="ruby-keyword kw">end</span>
+245:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000066" class="method-detail">
+        <a name="M000066"></a>
+
+        <div class="method-heading">
+          <a href="#M000066" class="method-signature">
+          <span class="method-name">refresh</span><span class="method-args">(current_user, session, url=nil)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000066-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000066-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 98</span>
+ 98:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">refresh</span>(<span class="ruby-identifier">current_user</span>, <span class="ruby-identifier">session</span>, <span class="ruby-identifier">url</span>=<span class="ruby-keyword kw">nil</span>)
+ 99:     <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">queuesync</span><span class="ruby-operator">==</span><span class="ruby-value">1</span> <span class="ruby-comment cmt"># queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)</span>
+100:       <span class="ruby-comment cmt"># Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)</span>
+101:       <span class="ruby-constant">Bj</span>.<span class="ruby-identifier">submit</span> <span class="ruby-node">&quot;ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}&quot;</span>,
+102:         <span class="ruby-identifier">:tag</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">id</span>.<span class="ruby-identifier">to_s</span>
+103:       <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-value str">&quot;Queued up task for user &quot;</span><span class="ruby-operator">+</span><span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">login</span><span class="ruby-operator">+</span> <span class="ruby-value str">&quot;, source &quot;</span><span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>
+104:     <span class="ruby-keyword kw">else</span> <span class="ruby-comment cmt"># go ahead and do it right now</span>
+105:       <span class="ruby-identifier">dosync</span>(<span class="ruby-identifier">current_user</span>, <span class="ruby-identifier">session</span>)
+106:     <span class="ruby-keyword kw">end</span>
+107:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000064" class="method-detail">
+        <a name="M000064"></a>
+
+        <div class="method-heading">
+          <a href="#M000064" class="method-signature">
+          <span class="method-name">setup_credential_adapter</span><span class="method-args">(current_user,session)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+used by <a href="Source.html#M000067">dosync</a> and <a
+href="Source.html#M000068">backpages</a>
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000064-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000064-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/source.rb, line 60</span>
+60:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">setup_credential_adapter</span>(<span class="ruby-identifier">current_user</span>,<span class="ruby-identifier">session</span>)
+61:     <span class="ruby-identifier">logger</span>.<span class="ruby-identifier">debug</span> <span class="ruby-value str">&quot;Logged in as: &quot;</span><span class="ruby-operator">+</span> <span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">login</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">current_user</span>  
+62:     <span class="ruby-identifier">usersub</span>=<span class="ruby-identifier">app</span>.<span class="ruby-identifier">memberships</span>.<span class="ruby-identifier">find_by_user_id</span>(<span class="ruby-identifier">current_user</span>.<span class="ruby-identifier">id</span>) <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">current_user</span>
+63:     <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>=<span class="ruby-identifier">usersub</span>.<span class="ruby-identifier">credential</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">usersub</span> <span class="ruby-comment cmt"># this variable is available in your source adapter</span>
+64:     <span class="ruby-identifier">source_adapter</span>=<span class="ruby-identifier">initadapter</span>(<span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">credential</span>,<span class="ruby-identifier">session</span>)   
+65:     
+66:     <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">source_adapter</span>.<span class="ruby-identifier">nil?</span> 
+67:       <span class="ruby-identifier">slog</span>(<span class="ruby-keyword kw">nil</span>,<span class="ruby-value str">&quot;Couldn't set up source adapter due to missing or invalid class&quot;</span>)
+68:       <span class="ruby-keyword kw">return</span>
+69:     <span class="ruby-keyword kw">end</span> 
+70:     <span class="ruby-identifier">source_adapter</span>
+71:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000074" class="method-detail">
+        <a name="M000074"></a>
+
+        <div class="method-heading">
+          <a href="#M000074" class="method-signature">
+          <span class="method-name">to_param</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000074-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000074-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/source.rb, line 256</span>
+256:   <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">to_param</span>
+257:     <span class="ruby-identifier">name</span>.<span class="ruby-identifier">gsub</span>(<span class="ruby-regexp re">/[^a-z0-9]+/i</span>, <span class="ruby-value str">'-'</span>) <span class="ruby-keyword kw">unless</span> <span class="ruby-identifier">new_record?</span>
+258:   <span class="ruby-keyword kw">end</span>
 </pre>
           </div>
         </div>

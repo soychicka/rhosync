@@ -46,7 +46,7 @@ module SourcesHelper
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
     (count_updates << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential
     if (ObjectValue.count_by_sql count_updates ) > 0
-      logger.debug "Refreshing source #{name} #{id} because there are some non-query object values"
+      logger.info "Refreshing source #{name} #{id} because there are some non-query object values"
       return true
     end
 
@@ -55,7 +55,7 @@ module SourcesHelper
     count_query_objs="select count(*) from object_values where update_type='query' and source_id="+id.to_s
     (count_query_objs << " and user_id="+ credential.user.id.to_s) if credential# if there is a credential then just do delete and update based upon the records with that credential
     if (ObjectValue.count_by_sql count_query_objs ) <= 0
-      logger.debug "Refreshing source #{name} #{id} because there is no data stored in object values"
+      logger.info "Refreshing source #{name} #{id} because there is no data stored in object values"
       return true
     end
 
@@ -69,7 +69,7 @@ module SourcesHelper
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      logger.debug "Refreshing source #{name} #{id}  because the data is old"
+      logger.info "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
       return true
     end
 
@@ -99,7 +99,6 @@ module SourcesHelper
     objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
         dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
-        p dupemsg
         logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
@@ -147,8 +146,6 @@ module SourcesHelper
       pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
-      # this function performs pending to final convert one at a time and is robust to failures to to do a pending to final for a single object
-      #update_pendings
     end
     self.refreshtime=Time.new # timestamp
   end
@@ -171,6 +168,7 @@ module SourcesHelper
     start=Time.new # start timing the operation
     objs=ObjectValue.find_by_sql("select distinct(object) as object,blob_file_name,blob_content_type,blob_file_size 
                                   from object_values where update_type='"+ utype +"'and source_id="+id.to_s)
+    res = nil
     if objs # check that we got some object values back
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
@@ -188,8 +186,19 @@ module SourcesHelper
             name_value_list=eval(nvlist)
             params="(name_value_list"+ (x.blob_file_name ? ",x.blob)" : ")")
             cmd="source_adapter." +utype +params
-            p "Executing" + cmd
-            eval cmd
+            logger.info "Executing" + cmd
+            res = nil
+            tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
+            begin
+              res = eval cmd
+              if res and res.is_a?(String) and tmp_object
+                tmp_object.update_attributes(:objectid => res, :source_id => id)
+              end
+            rescue SourceAdapterException => sae
+              if tmp_object
+                tmp_object.update_attributes(:error => "#{sae.class}:#{sae}", :source_id => id)
+              end
+            end
           end
         else
           msg="Missing object property on object value: " + x.inspect.to_s
@@ -201,6 +210,7 @@ module SourcesHelper
       slog(nil,msg)
     end
     tlog(start,utype,self.id) # log the time to perform the particular type of operation
+    res
   end
 
   # for query parameters (update type of qparms) they get cleared on subsequent calls just for a given user (or credentials)
@@ -217,7 +227,7 @@ module SourcesHelper
         end
       else
         msg="Missing object property on object value: " + x.inspect.to_s
-        logger.debug msg
+        logger.info msg
         slog(nil,msg)
       end
     end
@@ -254,8 +264,7 @@ module SourcesHelper
 
       # setup the conditions to handle the client request
       if @ack_token
-        logger.debug "[sources_controller] Received ack_token,
-        ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+        logger.debug "[sources_controller] Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
       else
         # get last token if available, otherwise it's the first request
         # for a given source
@@ -308,26 +317,52 @@ module SourcesHelper
   end
   
   # wrap object-values by object and source
-  def wrap_object_values(ovlist)
+  def wrap_object_values(ovlist,token)
+    @count = 0
     list = {}
+    temp_count = @client.client_temp_objects.count
+    
+    # process the ovlist (this will also include successful create objects)
     ovlist.each do |ov|
       src_name = ov.source.nil? ? nil : ov.source.name
       src_name ||= 'RhoDeleteSource'
       obj_sym = ov.object.nil? ? nil : ov.object.to_sym
       obj_sym ||= :rho_del_obj
-      av_hash = { :id => ov.id, 
-                  :db_operation => ov.db_operation,
-                  :attrib => ov.attrib,
-                  :value => ov.value }
+      old_obj = nil
+      av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value }
+                  
+      if temp_count > 0
+        # find the temp_obj that corresponds to the successful create
+        tmp_obj = @client.client_temp_objects.find(:first, :conditions => {:objectid => ov.object, :error => nil})
+      end
+      old_objid = tmp_obj.temp_objectid if tmp_obj
       if list[src_name]
         if list[src_name][obj_sym]
-          list[src_name][obj_sym] << av_hash
+          list[src_name][obj_sym][:av] << av_hash
+          @count +=1
         else
-          list[src_name][obj_sym] = [av_hash]
+          list[src_name][obj_sym] = { :oo => old_objid, :av => [av_hash] }
+          @count +=1
         end
       else
-        list[src_name] = { obj_sym => [av_hash] }
+        list[src_name] = { obj_sym => { :oo => old_objid, :av => [av_hash] } }
+        @count +=1
       end
+    end
+    error_objs = ClientTempObject.find(:all, :conditions => "client_id = '#{@client.client_id}' and error is not NULL")
+    
+    error_objs.each do |err_obj|
+      src_name = err_obj.source.nil? ? nil : err_obj.source.name
+      if list[src_name]
+        list[src_name][err_obj.temp_objectid.to_sym] = { :oo => err_obj.temp_objectid, :e => err_obj.error }
+        @count +=1
+      else
+        list[src_name] = { err_obj.temp_objectid.to_sym => { :oo => err_obj.temp_objectid, :e => err_obj.error } }
+        @count +=1
+      end
+      
+      # make sure to set token, this may be the only object in the list
+      @token = err_obj.token unless @token
     end
     list
   end
@@ -392,7 +427,7 @@ module SourcesHelper
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
       logger.debug "[sources_helper] resending token, resend_token: #{resend_token.inspect}"
-      objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id)
+      objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id,resend_token)
       client.update_attributes({:updated_at => last_sync_time, :last_sync_token => resend_token})
       objs_to_return.concat( ClientMap.get_insert_objs_by_token_status(client.id,resend_token) )
     else
@@ -403,6 +438,9 @@ module SourcesHelper
 
       # find delete records
       objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id) )
+      
+      # process temp objects for this client
+      ClientMap.process_create_objs_for_client(client.id,source.id,token)
 
       # find + save insert records
       objs_to_insert = ObjectValue.find_by_sql object_value_query

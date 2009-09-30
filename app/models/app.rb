@@ -1,17 +1,17 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: apps
 #
 #  id                 :integer(4)    not null, primary key
-#  name               :string(255)
-#  admin              :string(255)
-#  description        :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  anonymous          :integer(4)
-#  autoregister       :integer(4)
-#  stop_subscriptions :boolean(1)
+#  name               :string(255)   
+#  admin              :string(255)   
+#  description        :string(255)   
+#  created_at         :datetime      
+#  updated_at         :datetime      
+#  anonymous          :integer(4)    
+#  autoregister       :integer(4)    
+#  stop_subscriptions :boolean(1)    
 #
 
 class App < ActiveRecord::Base
