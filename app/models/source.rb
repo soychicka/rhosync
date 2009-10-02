@@ -153,7 +153,7 @@ class Source < ActiveRecord::Base
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
       if defined? source_adapter.page 
-  #      source_adapter.page(0)
+        source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
         cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
         p "Executing background job: #{cmd} #{current_user.id.to_s}"
