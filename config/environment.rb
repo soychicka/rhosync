@@ -34,6 +34,7 @@ Rails::Initializer.run do |config|
   config.gem "rspec-rails", :lib => "spec/rake/spectask"
   config.gem "rcov"
   config.gem "libxml-ruby", :lib => "xml/libxml"
+  config.gem "ar-extensions", :version => ">=0.9.2"
   
 
   # Only load the plugins named here, in the order given. By default, all plugins 
@@ -78,6 +79,8 @@ Rails::Initializer.run do |config|
 
   config.active_record.colorize_logging = false
 end
+
+require 'ar-extensions/import/mysql' if Rails::Configuration.new.database_configuration[RAILS_ENV]["adapter"]=="mysql"
 
 ActionController::Base.session_options[:session_expires] = 1.year.from_now
 
