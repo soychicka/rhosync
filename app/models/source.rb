@@ -155,7 +155,7 @@ class Source < ActiveRecord::Base
       if defined? source_adapter.page 
         source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
-        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
+        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 1"
         p "Executing background job: #{cmd} #{current_user.id.to_s}"
         begin 
           Bj.submit cmd,:tag => current_user.id.to_s
