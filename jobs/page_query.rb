@@ -12,6 +12,8 @@ logger.debug "#{Time.now} Starting page_query #{ARGV.inspect.to_s}"
 # usage: page_query.rb <user number> <source number> [start page (defaults to 1)]
 source=Source.find(ARGV[1])
 source.current_user=User.find(ARGV[0])
+startpage=ARGV[2] if ARGV.size>2
+startpage||=1
 
 logger.debug "Source = #{source.inspect.to_s}"
 logger.debug "Current_user = #{source.current_user.inspect.to_s}"
