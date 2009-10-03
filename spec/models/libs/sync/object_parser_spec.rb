@@ -57,6 +57,28 @@ describe "Sync::ObjectParser" do
       parser.objects.first.attrib.should == "attrib"
       parser.objects.first.value.should == "value"
     end
+  
+    it "should work with String keys" do 
+      parser = parser_from(expected_object = "a-string", @valid_attributes )
+      parser.objects.first.object.should == expected_object
+    end 
+    
+    it "should work with Fixnum keys"
+    
+    it "should handle single quotes in attribute values" do
+      key, values = key_and_values(@valid_key, "attrib", attribute_value = "'")
+      parser_from( key, values ).objects.first.value.should == attribute_value
+    end
+    
+    it "should convert Fixnum values into strings"
+
+    it "should return empty array if any attribut is invalid (according to ObjectValue validations)" do
+      object_value_mock = mock(:null_object => true)
+      object_value_mock.should_receive(:valid?).twice.and_return(true, false)
+      ObjectValue.should_receive(:new).twice.and_return( object_value_mock )
+      key, values = key_and_values(@valid_key, "attrib1", "value1", "attrib2", "value2")
+      parser_from( key, values ).objects.should be_empty
+    end
     
   end
   
@@ -80,7 +102,7 @@ describe "Sync::ObjectParser" do
     end
   end
   
-  ###### Helpers 
+  ###### Spec Helpers 
   def parser_from(key, values, options = {})
     source_id = options[:source_id] ||= @valid_source_id
     user_id = options[:user_id] ||= nil

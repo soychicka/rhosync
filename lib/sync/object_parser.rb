@@ -13,11 +13,13 @@ module Sync
     end
     
     def array_of_object_values
+      return [] if @has_invalid_attribute
       @object_values
     end
     
-    # Using :objects alias in the specs makes them easier to read as the context is clear.
-    alias_method :objects, :array_of_object_values     
+    # Using :objects alias in the specs makes it easier to read the examples 
+    # as the context is clear it that case.
+    alias_method :objects, :array_of_object_values
     
     #################################
     private 
@@ -64,6 +66,7 @@ module Sync
                                    object_value.user_id, 
                                    object_value.value )
 
+      @has_invalid_attribute = true unless object_value.valid?
       object_value
     end
     
