@@ -1,7 +1,9 @@
 module Sync
   class ObjectParser
     
-    def initialize(object_key, object_attributes, source_id, user_id) 
+    def initialize(object_key, object_attributes, source_id, user_id = nil)
+      validate_init_args(object_key, object_attributes, source_id, user_id)
+      
       @object_key, @object_attributes, @source_id, @user_id = 
         object_key, object_attributes, source_id, user_id 
       
@@ -14,6 +16,8 @@ module Sync
       @object_values
     end
     
+    # Using :objects alias in the specs makes them easier to read as the context is clear.
+    alias_method :objects, :array_of_object_values     
     
     #################################
     private 
@@ -62,5 +66,13 @@ module Sync
 
       object_value
     end
+    
+    def validate_init_args(object_key, object_attributes, source_id, user_id)
+      raise IllegalArgumentError.new("object_key was nil") if object_key.nil?
+      raise IllegalArgumentError.new("object_attributes was nil") if object_attributes.nil? 
+      raise IllegalArgumentError.new("object_attributes was not a Hash") unless object_attributes.is_a?(Hash)
+      raise IllegalArgumentError.new("source_id was nil") if source_id.nil?
+    end
+    
   end
 end
