@@ -12,6 +12,19 @@ describe "SyncSpecHelper" do
             "other-name", "other-value").should == expected_triple
   end
   
+  it "should test triple helper with Fixnum ids (tests spec helper method)" do 
+    expected_triple = {
+      123 => {
+        "name" => "value", 
+        "other-name" => "other-value"
+      } 
+    }
+    
+    triple(123, 
+           "name", "value", 
+           "other-name", "other-value").should == expected_triple
+  end
+  
   it "should test triples helper (tests spec helper method)" do 
     expected_triple_hash = {
       "123" => {

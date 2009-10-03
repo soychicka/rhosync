@@ -33,7 +33,7 @@ module Sync
     def prepare_common_attributes
       @common_attributes = {
         :source_id => @source_id,
-        :object => @object_key,
+        :object => @object_key.to_s,
         :user_id => @user_id }
     end
     

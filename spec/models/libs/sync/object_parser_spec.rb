@@ -63,14 +63,20 @@ describe "Sync::ObjectParser" do
       parser.objects.first.object.should == expected_object
     end 
     
-    it "should work with Fixnum keys"
+    it "should work with Fixnum keys" do 
+      parser = parser_from(expected_object = 1234, @valid_attributes )
+      parser.objects.first.object.should == expected_object.to_s
+    end
     
     it "should handle single quotes in attribute values" do
       key, values = key_and_values(@valid_key, "attrib", attribute_value = "'")
       parser_from( key, values ).objects.first.value.should == attribute_value
     end
     
-    it "should convert Fixnum values into strings"
+    it "should convert Fixnum values into strings" do 
+      key, values = key_and_values(@valid_key, "attrib", attribute_value = 1234)
+      parser_from( key, values ).objects.first.value.should == attribute_value.to_s
+    end
 
     it "should return empty array if any attribut is invalid (according to ObjectValue validations)" do
       object_value_mock = mock(:null_object => true)
