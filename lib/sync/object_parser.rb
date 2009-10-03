@@ -55,7 +55,7 @@ module Sync
       
       object_value = ObjectValue.new @common_attributes.merge(attribs)
       
-      # This whole pending thing should be calculated in ObjectValue
+      # TODO: This whole pending thing should be calculated in ObjectValue
       object_value.pending_id = 
         ObjectValue.hash_from_data(object_value.attrib, 
                                    object_value.object, 

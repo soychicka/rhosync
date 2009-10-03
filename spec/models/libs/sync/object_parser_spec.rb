@@ -9,17 +9,6 @@ describe "Sync::ObjectParser" do
     @valid_source_id = 1
   end
   
-  def key_and_values(*args)
-    one_object_triple = triple(*args)
-    return one_object_triple.keys.first, one_object_triple.values.first
-  end
-  
-  def parser_from(key, values, options = {})
-    source_id = options[:source_id] ||= @valid_source_id
-    user_id = options[:user_id] ||= nil
-    Sync::ObjectParser.new(key, values, source_id, user_id)
-  end
-  
   describe "array_of_object_values()" do 
     
     it "should create object_value with supplied key (i.e. the object)" do
@@ -89,5 +78,17 @@ describe "Sync::ObjectParser" do
     it "should require source_id" do
       lambda { Sync::ObjectParser.new(@valid_key, @valid_attributes, nil) }.should raise_error(Sync::IllegalArgumentError)
     end
+  end
+  
+  ###### Helpers 
+  def parser_from(key, values, options = {})
+    source_id = options[:source_id] ||= @valid_source_id
+    user_id = options[:user_id] ||= nil
+    Sync::ObjectParser.new(key, values, source_id, user_id)
+  end
+  
+  def key_and_values(*args)
+    one_object_triple = triple(*args)
+    return one_object_triple.keys.first, one_object_triple.values.first
   end
 end
