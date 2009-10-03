@@ -23,13 +23,29 @@ describe "Sync::Synchronizer" do
         triple("52", "attrib", "valid!")
       )
       ObjectValue.all.size.should == 1
+      ObjectValue.all.first.object.should == "52"
     end
     
-    it "should use default source_id from @source" do
-      pending "Should verify that ObjectParser is initialized with source_id"
+    it "should initialize ObjectParser with @source_id" do
+      key = "123"
+      attribs = {"attrib-name" => "value" }
       expected_source_id = 321
-      sync triple("123", "attrib-name", "value"), :source_id => expected_source_id
-      ObjectValue.first.source_id.should == expected_source_id
+      
+      mock_parser = mock("ObjectParser", :null_object => true)
+      Sync::ObjectParser.should_receive(:new).with(key, attribs, expected_source_id, nil).and_return(mock_parser)
+                                                   
+      sync( {key => attribs}, :source_id => expected_source_id )
+    end
+    
+    it "should initialize ObjectParser with @user_id" do
+      key = "123"
+      attribs = {"attrib-name" => "value" }
+      expected_user_id = 12001
+      
+      mock_parser = mock("ObjectParser", :null_object => true)
+      Sync::ObjectParser.should_receive(:new).with(key, attribs, @source_id, expected_user_id).and_return(mock_parser)
+                                                   
+      sync( {key => attribs}, :user_id => expected_user_id )
     end
     
     it "should create an object_value" do
