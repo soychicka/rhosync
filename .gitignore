@@ -15,3 +15,5 @@ vendor/sync/*
 !vendor/sync/SugarCRM/
 !vendor/sync/SystemApiSamples/
 !vendor/sync/Test/
+doc/rspec_report.html
+

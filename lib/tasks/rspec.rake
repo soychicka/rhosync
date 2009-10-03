@@ -22,6 +22,12 @@ Spec::Rake::SpecTask.new(:spec => spec_prereq) do |t|
 end
 
 namespace :spec do
+  desc "Run all specs and generate html report"
+  Spec::Rake::SpecTask.new(:html) do |t|
+    t.spec_opts = ['--options', "\"#{RAILS_ROOT}/spec/spec_html.opts\""]
+    t.spec_files = FileList['spec/**/*_spec.rb']
+  end
+  
   desc "Run all specs in spec directory with RCov (excluding plugin specs)"
   Spec::Rake::SpecTask.new(:rcov) do |t|
     t.spec_opts = ['--options', "\"#{RAILS_ROOT}/spec/spec.opts\""]
