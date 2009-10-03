@@ -63,7 +63,7 @@ describe "Sync::ObjectParser" do
       parser.objects.first.object.should == expected_object
     end 
     
-    it "should work with Fixnum keys" do 
+    it "should convert Fixnum keys into strings" do 
       parser = parser_from(expected_object = 1234, @valid_attributes )
       parser.objects.first.object.should == expected_object.to_s
     end

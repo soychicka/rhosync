@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + "/../../../spec_helper"
 require File.dirname(__FILE__) + "/sync_spec_helper"
 require 'sync'
 
-describe "Sync.Synchronizer" do
+describe "Sync::Synchronizer" do
   before do 
     @sync_data = {}
     @source_id = 123
