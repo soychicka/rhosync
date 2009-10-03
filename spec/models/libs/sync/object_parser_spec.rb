@@ -50,9 +50,23 @@ describe "Sync::ObjectParser" do
       parser.objects.first.user_id.should == expected_user_id
     end
     
-    it "should not require user_id" do 
+    it "should not require user_id" do
       parser = parser_from( @valid_key, @valid_attributes, :user_id => nil )
       parser.objects.first.user_id.should be_nil
+    end
+    
+    it "should allow source_id overriding" do 
+      key, values = key_and_values("key", :source_id, expected_source_id = 1234, "attrib", "value")
+      parser = parser_from( key, values, :source_id => 5678 )
+      parser.objects.first.source_id.should == expected_source_id
+    end
+    
+    it "should not create an ObjectValue for an overridden source_id" do 
+      key, values = key_and_values("key", "attrib", "value", :source_id, 1234)
+      parser = parser_from( key, values )
+      parser.objects.size.should == 1
+      parser.objects.first.attrib.should == "attrib"
+      parser.objects.first.value.should == "value"
     end
     
   end

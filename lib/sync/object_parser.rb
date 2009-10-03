@@ -24,7 +24,7 @@ module Sync
     
     def parse_object
       prepare_common_attributes
-      find_overridden_source_id
+      remove_overridden_source_id_from_object_attributes
       create_object_values
     end
     
@@ -35,8 +35,8 @@ module Sync
         :user_id => @user_id }
     end
     
-    def find_overridden_source_id
-      @overridden_source_id = @object_attributes[:source_id]
+    def remove_overridden_source_id_from_object_attributes
+      @overridden_source_id = @object_attributes.delete(:source_id)
     end
     
     def create_object_values
