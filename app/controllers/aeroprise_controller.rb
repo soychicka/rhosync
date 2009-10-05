@@ -42,11 +42,15 @@ class AeropriseController < ApplicationController
     @source = Source.find_by_name("AeropriseRequest")
      
     # find the user for this SR
+    begin
     user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"user_id",
         :source_id=>@source.id}).value
         
-    # TBD: there is no object that matches!
-    
+    # TBD: there is no object that matches! should we fetch it?
+    rescue
+      logger.error "worklog notification for existing SR but SR is not found in sync data"
+      return
+      end
     # login as this user
     api = login(user_id)
     
