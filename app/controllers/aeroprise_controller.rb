@@ -111,6 +111,16 @@ class AeropriseController < ApplicationController
     "ERROR srd_notification"
   end
   
+  def index
+  end
+  
+  def new_credentials
+  end
+  
+  def update_credentials
+  	Aeroprise.set_admin_credentials(params['username'], params['password'])
+  	redirect_to :action => :index
+  end
  
  protected
  
