@@ -93,29 +93,21 @@ describe "Sync::Synchronizer" do
       lambda { Sync::Synchronizer.new(@sync_data, nil) }.should raise_error(Sync::IllegalArgumentError)
     end
     
-    it "should raise error if source_id is less than 1" do 
-      lambda { Sync::Synchronizer.new(@sync_data, 0) }.should raise_error(Sync::IllegalArgumentError)
+    it "should raise error if source_id is less than 0" do 
+      lambda { Sync::Synchronizer.new(@sync_data, -1) }.should raise_error(Sync::IllegalArgumentError)
     end
     
-    it "should raise error if source_id param is not Fixnum" do
-      mock = mock("non-fixnum", :null_object => true)
-      mock.should_receive(:is_a?).with(Fixnum).and_return(false)
-      lambda { Sync::Synchronizer.new(@sync_data, mock) }.should raise_error(Sync::IllegalArgumentError)
-    end 
+    it "should allow limit as string" do 
+      lambda { Sync::Synchronizer.new(@sync_data, @source_id, "1") }.should_not raise_error 
+    end
+    
+    it "should interpret limit 0 as 'no limit'" do 
+      Sync::Synchronizer.new(@sync_data, @source_id, 0).object_limit.should be_nil
+      Sync::Synchronizer.new(@sync_data, @source_id, '0').object_limit.should be_nil
+    end
     
     it "should not require limit and user_id params" do 
       lambda { Sync::Synchronizer.new(@sync_data, @source_id) }.should_not raise_error
-    end
-    
-    
-    it "should raise error if object_limit param is not Fixnum" do
-      mock = mock("non-fixnum", :null_object => true)
-      mock.should_receive(:is_a?).with(Fixnum).and_return(false)
-      lambda { Sync::Synchronizer.new(@sync_data, @source_id, mock) }.should raise_error(Sync::IllegalArgumentError)
-    end
-    
-    it "should raise error if object_limit is less than 1" do 
-      lambda { Sync::Synchronizer.new(@sync_data, @source_id, 0) }.should raise_error(Sync::IllegalArgumentError)
     end
     
     it "should allow object_limit to be nil" do 

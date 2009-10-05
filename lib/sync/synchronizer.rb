@@ -5,7 +5,8 @@ module Sync
     
     def initialize(sync_data, source_id, object_limit = nil, user_id = nil)
       validate_init_args(sync_data, source_id, object_limit, user_id)
-      @sync_data, @source_id, @object_limit, @user_id = sync_data, source_id, object_limit, user_id
+      @sync_data, @source_id, @user_id = sync_data, source_id, user_id
+      @object_limit = (object_limit.blank? or object_limit.to_i == 0) ? nil : object_limit.to_i
     end
     
     def sync
@@ -48,12 +49,16 @@ module Sync
       raise IllegalArgumentError.new("Invalid source_id '#{source_id}'") unless (source_id.is_a?(Fixnum) and (source_id > 0))
       raise IllegalArgumentError.new("Sync data was 'nil'") if sync_data.nil?
       raise IllegalArgumentError.new("Sync data is not a hash") unless sync_data.is_a? Hash
-      raise IllegalArgumentError.new("Invalid object_limit '#{object_limit}'") unless nil_or_fixnum_greater_than_zero?(object_limit) 
+      raise IllegalArgumentError.new("Invalid object_limit '#{object_limit}'") unless nil_or_positive?(object_limit) 
       raise IllegalArgumentError.new("Invalid user_id '#{user_id}'") unless nil_or_fixnum_greater_than_zero?(user_id)
     end
     
     def nil_or_fixnum_greater_than_zero?(object)
       object.nil? or (object.is_a?(Fixnum) and (object > 0))
+    end
+    
+    def nil_or_positive?(object)
+      return (object.blank? or (object.to_i > -1) ) 
     end
   end
 end
