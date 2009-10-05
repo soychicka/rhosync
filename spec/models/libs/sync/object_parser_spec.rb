@@ -78,14 +78,13 @@ describe "Sync::ObjectParser" do
       parser_from( key, values ).objects.first.value.should == attribute_value.to_s
     end
 
-    it "should return empty array if any attribut is invalid (according to ObjectValue validations)" do
-      object_value_mock = mock(:null_object => true)
-      object_value_mock.should_receive(:valid?).twice.and_return(true, false)
-      ObjectValue.should_receive(:new).twice.and_return( object_value_mock )
-      key, values = key_and_values(@valid_key, "attrib1", "value1", "attrib2", "value2")
-      parser_from( key, values ).objects.should be_empty
+    ObjectValue::RESERVED_ATTRIB_NAMES.each do |attrib_name|
+      it "should not create ObjectValue for attribute named '#{attrib_name}'" do
+        objects = parser_from( @valid_key, @valid_attributes.merge("#{attrib_name}" => "some-value") ).objects
+        objects.size.should == 1
+        {objects.first.attrib => objects.first.value}.should == @valid_attributes
+      end
     end
-    
   end
   
   describe "initialize()" do

@@ -12,11 +12,6 @@ describe "Sync::Synchronizer" do
   end
   
   describe "sync" do 
-    it "should ignore the complete object if it contains invalid attributes" do
-      sync triple("51", "attrib", "valid", "attrib_type", "invalid", "id", "invalid")
-      ObjectValue.all.should be_empty
-    end
-    
     it "should not ignore valid object when invalid objects are present" do 
       sync triples( 
         triple("51", "attrib_type", "invalid", "id", "invalid"),

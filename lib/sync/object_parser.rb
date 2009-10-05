@@ -42,8 +42,12 @@ module Sync
     end
     
     def create_object_values
-      @object_attributes.each_pair do |attribute_key, attribute_value|
-        @object_values << parse_attributes(attribute_key, attribute_value)
+      @object_attributes.each_pair do |attribute_key, attribute_value| 
+        unless ObjectValue::RESERVED_ATTRIB_NAMES.include? attribute_key 
+          @object_values << parse_attributes(attribute_key, attribute_value)
+        else
+          Rails.logger.warn "Ignoring key-value pair: #{{attribute_key => attribute_value}.inspect}."
+        end
       end
     end
 
@@ -66,7 +70,6 @@ module Sync
                                    object_value.user_id, 
                                    object_value.value )
 
-      @has_invalid_attribute = true unless object_value.valid?
       object_value
     end
     

@@ -22,6 +22,7 @@
 require 'digest/sha1'
 
 class ObjectValue < ActiveRecord::Base
+  RESERVED_ATTRIB_NAMES = ["attrib_type", "id"] 
   belongs_to :source
   has_many :clients
   has_many :client_temp_objects
@@ -40,7 +41,7 @@ class ObjectValue < ActiveRecord::Base
   end 
   
   def validate
-    ["attrib_type", "id"].each do |invalid_name|
+    RESERVED_ATTRIB_NAMES.each do |invalid_name|
       errors.add(:attrib, "'#{invalid_name}' is not a valid attribute name") if attrib == invalid_name  
     end
   end
