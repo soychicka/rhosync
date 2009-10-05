@@ -9,6 +9,10 @@ class SourcesController < ApplicationController
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
+  before_filter :check_version, :only => [:show, :search]
+  
+  UNSUPPORTED_VERSIONS = [1]
+  SUPPORTED_VERSIONS = [2]
 
   include SourcesHelper
   # shows all object values in XML structure given a supplied source
@@ -39,10 +43,10 @@ class SourcesController < ApplicationController
   # defaults to no message, 1/2 second vibrate
   # also provides callback URL of this source's show method but allows for overriding this callback
   def ping_user
-    logger.debug "Pinging user #{params[:login]}"
+    logger.info "Pinging user #{params[:login]}"
     user=User.find_by_login params[:login] if params[:login]
     if user.nil?
-      logger.info "Failed to find user to notify: #{params[:login]}"
+      logger.error "Failed to find user to notify: #{params[:login]}"
     else
       callback_url=params[:callback_url]
       lastslash=request.url.rindex('/') if callback_url.nil? # compute the callback if not supplied
@@ -75,15 +79,8 @@ class SourcesController < ApplicationController
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
-      respond_to do |format|
-        format.html
-        format.xml  { render :xml => @object_values }
-        if @version
-          format.json { render :template => "sources/show.json_v#{@version}.erb" }
-        else
-          format.json
-        end
-      end
+      @count = @count.nil? ? @object_values.length : @count
+      handle_show_format
     end
     
   rescue SourceAdapterLoginException => e
@@ -120,17 +117,10 @@ class SourcesController < ApplicationController
       logger.debug "Searching for #{conditions.inspect.to_s}"
 
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
-
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
       get_wrapped_list(@object_values)
-      respond_to do |format|
-        format.html { render :template=>"sources/show.html.erb"}
-        if @version
-          format.json { render :template => "sources/show.json_v#{@version}.erb" }
-        else
-          format.json { render :template => "sources/show.json.erb" }
-        end
-      end
+      @count = @count.nil? ? @object_values.length : @count
+      handle_show_format
     end
   end
 
@@ -157,11 +147,7 @@ class SourcesController < ApplicationController
   def clientreset
     @client = Client.find_by_client_id(params[:client_id])
     if @client
-      ActiveRecord::Base.transaction do
-        ClientMap.delete_all(:client_id => @client.client_id)
-        @client.last_sync_token=nil
-        @client.save
-      end
+      @client.reset
     end
     render :nothing=> true, :status => 200
   end
@@ -212,6 +198,9 @@ class SourcesController < ApplicationController
       if x["attrib_type"] and x["attrib_type"] == 'blob'
         o.blob = params[:blob]
         o.blob.instance_write(:file_name, x["value"])
+      end
+      unless @client.client_temp_objects.exists?(:temp_objectid => x['object'])
+        @client.client_temp_objects.create!(:temp_objectid => x['object'], :source_id => @source.id) 
       end
       o.save
       # add the created ID + created_at time to the list
@@ -365,7 +354,7 @@ class SourcesController < ApplicationController
     if current_user.nil?
       redirect_to :controller=>:sessions,:action=>:new
     else
-      p "Current user: " + current_user.login
+      logger.info "Current user: " + current_user.login
     end
     @source=Source.find_by_permalink params[:id]
     @app=@source.app
@@ -492,6 +481,28 @@ class SourcesController < ApplicationController
 
 
 protected
+  def check_version
+    @version = params[:version]
+    if @version
+      @version = @version.to_i
+      if UNSUPPORTED_VERSIONS.include?(@version)
+        render :text => "This server only supports the following protocol version(s): #{SUPPORTED_VERSIONS.join(',')}.  Please update your rhodes client.", :status => 404 and return
+      end
+    end
+  end
+
+  def handle_show_format
+    respond_to do |format|
+      format.html
+      format.xml  { render :xml => @object_values }
+      if @version and @version == 2
+        format.json { render :template => "sources/show.json_v2.erb" }
+      else
+        format.json
+      end
+    end
+  end
+
   def get_new_token
     ((Time.now.to_f - Time.mktime(2009,"jan",1,0,0,0,0).to_f) * 10**6).to_i
   end
@@ -507,7 +518,6 @@ protected
   end
   
   def get_wrapped_list(ovlist)
-    @version = params[:version]
-    @wrapped_list = wrap_object_values(ovlist) if @version
+    @wrapped_list = wrap_object_values(ovlist,@token) if @version
   end
 end

@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: sources
 #
@@ -16,13 +16,16 @@
 #  pollinterval :integer(4)    
 #  priority     :integer(4)    
 #  incremental  :integer(4)    
-#  queuesync    :boolean(1)    
+#  queuesync    :integer(4)    
 #  limit        :string(255)   
 #  callback_url :string(255)   
+#
+  
 class Source < ActiveRecord::Base
   include SourcesHelper
   
   has_many :object_values
+  has_many :client_temp_objects
   has_many :source_logs
   has_many :source_notifies
   has_many :users, :through => :source_notifies
@@ -39,12 +42,12 @@ class Source < ActiveRecord::Base
     end
     if not self.adapter.blank? 
       begin
-        p "Creating class for #{self.adapter}"
+        logger.info "Creating class for #{self.adapter}"
         @source_adapter=(Object.const_get(self.adapter)).new(self,credential) 
         @source_adapter.session = session if session
       rescue Exception=>e
         msg="Failure to create adapter from class #{self.adapter}: #{e.inspect.to_s}"
-        p msg
+        logger.debug msg
         slog(nil,msg)
       end
     else # if source_adapter is nil it will
@@ -124,6 +127,8 @@ class Source < ActiveRecord::Base
     begin 
       process_update_type('create')
       cleanup_update_type('create')
+    rescue SourceAdapterException => sae
+      cleanup_update_type('create',nil,sae)
     rescue Exception=>e
       slog(e, "Failed to create",self.id,"create")
       raise e
@@ -153,15 +158,15 @@ class Source < ActiveRecord::Base
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
       if defined? source_adapter.page 
-  #      source_adapter.page(0)
+        #source_adapter.page(0)
         # then do the rest in background using the page_query.rb script
         cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id}"
-        p "Executing background job: #{cmd} #{current_user.id.to_s}"
+        logger.info "Executing background job: #{cmd} #{current_user.id.to_s}"
         begin 
           Bj.submit cmd,:tag => current_user.id.to_s
         rescue =>e
-          p "Failed to execute #{e.to_s}"
-          p e.backtrace.join("\n")
+          logger.error "Failed to execute #{e.to_s}"
+          logger.error e.backtrace.join("\n")
         end
         tlog(start,"page",self.id)
         start=Time.new
@@ -178,9 +183,9 @@ class Source < ActiveRecord::Base
       finalize_query_records(@credential)
       tlog(start,"finalize",self.id)
     rescue Exception=>e
-      p "Failed to query,sync: #{e.to_s}"
+      logger.debug "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
-      p e.backtrace.join("\n")
+      logger.debug e.backtrace.join("\n")
     end 
     source_adapter.logoff
   end
@@ -190,17 +195,6 @@ class Source < ActiveRecord::Base
   def backpages
     # first detect if some background (backpages) job is already working against this source and user
     logger.info "Backpages called"
-=begin
-    lock=ObjectValue.find_by_source_id_and_user_id_and_update_type id,self.current_user.id,"lock"
-    if lock 
-      logger.info "Background job already running for source #{id} and user #{current_user.id}"
-      return # cant do another background job
-    end  
-    # otherwise create a lock and do the query
-    lock=ObjectValue.new(:source_id=>id,:user_id=>user_id,:update_type=>"lock")
-    lock.save
-=end
-
     source_adapter=setup_credential_adapter(current_user,nil)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
     begin
@@ -224,9 +218,6 @@ class Source < ActiveRecord::Base
       pagenum=pagenum+1
     end
     finalize_query_records(credential)
-=begin    
-    lock.delete
-=end
   end
   
   
@@ -265,8 +256,17 @@ class Source < ActiveRecord::Base
   def to_param
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
   end
-  
+
+	# TODO: this is a bit wierd we need to test in this way  
   def self.find_by_permalink(link)
-    Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
+    if link.is_a? String
+    	if link.length > 2
+      	Source.find(:first, :conditions => ["name = ?", link])
+      else
+      	Source.find(link.to_i)
+      end
+    else
+      Source.find(link)
+    end
   end
 end

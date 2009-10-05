@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: client_maps
 #
@@ -23,6 +23,7 @@ class ClientMap < ActiveRecord::Base
       ActiveRecord::Base.connection.execute "update client_maps set ack_token=1 where token='#{ack_token}'"
       ActiveRecord::Base.connection.execute "delete from client_maps where token='#{ack_token}'
                                              and db_operation='delete'"
+      ActiveRecord::Base.connection.execute "delete from client_temp_objects where token='#{ack_token}'"                                       
     end
   end
 
@@ -38,12 +39,13 @@ class ClientMap < ActiveRecord::Base
   end
   
   # get delete objects based on token status
-  def self.get_delete_objs_by_token_status(client_id)
+  def self.get_delete_objs_by_token_status(client_id,resend_token)
     objs_to_return = []
     objs_to_delete = ClientMap.find_by_sql "select * from client_maps 
                                             where ack_token = 0 
                                             and db_operation = 'delete'
-                                            and client_id='#{client_id}'"
+                                            and client_id='#{client_id}'
+                                            and token='#{resend_token}'"
     objs_to_delete.each do |map|
       objs_to_return << new_delete_obj(map.object_value_id)
     end
@@ -55,10 +57,23 @@ class ClientMap < ActiveRecord::Base
   def self.get_delete_objs_for_client(token,page_size,client_id)
     objs_to_return = []
     ActiveRecord::Base.transaction do
-      objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
-                                              cm.object_value_id = ov.id
-                                              where cm.client_id='#{client_id}' and ov.id is NULL
-                                              and cm.dirty=0 order by ov.object limit #{page_size}"
+       if ActiveRecord::Base.connection.adapter_name.downcase == "oracle"
+        objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
+                                                cm.object_value_id = ov.id
+                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                and cm.dirty=0 and ROWNUM <= #{page_size} order by ov.object"
+      elsif ActiveRecord::Base.connection.adapter_name.downcase == "sqlserver"
+	      
+        objs_to_delete = ClientMap.find_by_sql "select top #{page_size} * from client_maps cm left join object_values ov on
+                                                cm.object_value_id = ov.id
+                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                and cm.dirty=0 order by ov.object"
+      else	      
+        objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
+                                                cm.object_value_id = ov.id
+                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                and cm.dirty=0 order by ov.object limit #{page_size}"
+      end
       objs_to_delete.each do |map|
         objs_to_return << new_delete_obj(map.object_value_id)
         # update this client_map record with a dirty flag and the token, 
@@ -69,6 +84,16 @@ class ClientMap < ActiveRecord::Base
       end
     end
     objs_to_return
+  end
+  
+  def self.process_create_objs_for_client(client_id,source_id,token)
+    conditions = "client_id = '#{client_id}' and token is NULL and source_id = #{source_id}"
+    temp_objects = ClientTempObject.find( :all, :conditions => conditions )
+
+    temp_objects.map do |tmp_object|
+      tmp_object.update_attribute(:token, token)
+      tmp_object.save
+    end
   end
   
   # Add insert objects to client_maps based on 

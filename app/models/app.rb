@@ -1,17 +1,17 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: apps
 #
 #  id                 :integer(4)    not null, primary key
-#  name               :string(255)
-#  admin              :string(255)
-#  description        :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  anonymous          :integer(4)
-#  autoregister       :integer(4)
-#  stop_subscriptions :boolean(1)
+#  name               :string(255)   
+#  admin              :string(255)   
+#  description        :string(255)   
+#  created_at         :datetime      
+#  updated_at         :datetime      
+#  anonymous          :integer(4)    
+#  autoregister       :integer(4)    
+#  stop_subscriptions :boolean(1)    
 #
 
 class App < ActiveRecord::Base
@@ -32,7 +32,11 @@ class App < ActiveRecord::Base
   end
 
   def self.find_by_permalink(link)
-    App.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
+    if link.is_a? String
+      App.find(:first, :conditions => ["name =:link", {:link=> link}])
+    else
+      App.find(:first, :conditions => ["id =:link", {:link=> link}])
+    end
   end
 
   def authenticates?

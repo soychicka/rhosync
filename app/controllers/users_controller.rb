@@ -18,7 +18,7 @@ class UsersController < ApplicationController
     begin
       success = @user && @user.save!
     rescue Exception
-      puts "Error: #{$!}"
+      logger.error "Error: #{$!}"
     end
     respond_to do |wants|
       wants.html do

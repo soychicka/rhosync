@@ -11,7 +11,7 @@ module UsersHelper
     begin
       @user.save!
     rescue Exception
-      puts "Error: #{$!}"
+      logger.error "Error: #{$!}"
     end
     @user
   end
