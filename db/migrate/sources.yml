@@ -3,46 +3,41 @@ AeropriseCategory:
   name: AeropriseCategory
   adapter: AeropriseCategory
   app_id: 1
-  limit: 1000000
-  pollinterval: 300000
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
 AeropriseRequest:
   id: 2
   name: AeropriseRequest
   adapter: AeropriseRequest
   app_id: 1
-  limit: 1000000
-  pollinterval: 300000
-
-AeropriseRequestAction:
-  id: 3
-  name: AeropriseRequestAction
-  adapter: AeropriseRequestAction
-  app_id: 1
-  limit: 1000000
-  pollinterval: 300000
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
 AeropriseSrd:
-  id: 4
+  id: 3
   name: AeropriseSrd
   adapter: AeropriseSrd
   app_id: 1
-  limit: 1000000
-  pollinterval: 300000
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
 AeropriseUser:
-  id: 5
+  id: 4
   name: AeropriseUser
   adapter: AeropriseUser
   app_id: 1
-  limit: 1000000
-  pollinterval: 300000
+  limit: 10000000
+  pollinterval: -1
 
 AeropriseWorklog:
-  id: 6
+  id: 5
   name: AeropriseWorklog
   adapter: AeropriseWorklog
   app_id: 1
-  limit: 1000000
-  pollinterval: 300000
+  limit: 10000000
+  pollinterval: 0 
 
