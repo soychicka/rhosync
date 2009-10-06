@@ -1,11 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe ObjectValue do
-  before(:each) do
-    @valid_attributes = {
-    }
-  end
-
   it "should generate same id hash for known values" do
     ov = ObjectValue.create!({:attrib => 'some-attrib',
                          :object => 'some-object',
@@ -38,4 +33,6 @@ describe ObjectValue do
       o.errors[:value].should_not be_nil
     end
   end
+  
+  it "should validate the allowed values for attrib_type"
 end

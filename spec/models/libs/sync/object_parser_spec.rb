@@ -85,6 +85,20 @@ describe "Sync::ObjectParser" do
         {objects.first.attrib => objects.first.value}.should == @valid_attributes
       end
     end
+    
+    it "should set attrib_type on all ObjectValues if it is present in the triple" do 
+      key, values = key_and_values(@valid_key, "firstname",   "robin", 
+                                               "lastname",    "spainhour",
+                                               "attrib_type", expected_type = "blob" )
+      objects = parser_from( key, values ).objects
+      
+      objects.size.should == 2
+      
+      objects.each do | object | 
+        object.attrib_type.should == expected_type
+      end
+      
+    end
   end
   
   describe "initialize()" do

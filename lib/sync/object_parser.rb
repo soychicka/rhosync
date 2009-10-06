@@ -35,6 +35,14 @@ module Sync
         :source_id => @source_id,
         :object => @object_key.to_s,
         :user_id => @user_id }
+        
+      remove_attrib_type_from_object_attributes
+    end
+    
+    def remove_attrib_type_from_object_attributes
+      if @object_attributes.include?("attrib_type")
+        @common_attributes[:attrib_type] = @object_attributes.delete("attrib_type")
+      end
     end
     
     def remove_overridden_source_id_from_object_attributes
