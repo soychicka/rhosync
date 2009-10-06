@@ -13,7 +13,6 @@ module Sync
     end
     
     def array_of_object_values
-      return [] if @has_invalid_attribute
       @object_values
     end
     
