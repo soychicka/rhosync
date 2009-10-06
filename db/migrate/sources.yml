@@ -1,110 +1,43 @@
-SugarAccounts:
+AeropriseCategory:
   id: 1
-  name: SugarAccounts
-  adapter: SugarAccounts
+  name: AeropriseCategory
+  adapter: AeropriseCategory
   app_id: 1
-  limit: 100
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
-SugarCases:
+AeropriseRequest:
   id: 2
-  name: SugarCases
+  name: AeropriseRequest
+  adapter: AeropriseRequest
   app_id: 1
-  adapter: SugarCases
-  limit: 100
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
-SugarEmployees:
+AeropriseSrd:
   id: 3
-  name: SugarEmployees
+  name: AeropriseSrd
+  adapter: AeropriseSrd
   app_id: 1
-  adapter: SugarEmployees
-  limit: 100
-  
-SugarContacts:
-  id: 11
-  name: SugarContacts
-  app_id: 1
-  adapter: SugarContacts
-  limit: 100
-  
-SugarLeads:
-  id: 12
-  name: SugarLeads
-  app_id: 1
-  adapter: SugarLeads
-  limit: 100
-  
-SugarOpportunities:
-  id: 13
-  name: SugarOpportunities
-  app_id: 1
-  adapter: SugarOpportunities
-  limit: 100
-    
-SugarMeetings:
-  id: 14
-  name: SugarMeetings
-  app_id: 1
-  adapter: SugarMeetings
-  limit: 100
-    
-SugarCalls:
-  id: 15
-  name: SugarCalls
-  app_id: 1
-  adapter: SugarCalls
-  limit: 100
+  limit: 10000000
+  pollinterval: -1
+  queuesync: 1
 
-SugarCampaigns:
-  id: 16
-  name: SugarCampaigns
+AeropriseUser:
+  id: 4
+  name: AeropriseUser
+  adapter: AeropriseUser
   app_id: 1
-  adapter: SugarCampaigns
-  limit: 100
-    
-SugarProducts:
-  id: 17
-  name: SugarProducts
+  limit: 10000000
+  pollinterval: -1
+
+AeropriseWorklog:
+  id: 5
+  name: AeropriseWorklog
+  adapter: AeropriseWorklog
   app_id: 1
-  adapter: SugarProducts
-  limit: 100
-      
-SugarTeams:
-  id: 18
-  name: SugarTeams
-  app_id: 1
-  adapter: SugarTeams
-  limit: 100
-  
-SugarUsers:
-  id: 19
-  name: SugarUsers
-  app_id: 1
-  adapter: SugarUsers
-  limit: 100
-  
-SugarQuotes:
-  id: 21
-  name: SugarQuotes
-  app_id: 1
-  adapter: SugarQuotes
-  limit: 100
-
-Customer:
-  id: 22
-  name: Customer
-  app_id: 3
-  adapter: Customer
-  url: http://rhostore.heroku.com/customers.json
-  limit: 100
-
-Product:
-  id: 23
-  name: Product
-  app_id: 3
-  adapter: ProductAdapter
-  url: http://rhostore.heroku.com/products.json
-  limit: 100
-
-
-
+  limit: 10000000
+  pollinterval: 0 
 

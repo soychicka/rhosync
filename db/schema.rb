@@ -9,11 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-<<<<<<< HEAD
 ActiveRecord::Schema.define(:version => 20090924235148) do
-=======
-ActiveRecord::Schema.define(:version => 20090921184016) do
->>>>>>> 1-4-tmpobjects
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
