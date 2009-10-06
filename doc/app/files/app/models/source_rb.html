@@ -56,7 +56,7 @@
     </tr>
     <tr class="top-aligned-row">
       <td><strong>Last Update:</strong></td>
-      <td>Thu Oct 02 15:28:12 -0700 2008</td>
+      <td>Fri Sep 25 15:01:29 -0700 2009</td>
     </tr>
     </table>
   </div>
@@ -68,6 +68,34 @@
 
   <div id="contextContent">
 
+    <div id="description">
+      <h2>Schema Information</h2>
+<p>
+Schema version: 20090921184016
+</p>
+<p>
+Table name: sources
+</p>
+<pre>
+ id           :integer(4)    not null, primary key
+ name         :string(255)
+ url          :string(255)
+ login        :string(255)
+ password     :string(255)
+ created_at   :datetime
+ updated_at   :datetime
+ refreshtime  :datetime
+ adapter      :string(255)
+ app_id       :integer(4)
+ pollinterval :integer(4)
+ priority     :integer(4)
+ incremental  :integer(4)
+ queuesync    :integer(4)
+ limit        :string(255)
+ callback_url :string(255)
+</pre>
+
+    </div>
 
 
    </div>

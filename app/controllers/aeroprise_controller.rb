@@ -13,18 +13,6 @@ class AeropriseController < ApplicationController
   web_service_api AeropriseApi
   web_service_scaffold :invocation if Rails.env == 'development'
   
-  def record_object_value(oav)
-    ovdata = ObjectValue.find(:first, :conditions => {:object=>oav[:object], :attrib=>oav[:attrib],
-        :user_id=>oav[:user_id], :source_id=>oav[:source_id]})
-    
-    if ovdata
-      ovdata.delete
-    end
-    
-    ObjectValue.create(:object=>oav[:object], :attrib=>oav[:attrib],
-        :user_id=>oav[:user_id], :source_id=>oav[:source_id], :value => oav[:value], :update_type=>"query")    
-  end
-  
   def sr_needs_attention(login, sr_id)
     # toggle needs attention for this SR
     @source = Source.find_by_name("AeropriseRequest")
@@ -54,11 +42,15 @@ class AeropriseController < ApplicationController
     @source = Source.find_by_name("AeropriseRequest")
      
     # find the user for this SR
+    begin
     user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"user_id",
         :source_id=>@source.id}).value
         
-    # TBD: there is no object that matches!
-    
+    # TBD: there is no object that matches! should we fetch it?
+    rescue
+      logger.error "worklog notification for existing SR but SR is not found in sync data"
+      return
+      end
     # login as this user
     api = login(user_id)
     
@@ -79,7 +71,7 @@ class AeropriseController < ApplicationController
     user = User.find_by_login(user_id)
     
     # serialize array of hashes and update 
-    record_object_value(:object=>sr_id, :attrib=>"workinfo",
+    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"workinfo",
       :user_id=>user.id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
     
     # ping the user
@@ -99,26 +91,17 @@ class AeropriseController < ApplicationController
   # instanceID [ID for SRD]
   # Status [Current state of SRD two main values 'deployed' and 'expired']
   # activeState [Whether or not the SRD is 'online' or 'offline']
-  def srd_notification(instance_id, status, active_state)
-    @source = Source.find_by_name("AeropriseSrd")
-    @srd = ObjectValue.find(:first, :conditions => {:object=>instance_id, :source_id=>@source.id})
-
-    logger.debug "Warning: unknown SRD #{instance_id}" if @srd.nil?
-    
-    # if deployed and online, check if present. if not add and notify
+  def srd_notification(instance_id, status, active_state)   
+    # if deployed and online, run add and notify
     if (status=='Deployed' && active_state=='Online')
-      if @srd.nil?
-        # start background job to try to get this SRD for each user
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
-      end
+      # start background job to try to get this SRD for each user
+      Bj.submit "ruby ./jobs/srd_runner.rb add #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => "AeropriseSrd")}"
     end
     
-    # if expired or offline, check if present. if so, remove and notify
+    # if expired or offline, run remove and notify
     if (status=='Expired' || active_state=='Offline')
-      if @srd
-        # start background job to try to remove this SRD for each user that has it
-        Bj.submit "ruby script/runner ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => @source.name)}"
-      end
+      # start background job to try to remove this SRD for each user that has it
+      Bj.submit "ruby ./jobs/srd_runner.rb remove #{instance_id} #{app_source_url(:app_id=>"Aeroprise", :id => "AeropriseSrd")}"
     end
         
     "OK srd_notification"
@@ -128,6 +111,16 @@ class AeropriseController < ApplicationController
     "ERROR srd_notification"
   end
   
+  def index
+  end
+  
+  def new_credentials
+  end
+  
+  def update_credentials
+  	Aeroprise.set_admin_credentials(params['username'], params['password'])
+  	redirect_to :action => :index
+  end
  
  protected
  

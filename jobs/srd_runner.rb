@@ -2,18 +2,28 @@
 # This script is specific to Aeroprise application, and not a generally reuseable rhosync component
 #
 
-require 'rubyarapi'
-require 'aeroprise'
-require 'base64'
-require 'aeroprise_srd'
-require 'aeroprise_srd_record'
+require 'rubygems'
+#require 'rubyarapi'
+#require 'aeroprise'
+#require 'base64'
 
-File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
+RAILS_ROOT=File.expand_path(File.dirname(__FILE__)+'/..')
+require File.join(RAILS_ROOT, "config/environment")
+
+#require 'aeroprise_srd'
+#require 'aeroprise_srd_record'
+
+#require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
 logfile = File.open("log/bj-srd_runner.log", "a+")  
-logger = Logger.new(logfile)
+$logger = Logger.new(logfile)
 
-logger.debug "#{Time.now} starting srd_runner #{ARGV.inspect.to_s}"
+def log_debug(msg)
+  $logger.debug msg
+  #puts msg
+end
+
+log_debug "#{Time.now} starting srd_runner #{ARGV.inspect.to_s}"
 
 # usage: srd_runner.rb remove SRD_XXXXXXXXXXXX http://rhosync.example.com/sources/10/show
 
@@ -21,17 +31,24 @@ action        =ARGV[0]
 srd_id        =ARGV[1]
 callback_url  =ARGV[2]
 
-logger.debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
+log_debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 
 def ping(user, url)
+  log_debug "pinging #{user.login}"
   result = user.ping(url)
 
-  logger.debug result.inspect.to_s
-  logger.debug result.code
-  logger.debug result.message
-  logger.debug result.body
+  if result.blank?
+    log_debug "empty result, failed"
+  else
+    log_debug result.inspect.to_s
+    log_debug result.code
+    log_debug result.message
+    log_debug result.body
+  end
   
   sleep 5
+  rescue
+  log_debug "exception in ping method wrapper"
 end
 
 begin
@@ -42,24 +59,38 @@ begin
     serverip = app.configurations.find(:first, :conditions => {:name => 'remedyip'})
     adminuser = app.configurations.find(:first, :conditions => {:name => 'adminuser'})
     pw = app.configurations.find(:first, :conditions => {:name => 'adminpw'})
+    
+    raise "db config invalid" if adminuser.nil? || pw.nil?
+    
     adminuser.value = Base64.decode64(adminuser.value)
     pw.value = Base64.decode64(pw.value)
     login,password = Aeroprise.decrypt(adminuser.value,pw.value)
-    api = Rubyarapi.new(login,password,serverip)
+    api = Rubyarapi.new(login,password,serverip.value)
     
     # iterate over all users
+    log_debug "interating over #{app.users.size} users"
     app.users.each do |user|
 
+      log_debug "impersonating #{user.login}"
       api.impersonate(user.login)
       
       # try to get this srd for them
       srd = api.get_srds(srd_id)
+      log_debug "got this srd info #{srd.inspect.to_s}"
       
       # destroy all OLD OVAs for this user on the object
       ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>srd_id)
       
-      # re-add this srd to their data
-      AeropriseSrdRecord.create(srd, source.id, user.id) if srd
+      if srd
+        log_debug "adding srd to user's list"
+        # re-add this srd to their data
+        AeropriseBase.api=api
+        AeropriseBase.logger = $logger
+        AeropriseSrdRecord.create([srd_id, srd], source.id, user.id)
+
+        # set them all to type query
+        ObjectValue.update_all("update_type='query'", "object='#{srd_id}' and user_id=#{user.id} and source_id=#{source.id}")
+      end
       
       #notify
       ping(user, callback_url)
@@ -80,8 +111,8 @@ begin
   end
 
 rescue => e
-  logger.debug e.inspect.to_s
-  logger.debug e.backtrace.join("\n")
+  log_debug e.inspect.to_s
+  log_debug e.backtrace.join("\n")
 end
 
-logger.debug "... done srd_runner"
+log_debug "... done srd_runner"

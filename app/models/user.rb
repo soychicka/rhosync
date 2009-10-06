@@ -1,10 +1,10 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: users
 #
 #  id                        :integer(4)    not null, primary key
-#  login                     :string(40)    
+#  login                     :string(255)   
 #  name                      :string(100)   default("")
 #  email                     :string(100)   
 #  crypted_password          :string(40)    
@@ -13,8 +13,6 @@
 #  updated_at                :datetime      
 #  remember_token            :string(40)    
 #  remember_token_expires_at :datetime      
-#  password_reset_code       :string(255)   
-#  expires_at                :datetime      
 #
 
 require 'digest/sha1'
@@ -63,9 +61,14 @@ class User < ActiveRecord::Base
   
   def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
-    clients.each do |client|
-      @result=client.ping(callback_url,message,vibrate,badge,sound)
-      p "Result of client ping: #{@result}" if @result
+    if clients # might not have clients?
+      logger.debug "pinging #{clients.size} client devices"
+      clients.each do |client|
+        # will fail if client.device_type is blank or other misconfig
+        # dont die on single bad device ping
+        @result=client.ping(callback_url,message,vibrate,badge,sound) rescue nil
+        logger.debug "Result of client ping: #{@result}" if @result
+      end
     end
     @result
   end 

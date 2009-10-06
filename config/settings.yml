@@ -2,7 +2,7 @@ development:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
-  bbserver: 192.168.10.77
+  bbserver: aerobes.aeroprise.com
   iphoneserver: gateway.sandbox.push.apple.com
   iphoneport: 2195
   iphonepassphrase: something
@@ -12,7 +12,7 @@ test:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
-  bbserver: 192.168.10.77
+  bbserver: aerobes.aeroprise.com
   iphoneserver: gateway.sandbox.push.apple.com
   iphoneport: 2195
   iphonepassphrase: something
@@ -22,7 +22,7 @@ production:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
-  bbserver: 192.168.10.77
+  bbserver: aerobes.aeroprise.com
   iphoneserver: gateway.push.apple.com
   iphoneport: 2195  
   iphonepassphrase: something
