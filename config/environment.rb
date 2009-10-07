@@ -100,3 +100,5 @@ module SOAP
     XSINamespaceTag = 'xsi'
 end
 
+RHOSYNC_LICENSE = IO.read("#{File.dirname(__FILE__)}/license.key").strip unless defined?(RHOSYNC_LICENSE)
+

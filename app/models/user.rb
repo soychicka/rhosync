@@ -42,6 +42,9 @@ class User < ActiveRecord::Base
   validates_format_of       :name,     :with => Authentication.name_regex,  :message => Authentication.bad_name_message, :allow_nil => true
   validates_length_of       :name,     :maximum => 100
 
+  validate :must_not_exceed_license_seats
+
+
   # HACK HACK HACK -- how to do attr_accessible from here?
   # prevents a user from submitting a crafted form that bypasses activation
   # anything else you want your user to change should be added here.
@@ -71,5 +74,9 @@ class User < ActiveRecord::Base
       end
     end
     @result
-  end 
+  end
+  def must_not_exceed_license_seats
+    maxusers = License::Reader.new(RHOSYNC_LICENSE).seats
+    errors.add_to_base("Your current license only permits #{maxusers} users.") if self.class.count >= maxusers
+  end
 end
