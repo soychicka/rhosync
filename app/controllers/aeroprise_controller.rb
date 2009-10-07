@@ -14,6 +14,10 @@ class AeropriseController < ApplicationController
   web_service_scaffold :invocation if Rails.env == 'development'
   
   def sr_needs_attention(login, sr_id)
+  
+  logger.debug "login = #{login}"
+  logger.debug "sr_id = #{sr_id}"
+  
     # toggle needs attention for this SR
     @source = Source.find_by_name("AeropriseRequest")
     @user = User.find_by_login(login)
@@ -141,7 +145,7 @@ class AeropriseController < ApplicationController
     pw = app.configurations.find(:first, :conditions => {:name => 'adminpw'})
       
     unless admin_user.nil? or pw.nil?
-      admin_user.value = Base64.decode64(user.value)
+      admin_user.value = Base64.decode64(admin_user.value)
       pw.value = Base64.decode64(pw.value)
       
       login,password = Aeroprise.decrypt(admin_user.value,pw.value)
