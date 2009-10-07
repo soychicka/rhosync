@@ -40,7 +40,7 @@ class ObjectValue < ActiveRecord::Base
   end
   
   def self.hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
-    res = (user_id & 0xff)
+    res = user_id.nil? ? 0 : (user_id & 0xff)
     res <<= 8
     res |= (attrib.hash & 0xff)
     res <<= 8
