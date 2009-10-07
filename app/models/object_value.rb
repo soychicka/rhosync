@@ -40,21 +40,15 @@ class ObjectValue < ActiveRecord::Base
   end
   
   def self.hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
-    #"#{object}#{attrib}#{update_type}#{source_id}#{user_id}#{value}#{random}".hash.to_i.abs
     res = (user_id & 0xff)
-    puts "res1: #{res.to_s(2)}, res(i): #{res}"
     res <<= 8
     res |= (attrib.hash & 0xff)
-    puts "res2: #{res.to_s(2)}, res(i): #{res}"
     res <<= 8
     res |= (source_id & 0xff)
-    puts "res3: #{res.to_s(2)}, res(i): #{res}"
     res <<= 16
     res |= (object.hash & 0xffff)
-    puts "res4: #{res.to_s(2)}, res(i): #{res}"
     res <<= 16
     res |= (value.hash & 0xffff)
-    puts "res5: #{res.to_s(2)}, res(i): #{res}"
     res
   end
   
