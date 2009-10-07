@@ -41,6 +41,17 @@ module SourcesHelper
 
   def needs_refresh
     result=nil
+    
+    # check to make sure we are not running a paged query in the background
+    command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id} 1"
+    jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
+		jobs.each do |job|
+			if !job.finished?
+				logger.info "pending paged query job detected, needs_refresh returning false"
+				return false
+			end
+		end
+    
     # refresh if there are any updates to come
     # INDEX: SHOULD USE BY_SOURCE_USER_TYPE
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
