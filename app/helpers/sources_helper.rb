@@ -275,14 +275,14 @@ module SourcesHelper
 
       # setup the conditions to handle the client request
       if @ack_token
-        logger.debug "[sources_controller] Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+        logger.debug "Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
       else
         # get last token if available, otherwise it's the first request
         # for a given source
         @resend_token=@client.last_sync_token
         if @resend_token.nil?
           @first_request=true
-          logger.debug "[sources_controller] First request for source"
+          logger.debug "First request for source"
         end
       end
 
@@ -300,9 +300,7 @@ module SourcesHelper
       # doesn't receive the last page again
       @token=nil if @object_values.nil? or @object_values.length == 0
 
-      logger.debug "[sources_controller] Finished processing objects for client,
-      token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
-      updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+      logger.debug "Finished processing objects for client, token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect}, object_values count: #{@object_values.length}"
 
       @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
                                                source_id = #{@source.id} and update_type = '#{utype}'"
@@ -394,16 +392,8 @@ module SourcesHelper
     user_condition ||= "is NULL"
 
     # Setup the query conditions
-    object_value_conditions = "from object_values ov
-                                where ov.update_type='query'
-                                #{by_source_condition}
-                                and ov.user_id #{user_condition}
-                                and id not in
-                                  (select object_value_id
-                                   from client_maps
-                                   where client_id='#{client.id}')
-                                order by ov.object,ov.id
-                                limit #{page_size}"
+    object_value_conditions = "from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
+        and id not in (select object_value_id from client_maps where client_id='#{client.id}') order by ov.object,ov.id limit #{page_size}"
 
     object_value_query = "select * #{object_value_conditions}"
 
@@ -412,12 +402,12 @@ module SourcesHelper
 
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
-      logger.debug "[sources_helper] resending token, resend_token: #{resend_token.inspect}"
+      logger.debug "Resending token, resend_token: #{resend_token.inspect}"
       objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id,resend_token)
       client.update_attributes({:updated_at => last_sync_time, :last_sync_token => resend_token})
       objs_to_return.concat( ClientMap.get_insert_objs_by_token_status(client.id,resend_token) )
     else
-      logger.debug "[sources_helper] ack_token: #{ack_token.inspect}, using new token: #{token.inspect}"
+      logger.debug "ack_token: #{ack_token.inspect}, using new token: #{token.inspect}"
 
       # mark acknowledged token so we don't send it again
       ClientMap.mark_objs_by_ack_token(ack_token) if ack_token and ack_token.length > 0

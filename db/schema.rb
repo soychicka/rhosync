@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091006224021) do
+ActiveRecord::Schema.define(:version => 20091007202840) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -80,7 +80,7 @@ ActiveRecord::Schema.define(:version => 20091006224021) do
 
   create_table "client_maps", :id => false, :force => true do |t|
     t.string  "client_id",       :limit => 36
-    t.integer "object_value_id"
+    t.integer "object_value_id", :limit => 8
     t.string  "db_operation"
     t.string  "token"
     t.integer "dirty",           :limit => 1,  :default => 0
