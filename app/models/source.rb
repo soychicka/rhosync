@@ -216,7 +216,7 @@ class Source < ActiveRecord::Base
       source_adapter.sync
       pagenum=pagenum+1
     end
-    finalize_query_records(credential)
+    finalize_query_records(credential, false)
   end
   
   
