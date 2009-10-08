@@ -43,7 +43,7 @@ module SourcesHelper
     result=nil
     
     # check to make sure we are not running a paged query in the background
-    command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id} 1"
+    command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id} 1" if credential
     jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
 		jobs.each do |job|
 			if !job.finished?
