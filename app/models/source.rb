@@ -158,9 +158,9 @@ class Source < ActiveRecord::Base
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
       if defined? source_adapter.page 
-        source_adapter.page(0)
+    
         # then do the rest in background using the page_query.rb script
-        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 1"
+        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 0"
         logger.info "Executing background job: #{cmd} #{current_user.id.to_s}"
         begin 
           Bj.submit cmd,:tag => current_user.id.to_s
@@ -170,24 +170,26 @@ class Source < ActiveRecord::Base
         end
         tlog(start,"page",self.id)
         start=Time.new
+
       else       
         start=Time.new
         source_adapter.query
         tlog(start,"query",self.id)
-      end        
       
-      start=Time.new
-      source_adapter.sync
-      tlog(start,"sync",self.id)
-      start=Time.new
-      finalize_query_records(@credential)
-      tlog(start,"finalize",self.id)
+      	start=Time.new
+      	source_adapter.sync
+      	tlog(start,"sync",self.id)
+      	start=Time.new
+      	finalize_query_records(@credential)
+      	tlog(start,"finalize",self.id)
+      	source_adapter.logoff
+      end  
     rescue Exception=>e
       logger.error "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
       logger.error e.backtrace.join("\n")
     end 
-    source_adapter.logoff
+
   end
   
   # used by background job for paged query (page_query.rb script)
@@ -216,7 +218,7 @@ class Source < ActiveRecord::Base
       source_adapter.sync
       pagenum=pagenum+1
     end
-    finalize_query_records(credential, false)
+    finalize_query_records(credential)
   end
   
   
