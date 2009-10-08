@@ -142,6 +142,7 @@ module SourcesHelper
         end
       end
       self.refreshtime=Time.new
+      save
       # TODO: This is bad... These collided but we can't update them, so we delete for now.
       ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
     end
@@ -162,6 +163,7 @@ module SourcesHelper
       ActiveRecord::Base.connection.execute(pending_to_query)
     end
     self.refreshtime=Time.new # timestamp
+    save
   end
 
   # helper function to come up with the string used for the name_value_list
