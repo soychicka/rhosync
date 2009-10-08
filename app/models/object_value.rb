@@ -21,6 +21,7 @@
    
 class ObjectValue < ActiveRecord::Base
   belongs_to :source
+  belongs_to :user
   has_many :clients
   has_many :client_temp_objects
   has_attached_file :blob
