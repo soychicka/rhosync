@@ -15,7 +15,6 @@ class ChangeOvIdToBigint < ActiveRecord::Migration
       t.integer  "blob_file_size"
       t.string   "attrib_type"
     end
-    execute "ALTER TABLE object_values ADD `id` bigint(20) AUTO_INCREMENT PRIMARY KEY"
   end
 
   def self.down
