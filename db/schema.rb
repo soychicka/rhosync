@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091007202840) do
+ActiveRecord::Schema.define(:version => 20091008233958) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -89,6 +89,7 @@ ActiveRecord::Schema.define(:version => 20091007202840) do
 
   add_index "client_maps", ["client_id", "object_value_id"], :name => "client_map_c_id_ov_id"
   add_index "client_maps", ["client_id"], :name => "client_map_c_id"
+  add_index "client_maps", ["dirty"], :name => "by_dirty"
   add_index "client_maps", ["token"], :name => "client_map_tok"
 
   create_table "client_temp_objects", :force => true do |t|
@@ -144,12 +145,12 @@ ActiveRecord::Schema.define(:version => 20091007202840) do
     t.datetime "updated_at"
   end
 
-  create_table "object_values", :force => true do |t|
+  create_table "object_values", :id => false, :force => true do |t| 
     t.integer  "source_id"
     t.string   "object"
     t.string   "attrib"
     t.text     "value"
-    t.integer  "pending_id",        :limit => 8
+    t.integer  "pending_id", :limit => 8
     t.string   "update_type"
     t.integer  "user_id"
     t.datetime "created_at"
@@ -159,6 +160,9 @@ ActiveRecord::Schema.define(:version => 20091007202840) do
     t.integer  "blob_file_size"
     t.string   "attrib_type"
   end
+  execute "ALTER TABLE object_values ADD `id` bigint(20) AUTO_INCREMENT PRIMARY KEY"
+
+  add_index "object_values", ["object"], :name => "by_obj"
 
   create_table "source_logs", :force => true do |t|
     t.string   "error"
