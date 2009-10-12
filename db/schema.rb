@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090716233709) do
+ActiveRecord::Schema.define(:version => 20091009002420) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -36,8 +36,6 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.text    "value"
     t.text    "cast"
   end
-
-  add_index "bj_config", ["hostname", "key"], :name => "index_bj_config_on_hostname_and_key", :unique => true
 
   create_table "bj_job", :id => false, :force => true do |t|
     t.integer  "bj_job_id",      :null => false
@@ -82,7 +80,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
 
   create_table "client_maps", :id => false, :force => true do |t|
     t.string  "client_id",       :limit => 36
-    t.integer "object_value_id"
+    t.integer "object_value_id", :limit => 8
     t.string  "db_operation"
     t.string  "token"
     t.integer "dirty",           :limit => 1,  :default => 0
@@ -91,7 +89,17 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
 
   add_index "client_maps", ["client_id", "object_value_id"], :name => "client_map_c_id_ov_id"
   add_index "client_maps", ["client_id"], :name => "client_map_c_id"
+  add_index "client_maps", ["dirty"], :name => "by_dirty"
   add_index "client_maps", ["token"], :name => "client_map_tok"
+
+  create_table "client_temp_objects", :force => true do |t|
+    t.string  "client_id"
+    t.string  "objectid"
+    t.string  "temp_objectid"
+    t.integer "source_id"
+    t.string  "token"
+    t.text    "error"
+  end
 
   create_table "clients", :id => false, :force => true do |t|
     t.string   "client_id",       :limit => 36
@@ -142,7 +150,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.string   "object"
     t.string   "attrib"
     t.text     "value"
-    t.integer  "pending_id"
+    t.integer  "pending_id",        :limit => 8
     t.string   "update_type"
     t.integer  "user_id"
     t.datetime "created_at"
@@ -153,7 +161,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
     t.string   "attrib_type"
   end
 
-  add_index "object_values", ["source_id", "user_id", "update_type"], :name => "by_source_user_type"
+  add_index "object_values", ["object"], :name => "by_obj"
 
   create_table "source_logs", :force => true do |t|
     t.string   "error"
@@ -199,7 +207,7 @@ ActiveRecord::Schema.define(:version => 20090716233709) do
   end
 
   create_table "users", :force => true do |t|
-    t.string   "login",                     :limit => 40
+    t.string   "login"
     t.string   "name",                      :limit => 100, :default => ""
     t.string   "email",                     :limit => 100
     t.string   "crypted_password",          :limit => 40

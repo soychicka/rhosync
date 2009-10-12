@@ -16,11 +16,16 @@ class ApplicationController < ActionController::Base
   # Uncomment this to filter the contents of submitted sensitive data parameters
   # from your application log (in this case, all fields with names like "password"). 
   filter_parameter_logging :password
+  
+  after_filter :set_content_type
+  
+  def set_content_type
+    response.content_type = Mime::HTML
+  end
 
   # register this particular device and associated user as interested in queued sync
   def register_client(client)
-    debugger
-    p 'Registering Client: ' + client.inspect
+    logger.debug 'Registering Client: ' + client.inspect
     if @current_user and not params["device_pin"].blank?
       client.pin = params["device_pin"]
       logger.debug "Registering device for notification with pin " + client.pin
@@ -34,4 +39,8 @@ class ApplicationController < ActionController::Base
     end
   end
   
+  def find_and_register_client
+    @client = Client.find_by_client_id(params[:client_id])
+    register_client(@client) if @client
+  end
 end

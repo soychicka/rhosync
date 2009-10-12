@@ -1,31 +1,34 @@
-# This controller handles the login/logout function of the site.  
+# This controller handles the login/logout function of the site.
 class SessionsController < ApplicationController
   include UsersHelper
-  
+
   # disable forgery protection for login
   # TODO: Only do this for json requests!
   protect_from_forgery :except => :client_login
+  
+  after_filter :find_and_register_client, :only => :client_login
 
   # render new.rhtml
   def new
   end
-  
+
   # POST http://rhosync.local/apps/Wikipedia/sources/Wikipedia/client_login
   #
-  # Parameters: {"action"=>"client_login", "id"=>"Wikipedia", 
+  # Parameters: {"action"=>"client_login", "id"=>"Wikipedia",
   # "controller"=>"sessions", "app_id"=>"Wikipedia", "login"=>"anonymous", "password"=>"[FILTERED]", "remember_me"=>"1"}
   def client_login
     logout_keeping_session!
     @app=App.find_by_permalink(params[:app_id])
-    
+
     if @app.authenticates? # authentication has been delegated to the application?
+      logger.debug "calling app delegated authentication"
       user = @app.authenticate(params[:login], params[:password], session)
       if user
         self.current_user = user
       else
-        render(:status => 401) and return
+        render(:nothing => true, :status => 401) and return
       end
-    else       
+    else
       user = User.authenticate(params[:login], params[:password])
       if user
         self.current_user = user
@@ -39,13 +42,14 @@ class SessionsController < ApplicationController
             @app.users << user
             @app.save
           else
-            render :status => 401
+            render(:nothing => true, :status => 401) and return
           end
         rescue ActiveRecord::RecordInvalid
-          render :status => 401
+          render(:nothing => true, :status => 401) and return
         end
       end
     end
+    render(:nothing => true, :status => 200)
   end
 
   def create
@@ -67,7 +71,7 @@ class SessionsController < ApplicationController
       if @app and @app.autoregister
         user=create_user params[:login],params[:password],params[:email]
         @app.users << user
-        @app.save        
+        @app.save
         redirect_back_or_default('/')
       else
         note_failed_signin

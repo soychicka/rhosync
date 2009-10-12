@@ -10,6 +10,8 @@ describe Source do
     Fixtures.create_fixtures(File.join(File.dirname(__FILE__), "..", "..", "db", "migrate"), "sources")
     @source = Source.find(1)
     @source.name.should == "SugarAccounts"
-    @source.attributes.size.should == 21
+    @source.attributes.size.should == 16
   end
+  
+  
 end
