@@ -49,6 +49,12 @@ class ObjectValue < ActiveRecord::Base
     res |= (object.hash & 0xffff)
     res <<= 16
     res |= (value.hash & 0xffff)
+    
+    if [1752717433503793, 1752720129523761, 1752716365398065].include?(res)
+      logger.debug "*************************\n\nPOSSIBLE DUPLICATE\n\n********************\n"
+      logger.debug "attrib=#{attrib}\nobject=#{object}\nupdate_type=#{update_type.inspect.to_s}\nsource_id=#{source_id}\nuser_id=#{user_id}\nvalue=#{value}"
+    end
+    
     res
   end
   
