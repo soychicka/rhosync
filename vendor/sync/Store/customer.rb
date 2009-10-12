@@ -9,7 +9,7 @@ class Customer < SourceAdapter
   end
  
   def query(conditions=nil,limit=nil,offset=nil)
-    logger = Logger.new('store.log', File::WRONLY | File::APPEND)
+    logger = Logger.new('log/store.log', File::WRONLY | File::APPEND)
     logger.debug "query called with conditions=#{conditions} limit=#{limit} and offset=#{offset}"
     
     parsed=nil
