@@ -45,13 +45,15 @@ module SourcesHelper
     # check to make sure we are not running a paged query in the background
     command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id} 0" if credential
 
-    jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
-		jobs.each do |job|
-			if !job.finished?
-				logger.info "pending paged query job detected, needs_refresh returning false"
-				return false
-			end
-		end
+    if command
+      jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
+  		jobs.each do |job|
+  			if job.finished? != 0
+  				logger.info "pending paged query job detected, needs_refresh returning false so it can finish"
+  				return false
+  			end
+  		end
+    end
     
     # refresh if there are any updates to come
     # INDEX: SHOULD USE BY_SOURCE_USER_TYPE
