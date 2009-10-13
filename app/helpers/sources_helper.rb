@@ -111,6 +111,7 @@ module SourcesHelper
     objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
         dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
+        dupemsg+=" and OAV: #{prev.object.to_s},#{prev.attrib},#{prev.value} on source_id=#{source_id}"
         logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
