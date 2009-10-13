@@ -42,12 +42,15 @@ class ObjectValue < ActiveRecord::Base
   def self.hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
     res = user_id.nil? ? 0 : (user_id & 0xff)
     res <<= 8
+    attrib += "e0f3fd3241a2d0af8ac2ca49428fe3d96655f65b" if attrib and attrib.length < 10
+    res <<= 8
     res |= (attrib.hash & 0xff)
     res <<= 8
     res |= (source_id & 0xff)
-    res <<= 16
-    res |= (object.hash & 0xffff)
-    res <<= 16
+    object += "ea1b1b505da315a4ec6f413d8d4e0806e0b4786f" if object and object.length < 10
+    res <<= 24
+    res |= (object.hash & 0xffffff)
+    value += "b60845c27741ca52f9f7f2f111d1a5d9ecec823f" if value and value.length < 10
     res |= (value.hash & 0xffff)
     res
   end
