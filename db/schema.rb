@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091009002420) do
+ActiveRecord::Schema.define(:version => 20091013193010) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -162,6 +162,8 @@ ActiveRecord::Schema.define(:version => 20091009002420) do
   end
 
   add_index "object_values", ["object"], :name => "by_obj"
+  add_index "object_values", ["update_type", "source_id", "user_id"], :name => "by_ut_s_u"
+  add_index "object_values", ["update_type", "source_id"], :name => "by_ut_s"
 
   create_table "source_logs", :force => true do |t|
     t.string   "error"
