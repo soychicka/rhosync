@@ -48,7 +48,7 @@ module SourcesHelper
     if command
       jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
   		jobs.each do |job|
-  			if job.finished? != 0
+  			if job.state == 'running'
   				logger.info "pending paged query job detected, needs_refresh returning false so it can finish"
   				return false
   			end
