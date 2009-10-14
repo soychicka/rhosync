@@ -400,7 +400,7 @@ module SourcesHelper
     user_condition ||= "is NULL"
 
     # Setup the query conditions
-    object_value_insert_query = "select * from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
+    object_value_insert_query = "from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
         and not exists (select object_value_id from client_maps where ov.id=object_value_id and client_id='#{client.id}') order by ov.object,ov.id limit #{page_size}"
 
     object_value_query = "select * from object_values ov inner join client_maps on ov.id = client_maps.object_value_id where token = '#{token}' order by ov.object,ov.id"
