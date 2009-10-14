@@ -400,13 +400,13 @@ module SourcesHelper
     user_condition ||= "is NULL"
 
     # Setup the query conditions
-    object_value_conditions = "from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
-        and id not in (select object_value_id from client_maps where client_id='#{client.id}') order by ov.object,ov.id limit #{page_size}"
+    object_value_insert_query = "select * from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
+        and not exists (select object_value_id from client_maps where ov.id=object_value_id and client_id='#{client.id}') order by ov.object,ov.id limit #{page_size}"
 
-    object_value_query = "select * #{object_value_conditions}"
+    object_value_query = "select * from object_values ov inner join client_maps on ov.id = client_maps.object_value_id where token = '#{token}' order by ov.object,ov.id"
 
     # setup fields to insert in client_maps table
-    object_insert_query = "select '#{client.id}',id,'insert','#{token}' #{object_value_conditions}"
+    object_insert_query = "select '#{client.id}',id,'insert','#{token}' #{object_value_insert_query}"
 
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
@@ -427,8 +427,8 @@ module SourcesHelper
       ClientMap.process_create_objs_for_client(client.id,source.id,token)
 
       # find + save insert records
-      objs_to_insert = ObjectValue.find_by_sql object_value_query
       ClientMap.insert_new_client_maps(object_insert_query)
+      objs_to_insert = ObjectValue.find_by_sql object_value_query
       objs_to_insert.collect! {|x| x.db_operation = 'insert'; x}
 
       # Update the last updated time for this client
