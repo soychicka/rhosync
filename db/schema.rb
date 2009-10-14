@@ -162,6 +162,7 @@ ActiveRecord::Schema.define(:version => 20091013193010) do
   end
 
   add_index "object_values", ["object"], :name => "by_obj"
+  add_index "object_values", ["update_type", "source_id", "user_id", "pending_id"], :name => "by_ut_s_u_p"
   add_index "object_values", ["update_type", "source_id", "user_id"], :name => "by_ut_s_u"
   add_index "object_values", ["update_type", "source_id"], :name => "by_ut_s"
 
