@@ -340,8 +340,14 @@ module SourcesHelper
     temp_count = @client.client_temp_objects.count
     
     # process the ovlist (this will also include successful create objects)
+    sources = @app.sources
+    srchash = {}
+    sources.each do |src|
+      srchash[src.id] = src.name
+    end
+    
     ovlist.each do |ov|
-      src_name = ov.source.nil? ? nil : ov.source.name
+      src_name = srchash[ov.source_id]
       src_name ||= 'RhoDeleteSource'
       obj_sym = ov.object.nil? ? nil : ov.object.to_sym
       obj_sym ||= :rho_del_obj
