@@ -41,11 +41,7 @@ class ClientMap < ActiveRecord::Base
   # get delete objects based on token status
   def self.get_delete_objs_by_token_status(client_id,resend_token)
     objs_to_return = []
-    objs_to_delete = ClientMap.find_by_sql "select * from client_maps 
-                                            where ack_token = 0 
-                                            and db_operation = 'delete'
-                                            and client_id='#{client_id}'
-                                            and token='#{resend_token}'"
+    objs_to_delete = ClientMap.find_by_sql "select * from client_maps where ack_token = 0 and db_operation = 'delete' and client_id='#{client_id}' and token='#{resend_token}'"
     objs_to_delete.each do |map|
       objs_to_return << new_delete_obj(map.object_value_id)
     end
@@ -100,9 +96,7 @@ class ClientMap < ActiveRecord::Base
   # join query w/ object_values
   def self.insert_new_client_maps(insert_query)
     ActiveRecord::Base.transaction do
-      ActiveRecord::Base.connection.execute "insert into client_maps 
-                                             (client_id,object_value_id,db_operation,token)
-                                             #{insert_query}"                                      
+      ActiveRecord::Base.connection.execute "insert into client_maps (client_id,object_value_id,db_operation,token) #{insert_query}"                                      
     end
   end
   

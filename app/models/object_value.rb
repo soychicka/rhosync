@@ -19,6 +19,8 @@
 #  attrib_type       :string(255)   
 #
    
+require 'digest/sha1'
+
 class ObjectValue < ActiveRecord::Base
   belongs_to :source
   belongs_to :user
@@ -30,11 +32,9 @@ class ObjectValue < ActiveRecord::Base
   
   def before_save
     if self.pending_id.nil?
-      self.id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value,rand.to_s)
-      self.pending_id=self.class.hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value)  
-      logger.debug "Object Value ID: " + self.id.to_s
+      self.pending_id = hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value)  
     else
-      logger.debug "Record exists: " + self.inspect.to_s
+      logger.warn "Record exists: " + self.inspect.to_s
     end  
   end
 
@@ -43,7 +43,9 @@ class ObjectValue < ActiveRecord::Base
   end
   
   def self.hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)
-    "#{object}#{attrib}#{update_type}#{source_id}#{user_id}#{value}#{random}".hash.to_i.abs
+   string = "#{object}#{attrib}#{update_type}#{source_id}#{user_id}#{value}#{random}"
+   res = Digest::SHA1.hexdigest string
+   return  res[0..14].hex
   end
   
   def self.record_object_value(oav)

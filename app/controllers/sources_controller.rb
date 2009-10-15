@@ -205,6 +205,8 @@ class SourcesController < ApplicationController
       o.save
       # add the created ID + created_at time to the list
       objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
+      
+      ClientMap.create!(:client_id => @client.client_id, :object_value_id => x['id']) if x['id']
     end
     respond_to do |format|
       if params[:no_redirect]

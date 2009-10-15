@@ -9,8 +9,8 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090924235148) do
 
+ActiveRecord::Schema.define(:version => 20091013193010) do
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
     t.integer  "user_id"
@@ -80,7 +80,7 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
 
   create_table "client_maps", :id => false, :force => true do |t|
     t.string  "client_id",       :limit => 36
-    t.integer "object_value_id"
+    t.integer "object_value_id", :limit => 8
     t.string  "db_operation"
     t.string  "token"
     t.integer "dirty",           :limit => 1,  :default => 0
@@ -89,6 +89,7 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
 
   add_index "client_maps", ["client_id", "object_value_id"], :name => "client_map_c_id_ov_id"
   add_index "client_maps", ["client_id"], :name => "client_map_c_id"
+  add_index "client_maps", ["dirty"], :name => "by_dirty"
   add_index "client_maps", ["token"], :name => "client_map_tok"
 
   create_table "client_temp_objects", :force => true do |t|
@@ -148,7 +149,7 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
     t.string   "object"
     t.string   "attrib"
     t.text     "value"
-    t.integer  "pending_id"
+    t.integer  "pending_id",        :limit => 8
     t.string   "update_type"
     t.integer  "user_id"
     t.datetime "created_at"
@@ -158,6 +159,11 @@ ActiveRecord::Schema.define(:version => 20090924235148) do
     t.integer  "blob_file_size"
     t.string   "attrib_type"
   end
+
+  add_index "object_values", ["object"], :name => "by_obj"
+  add_index "object_values", ["source_id"], :name => "by_s"
+  add_index "object_values", ["update_type"], :name => "by_ut"
+  add_index "object_values", ["user_id"], :name => "by_u"
 
   create_table "source_logs", :force => true do |t|
     t.string   "error"

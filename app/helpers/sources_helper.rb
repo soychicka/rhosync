@@ -41,6 +41,20 @@ module SourcesHelper
 
   def needs_refresh
     result=nil
+    
+    # check to make sure we are not running a paged query in the background
+    command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id} 0" if credential
+
+    if command
+      jobs = Bj::Table::Job.find(:all, :conditions => ["command = ?", command])
+  		jobs.each do |job|
+  			if job.state == 'running'
+  				logger.info "pending paged query job detected, needs_refresh returning false so it can finish"
+  				return false
+  			end
+  		end
+    end
+    
     # refresh if there are any updates to come
     # INDEX: SHOULD USE BY_SOURCE_USER_TYPE
     count_updates = "select count(*) from object_values where update_type!='query' and source_id="+id.to_s
@@ -99,6 +113,7 @@ module SourcesHelper
     objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
         dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
+        dupemsg+=" and OAV: #{prev.object.to_s},#{prev.attrib},#{prev.value}"
         logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
@@ -130,24 +145,28 @@ module SourcesHelper
         end
       end
       self.refreshtime=Time.new
+      save
       # TODO: This is bad... These collided but we can't update them, so we delete for now.
       ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
     end
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
-  def finalize_query_records(credential)
+  def finalize_query_records(credential, cleanup=true)
     # first delete the existing query records
     ActiveRecord::Base.transaction do
-      delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
-      (delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
-      ObjectValue.delete_all delete_cmd
+    	if cleanup
+      	delete_cmd = "(update_type is not null and update_type !='qparms') and source_id="+id.to_s
+      	(delete_cmd << " and user_id="+ credential.user.id.to_s) if credential # if there is a credential then just do delete and update based upon the records with that credential
+      	ObjectValue.delete_all delete_cmd
+    	end
       remove_dupe_pendings(credential)
       pending_to_query="update object_values set update_type='query',id=pending_id where update_type is null and source_id="+id.to_s
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
     end
     self.refreshtime=Time.new # timestamp
+    save
   end
 
   # helper function to come up with the string used for the name_value_list
@@ -264,14 +283,14 @@ module SourcesHelper
 
       # setup the conditions to handle the client request
       if @ack_token
-        logger.debug "[sources_controller] Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
+        logger.debug "Received ack_token, ack_token: #{@ack_token.inspect}, new token: #{@token.inspect}"
       else
         # get last token if available, otherwise it's the first request
         # for a given source
         @resend_token=@client.last_sync_token
         if @resend_token.nil?
           @first_request=true
-          logger.debug "[sources_controller] First request for source"
+          logger.debug "First request for source"
         end
       end
 
@@ -289,9 +308,7 @@ module SourcesHelper
       # doesn't receive the last page again
       @token=nil if @object_values.nil? or @object_values.length == 0
 
-      logger.debug "[sources_controller] Finished processing objects for client,
-      token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect},
-      updated_at: #{@client.updated_at}, object_values count: #{@object_values.length}"
+      logger.debug "Finished processing objects for client, token: #{@token.inspect}, last_sync_token: #{@client.last_sync_token.inspect}, object_values count: #{@object_values.length}"
 
       @total_count = ObjectValue.count_by_sql "SELECT COUNT(*) FROM object_values where user_id = #{current_user.id} and
                                                source_id = #{@source.id} and update_type = '#{utype}'"
@@ -323,8 +340,14 @@ module SourcesHelper
     temp_count = @client.client_temp_objects.count
     
     # process the ovlist (this will also include successful create objects)
+    sources = @app.sources
+    srchash = {}
+    sources.each do |src|
+      srchash[src.id] = src.name
+    end
+    
     ovlist.each do |ov|
-      src_name = ov.source.nil? ? nil : ov.source.name
+      src_name = srchash[ov.source_id]
       src_name ||= 'RhoDeleteSource'
       obj_sym = ov.object.nil? ? nil : ov.object.to_sym
       obj_sym ||= :rho_del_obj
@@ -381,57 +404,24 @@ module SourcesHelper
     by_source_condition = "and ov.source_id=#{source.id}" if by_source
     user_condition = "= #{current_user.id}" if current_user and current_user.id
     user_condition ||= "is NULL"
-    
-    # Setup the query conditions       
-    mssql_limit = ""
-   if ActiveRecord::Base.connection.adapter_name.downcase == "oracle"
-        
-    object_value_conditions = "from object_values ov 
-                                where ov.update_type='query' 
-                                and ov.source_id=#{source.id} 
-                                and ov.user_id #{user_condition} 
-                                and id not in
-                                  (select object_value_id 
-                                   from client_maps 
-                                   where client_id='#{client.id}')
-				and ROWNUM <= #{page_size} 
-                                order by ov.object,ov.id"
-   elsif  ActiveRecord::Base.connection.adapter_name.downcase == "sqlserver"
-    mssql_limit = "top #{page_size}"
-    object_value_conditions = "from object_values ov 
-                                where ov.update_type='query' 
-                                and ov.source_id=#{source.id} 
-                                and ov.user_id #{user_condition} 
-                                and id not in
-                                  (select object_value_id 
-                                   from client_maps 
-                                   where client_id='#{client.id}') 
-                                order by ov.object,ov.id"
-   else
-    object_value_conditions = "from object_values ov 
-                                where ov.update_type='query' 
-                                and ov.source_id=#{source.id} 
-                                and ov.user_id #{user_condition} 
-                                and id not in
-                                  (select object_value_id 
-                                   from client_maps 
-                                   where client_id='#{client.id}') 
-                                order by ov.object,ov.id
-                                limit #{page_size}"
-   end
-    object_value_query = "select #{mssql_limit} * #{object_value_conditions}"
+
+    # Setup the query conditions
+    object_value_insert_query = "from object_values ov where ov.update_type='query' #{by_source_condition} and ov.user_id #{user_condition}
+        and not exists (select object_value_id from client_maps where ov.id=object_value_id and client_id='#{client.id}') order by ov.object,ov.id limit #{page_size}"
+
+    object_value_query = "select * from object_values ov inner join client_maps on ov.id = client_maps.object_value_id where token = '#{token}' order by ov.object,ov.id"
 
     # setup fields to insert in client_maps table
-    object_insert_query = "select #{mssql_limit} '#{client.id}',id,'insert','#{token}' #{object_value_conditions}"
+    object_insert_query = "select '#{client.id}',id,'insert','#{token}' #{object_value_insert_query}"
 
     # if we're resending the token, quickly return the results (inserts + deletes)
     if resend_token
-      logger.debug "[sources_helper] resending token, resend_token: #{resend_token.inspect}"
+      logger.debug "Resending token, resend_token: #{resend_token.inspect}"
       objs_to_return = ClientMap.get_delete_objs_by_token_status(client.id,resend_token)
       client.update_attributes({:updated_at => last_sync_time, :last_sync_token => resend_token})
       objs_to_return.concat( ClientMap.get_insert_objs_by_token_status(client.id,resend_token) )
     else
-      logger.debug "[sources_helper] ack_token: #{ack_token.inspect}, using new token: #{token.inspect}"
+      logger.debug "ack_token: #{ack_token.inspect}, using new token: #{token.inspect}"
 
       # mark acknowledged token so we don't send it again
       ClientMap.mark_objs_by_ack_token(ack_token) if ack_token and ack_token.length > 0
@@ -443,8 +433,8 @@ module SourcesHelper
       ClientMap.process_create_objs_for_client(client.id,source.id,token)
 
       # find + save insert records
-      objs_to_insert = ObjectValue.find_by_sql object_value_query
       ClientMap.insert_new_client_maps(object_insert_query)
+      objs_to_insert = ObjectValue.find_by_sql object_value_query
       objs_to_insert.collect! {|x| x.db_operation = 'insert'; x}
 
       # Update the last updated time for this client
