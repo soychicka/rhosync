@@ -27,6 +27,11 @@ class AeropriseController < ApplicationController
     
 		# get this SR from remedy
 		request = api.get_user_requests(sr_id)
+		if request.blank? || api.error
+			logger.fatal "Unable to get SR from remedy #{sr_id}"
+			return "ERROR sr_needs_attention"
+		end
+				
     workinfo = api.get_work_info(id)
     responses = api.get_answers_for_request(id)
     
