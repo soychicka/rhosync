@@ -96,12 +96,7 @@ class AeropriseController < ApplicationController
     # ping the user
     user = User.find(user_id)
     result = user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
-    
-    logger.debug result.inspect.to_s
-    logger.debug result.code
-    logger.debug result.message
-    logger.debug result.body
-    
+     
     "OK sr_work_info"
   rescue => e
     logger.debug "exception while responding to WS sr_work_info #{e.inspect.to_s}"
