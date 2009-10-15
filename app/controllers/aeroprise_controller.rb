@@ -88,15 +88,15 @@ class AeropriseController < ApplicationController
       record["submitdate"] = entry["submitdate"]
       worklog << record
     end
-
-    user = User.find_by_login(user_id)
     
     # serialize array of hashes and update 
     ObjectValue.record_object_value(:object=>sr_id, :attrib=>"workinfo",
-      :user_id=>user.id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
+      :user_id=>user_id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
     
     # ping the user
-    result = user.ping(app_source_url(:app_id=>@source.app.name, :id => @source.name))
+    user = User.find(user_id)
+    result = user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
+    
     logger.debug result.inspect.to_s
     logger.debug result.code
     logger.debug result.message
