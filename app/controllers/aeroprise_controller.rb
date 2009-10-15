@@ -71,8 +71,8 @@ class AeropriseController < ApplicationController
         
     # TBD: there is no object that matches! should we fetch it?
     rescue
-      logger.error "worklog notification for existing SR but SR is not found in sync data"
-      return "ERROR sr_work_info"
+      logger.debug "worklog notification for existing SR but SR is not found in sync data. Retrieving SR."
+      return sr_needs_attention(login,sr_id)
     end
     # login as this user
     api = login(user_id)
