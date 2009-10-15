@@ -66,10 +66,8 @@ class AeropriseController < ApplicationController
      
     # find the user for this SR
     begin
-    user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"user_id",
-        :source_id=>@source.id}).value
-        
-    # TBD: there is no object that matches! should we fetch it?
+    	user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqnumber",
+        :source_id=>@source.id}).user_id
     rescue
       logger.debug "worklog notification for existing SR but SR is not found in sync data. Retrieving SR."
       return sr_needs_attention(login,sr_id)
