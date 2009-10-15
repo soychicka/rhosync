@@ -73,7 +73,7 @@ class AeropriseController < ApplicationController
       return sr_needs_attention(login,sr_id)
     end
     # login as this user
-    api = login(user_id)
+    api = login(login)
     
     # worklog info
     workinfo = api.get_work_info(sr_id)
