@@ -15,18 +15,32 @@ class AeropriseController < ApplicationController
   
   def sr_needs_attention(login, sr_id)
   
-  logger.debug "login = #{login}"
-  logger.debug "sr_id = #{sr_id}"
+  	logger.debug "login = #{login}"
+  	logger.debug "sr_id = #{sr_id}"
   
     # toggle needs attention for this SR
     @source = Source.find_by_name("AeropriseRequest")
     @user = User.find_by_login(login)
+
+    # login as this user
+    api = login(login)
     
-    record_object_value(:object=>sr_id, :attrib=>"needsattention",
-        :user_id=>@user.id, :source_id=>@source.id, :value => "1")
+		# get this SR from remedy
+		request = api.get_user_requests(sr_id)
+    workinfo = api.get_work_info(id)
+    responses = api.get_answers_for_request(id)
+    
+    # destroy old sr 
+    ObjectValue.destroy_all(:source_id=>@source.id, :update_type=>'query', :user_id => @user.id, :object=>sr_id)
+    
+    # this function will add as type pending
+    AeropriseRequestRecord.create(request, workinfo, responses, @source.id, @user.id)
+    
+    # flip it to type query
+		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id}object=#{sr_id} and user_id=#{@user.id}"
 
     # ping the user
-    result = @user.ping(app_source_url(:app_id=>@source.app.name, :id => @source.name))
+    result = @user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
     logger.debug result.inspect.to_s
     logger.debug result.code
     logger.debug result.message
@@ -54,7 +68,7 @@ class AeropriseController < ApplicationController
     rescue
       logger.error "worklog notification for existing SR but SR is not found in sync data"
       return "ERROR sr_work_info"
-      end
+    end
     # login as this user
     api = login(user_id)
     
