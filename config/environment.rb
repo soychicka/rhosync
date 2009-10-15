@@ -84,16 +84,11 @@ ActionController::Base.session_options[:session_expires] = 1.year.from_now
 
 APP_CONFIG = YAML.load_file("#{RAILS_ROOT}/config/settings.yml")[RAILS_ENV].symbolize_keys
 
-=begin We actually don't need to set up the mailer 
-ActionMailer::Base.smtp_settings = {
-  :address        => 'smtp.yourserver.com', # default: localhost
-  :port           => '25',                  # default: 25
-  :user_name      => 'user',
-  :password       => 'pass',
-  :authentication => :plain                 # :plain, :login or :cram_md5
-}
-=end
-
+begin
+  ActiveRecord::ConnectionAdapters::MysqlAdapter::NATIVE_DATABASE_TYPES[:primary_key] = "BIGINT NOT NULL auto_increment PRIMARY KEY"
+rescue
+  
+end
 module SOAP
     SOAPNamespaceTag = 'env'
     XSDNamespaceTag = 'xsd'
