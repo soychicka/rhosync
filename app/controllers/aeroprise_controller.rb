@@ -32,8 +32,8 @@ class AeropriseController < ApplicationController
 			return "ERROR sr_needs_attention"
 		end
 				
-    workinfo = api.get_work_info(id)
-    responses = api.get_answers_for_request(id)
+    workinfo = api.get_work_info(sr_id)
+    responses = api.get_answers_for_request(sr_id)
     
     # destroy old sr 
     ObjectValue.destroy_all(:source_id=>@source.id, :update_type=>'query', :user_id => @user.id, :object=>sr_id)
