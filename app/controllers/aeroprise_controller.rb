@@ -37,7 +37,7 @@ class AeropriseController < ApplicationController
     AeropriseRequestRecord.create(request, workinfo, responses, @source.id, @user.id)
     
     # flip it to type query
-		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id}object=#{sr_id} and user_id=#{@user.id}"
+		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id} and object='#{sr_id}' and user_id=#{@user.id}"
 
     # ping the user
     result = @user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
