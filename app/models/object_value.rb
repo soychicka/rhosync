@@ -30,7 +30,7 @@ class ObjectValue < ActiveRecord::Base
   
   attr_accessor :db_operation, :oo
   
-  validates_presence_of :attrib, :value
+  validates_presence_of :attrib, :value, :if => "update_type == 'query'"
   
   def before_save
     if self.pending_id.nil?
