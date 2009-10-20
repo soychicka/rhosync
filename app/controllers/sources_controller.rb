@@ -111,12 +111,16 @@ class SourcesController < ApplicationController
       end
 
       logger.debug "Searching for #{conditions.inspect.to_s}"
-
+      logger.debug "#{Time.now.to_s}::::: Calling dosearch"
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
+      logger.debug "#{Time.now.to_s}::::: Calling build_object_values"
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
+      logger.debug "#{Time.now.to_s}::::: Calling get_wrapped_list"
       get_wrapped_list(@object_values)
+      logger.debug "#{Time.now.to_s}::::: Calling handle_show_format"
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
+      logger.debug "#{Time.now.to_s}::::: Done with search action"
     end
   end
 

@@ -125,23 +125,31 @@ module SourcesHelper
   # robust to failures to to do a pending to final for a single object
   def update_pendings(credential,check_existing=false)
     conditions="source_id=#{id}"
-    conditions << " and user_id=#{credential.user.id}" if credential
-    ActiveRecord::Base.transaction do
-      objs=ObjectValue.find :all, :conditions=>conditions, :order=> :pending_id
-      current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query'"
-      objs.each do |obj|
-        begin
-          # if check_existing, look for existing query object-attribute and delete it before replacement
-          if check_existing and current_ids.index(obj.pending_id.to_s) == nil
+    usr_condition=" and user_id=#{credential.user.id}" if credential
+    conditions << usr_condition
+    if check_existing
+      ActiveRecord::Base.transaction do
+        objs=ObjectValue.find(:all, :conditions=>conditions +" and update_type is NULL" )
+        #current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query' #{usr_condition}"
+        objs.each do |obj|
+          begin
+            # if check_existing, look for existing query object-attribute, then update it and delete pending row
             existing = ObjectValue.find :first, :conditions => "object='#{obj.object}' and attrib='#{obj.attrib}' and 
                                                                 update_type='query' and #{conditions}"
-            existing.destroy if existing
-            ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where
-                                                   id="+obj.id.to_s+" and update_type is null"
-            current_ids << obj.pending_id.to_s
+                                                                
+            if existing
+              update_fields = "pending_id=#{obj.pending_id},id=#{obj.pending_id},value='#{obj.value}'"
+              obj.destroy
+            else
+              update_fields = "id=pending_id,update_type='query'"
+            end
+ 
+            ActiveRecord::Base.connection.execute "update object_values set id=pending_id,#{update_fields} where 
+                          object='#{obj.object}' and attrib='#{obj.attrib}' and #{conditions}"
+                          
+          rescue Exception => e
+            slog(e,"Failed to finalize object value for object "+obj.inspect.to_s)
           end
-        rescue Exception => e
-          slog(e,"Failed to finalize object value (due to duplicate) for object "+obj.id.to_s,id)
         end
       end
       self.refreshtime=Time.new
