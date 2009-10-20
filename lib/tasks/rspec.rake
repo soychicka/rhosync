@@ -12,6 +12,8 @@ spec_prereq = File.exist?(File.join(RAILS_ROOT, 'config', 'database.yml')) ? "db
 task :noop do
 end
 
+Rake::Task[:default].prerequisites.clear
+
 task :default => :spec
 task :stats => "spec:statsetup"
 
