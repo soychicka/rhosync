@@ -126,7 +126,7 @@ module SourcesHelper
   def update_pendings(credential,check_existing=false)
     conditions="source_id=#{id}"
     usr_condition=" and user_id=#{credential.user.id}" if credential
-    conditions << usr_condition
+    conditions << usr_condition if usr_condition
     if check_existing
       ActiveRecord::Base.transaction do
         objs=ObjectValue.find(:all, :conditions=>conditions +" and update_type is NULL" )
