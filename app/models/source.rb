@@ -94,19 +94,14 @@ class Source < ActiveRecord::Base
       logger.debug e.backtrace.join("\n")
     end 
   end
-   
+  
+  # url - url to ping when done, nil = dont ping 
   def refresh(current_user, session, url=nil)
-    if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
-      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
-      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
-        :tag => current_user.id.to_s
-      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
-    else # go ahead and do it right now
-      dosync(current_user, session)
-    end
+    dosync(current_user, session, url)
   end
   
-  def dosync(current_user,session=nil)
+  # url - url to ping when done, nil = dont ping
+  def dosync(current_user, session=nil, url=nil)
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
@@ -157,13 +152,12 @@ class Source < ActiveRecord::Base
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
-      if defined? source_adapter.page 
-    
+      if defined?(source_adapter.page) 
         # then do the rest in background using the page_query.rb script
-        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 0"
+        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 0 #{url}"
         logger.info "Executing background job: #{cmd}"
         begin 
-          Bj.submit cmd,:tag => current_user.id.to_s
+          Bj.submit(cmd,:tag => current_user.id.to_s)
         rescue =>e
           logger.error "Failed to execute #{e.to_s}"
           logger.error e.backtrace.join("\n")
