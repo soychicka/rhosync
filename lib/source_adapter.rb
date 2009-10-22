@@ -1,14 +1,12 @@
 require 'sync'
 
-class SourceAdapterException < RuntimeError
-end
+class SourceAdapterException < RuntimeError; end
 
 # raise this to cause client to be logged out during a sync
 class SourceAdapterLoginException < SourceAdapterException; end
 
 # raise these to trigger rhosync sending an error to the client
 class SourceAdapterServerTimeoutException < SourceAdapterException; end
-
 class SourceAdapterServerErrorException < SourceAdapterException; end
 
 class SourceAdapter
@@ -37,20 +35,17 @@ class SourceAdapter
     default_sync.sync
   end
   
-  def create(name_value_list)
-  end
+  def create(name_value_list); end
 
   def update(name_value_list); end
 
   def delete(name_value_list); end
 
-  def logoff
-  end
+  def logoff; end
   
   # only implement this if you want RhoSync to install a callback into your backend
   # def set_callback(notify_url)
   # end
-  
   
   MSG_NO_OBJECTS = "No objects returned from query"
   MSG_NIL_RESULT_ATTRIB = "You might have expected a synchronization but the @result attribute was 'nil'"

@@ -1,8 +1,4 @@
-require 'digest/md5'
-require 'yaml'
-require 'open-uri'
-require 'net/http'
-require 'net/https'
+require 'sync'
 require 'source_adapter'
 
 class SourcesController < ApplicationController
@@ -15,9 +11,7 @@ class SourcesController < ApplicationController
   SUPPORTED_VERSIONS = [2]
 
   include SourcesHelper
-  # shows all object values in XML structure given a supplied source
-  # if a :last_update parameter is supplied then only show data that has been
-  # refreshed (retrieved from the backend) since then
+  include Sync
   protect_from_forgery :only => [:create, :delete, :update]
 
   def callback
@@ -516,6 +510,7 @@ protected
   end
   
   def get_wrapped_list(ovlist)
-    @wrapped_list = wrap_object_values(ovlist,@token) if @version
+    @cmapper = ClientMapper.new(@client,@token,@app)
+    @wrapped_list = @cmapper.wrap_object_values(ovlist) if @version
   end
 end
