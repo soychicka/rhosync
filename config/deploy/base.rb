@@ -8,7 +8,7 @@ set :use_sudo, false
 
 set :scm, "git"
 
-set :branch, "1-4-unstable"
+set :branch, "1-2-stable"
 
 set :ssh_options, { :forward_agent => true }
 
