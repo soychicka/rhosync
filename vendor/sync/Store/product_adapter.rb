@@ -36,6 +36,6 @@ class ProductAdapter < SourceAdapter
   def delete(name_value_list)
     obj_id = name_value_list.find { |item| item['name'] == 'id' }
     product = Product.find(obj_id['value'])
-    raise "Couldn't find or destroy the product" unless product && product.destroy
+    product.destroy if product
   end
 end
