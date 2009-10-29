@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091013193010) do
+ActiveRecord::Schema.define(:version => 20091029002629) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -177,13 +177,6 @@ ActiveRecord::Schema.define(:version => 20091013193010) do
     t.float    "timing"
   end
 
-  create_table "source_notifies", :force => true do |t|
-    t.integer  "source_id"
-    t.integer  "user_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
   create_table "sources", :force => true do |t|
     t.string   "name"
     t.string   "url"
@@ -200,13 +193,6 @@ ActiveRecord::Schema.define(:version => 20091013193010) do
     t.integer  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
-  end
-
-  create_table "synctasks", :force => true do |t|
-    t.integer  "source_id"
-    t.integer  "user_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
   end
 
   create_table "users", :force => true do |t|

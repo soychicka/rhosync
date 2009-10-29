@@ -23,9 +23,7 @@ class User < ActiveRecord::Base
   has_many :memberships
   has_many :administrations
   has_many :clients
-  has_many :synctasks
   has_many :users
-  has_many :source_notifies
   has_many :sources, :through => :source_notifies
   
   include Authentication
