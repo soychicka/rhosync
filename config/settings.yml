@@ -2,7 +2,8 @@ development:
   domain: mail.rhomobile.com
   sender: admin@rhomobile.com
   name: Admin
-  bbserver: aerobes.aeroprise.com
+#  bbserver: aerobes.aeroprise.com
+  bbserver: 127.0.0.1
   iphoneserver: gateway.sandbox.push.apple.com
   iphoneport: 2195
   iphonepassphrase: something

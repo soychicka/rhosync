@@ -26,7 +26,7 @@ begin
   if callback_url
     logger.debug "pinging the current_user"
 
-    result = current_user.ping(callback_url)
+    result = source.current_user.ping(callback_url)
     logger.debug result.inspect.to_s  
   end
 rescue => e
@@ -35,5 +35,5 @@ rescue => e
   logger.debug e.backtrace.join("\n")
 end
 
-logger.debug "Done page_query at #{Time.now}"
+logger.debug "******* END *********\npage_query at #{Time.now}"
 

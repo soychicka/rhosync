@@ -97,7 +97,20 @@ class Source < ActiveRecord::Base
   
   # url - url to ping when done, nil = dont ping 
   def refresh(current_user, session, url=nil)
-    dosync(current_user, session, url)
+    # if we have page method then entire dosync will be called in the background
+    source_adapter=setup_credential_adapter(current_user,session)
+  	if source_adapter.respond_to?(:page) 
+    	cmd="ruby script/runner ./jobs/dosync.rb #{current_user.id} #{id} #{url}"
+      logger.info "Executing background job: #{cmd}"
+      begin 
+      	Bj.submit(cmd,:tag => current_user.id.to_s)
+      rescue =>e
+      	logger.error "Failed to execute #{e.to_s}"
+        logger.error e.backtrace.join("\n")
+      end
+    else
+    	dosync(current_user, session, url)
+  	end
   end
   
   # url - url to ping when done, nil = dont ping
@@ -152,69 +165,39 @@ class Source < ActiveRecord::Base
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
-      if defined?(source_adapter.page) 
-        # then do the rest in background using the page_query.rb script
-        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 0 #{url}"
-        logger.info "Executing background job: #{cmd}"
-        begin 
-          Bj.submit(cmd,:tag => current_user.id.to_s)
-        rescue =>e
-          logger.error "Failed to execute #{e.to_s}"
-          logger.error e.backtrace.join("\n")
-        end
-        tlog(start,"page",self.id)
-        start=Time.new
+     
+      # if there is a poge method we call that, otherwise the query method
+      if source_adapter.respond_to?(:page)
+    		pagenum=0      
+    		result=true
+    		while result 
+      		logger.info "Calling page #{pagenum}"      
+      		result=source_adapter.page(pagenum)
+      		logger.info "Syncing #{pagenum}"      
+      		source_adapter.sync
+      		pagenum=pagenum+1
+    		end
+  		else
+  			start=Time.new
+	      source_adapter.query
 
-      else       
-        start=Time.new
-        source_adapter.query
-        tlog(start,"query",self.id)
+  	    tlog(start,"query",self.id)
       
-      	start=Time.new
+    	  start=Time.new
       	source_adapter.sync
       	tlog(start,"sync",self.id)
-      	start=Time.new
-      	finalize_query_records(@credential)
-      	tlog(start,"finalize",self.id)
-      	source_adapter.logoff
-      end  
+    	end
+    
+      start=Time.new
+      finalize_query_records(@credential)
+      tlog(start,"finalize",self.id)
+      source_adapter.logoff
     rescue Exception=>e
       logger.debug "Failed to query,sync: #{e.to_s}"
       slog(e,"Failed to query,sync",self.id)
       logger.debug e.backtrace.join("\n")
     end 
-
   end
-  
-  # used by background job for paged query (page_query.rb script)
-  # queries the second (1-th) through last page
-  def backpages(pagenum=1)
-    # first detect if some background (backpages) job is already working against this source and user
-    logger.info "Backpages called"
-    source_adapter=setup_credential_adapter(current_user,nil)
-    # make sure to use @client and @session_id variable in your code that is edited into each source!
-    begin
-      start=Time.new
-      source_adapter.login  # should set up @session_id
-      tlog(start,"login",self.id)  # log how long it takes to do the login
-    rescue Exception=>e
-      logger.info "Failed to login"
-      slog(e,"can't login",self.id,"login")
-      raise e
-    end
-    
-    result=true
-    @source=self
-    while result 
-      logger.info "Calling page #{pagenum}"      
-      result=source_adapter.page(pagenum)
-      logger.info "Syncing #{pagenum}"      
-      source_adapter.sync
-      pagenum=pagenum+1
-    end
-    finalize_query_records(credential)
-  end
-  
   
   def ask(current_user,question)
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user

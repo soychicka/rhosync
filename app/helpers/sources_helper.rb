@@ -43,13 +43,13 @@ module SourcesHelper
     result=nil
     
     # check to make sure we are not running a paged query in the background
-    command = "ruby script/runner ./jobs/page_query.rb #{credential.user.id} #{id}%" if credential
+    command = "'ruby script/runner ./jobs/dosync.rb #{credential.user.id} #{id}'%" if credential
 
     if command
       jobs = Bj::Table::Job.find(:all, :conditions => ["command LIKE ?", command])
   		jobs.each do |job|
   			if job.state == 'running'
-  				logger.info "pending paged query job detected, needs_refresh returning false so it can finish"
+  				logger.info "pending background job detected, needs_refresh returning false so it can finish"
   				return false
   			end
   		end
