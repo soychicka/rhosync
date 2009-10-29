@@ -36,7 +36,7 @@ class Blackberry < Client
     begin
       @result=http_post(url,data,headers)   
       Rails.logger.debug "Returning #{@result.inspect}"
-Rails.logger.debug @result.body
+      Rails.logger.debug @result.body
 
     rescue
       Rails.logger.debug "Failed to post "
@@ -60,9 +60,9 @@ Rails.logger.debug @result.body
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data
 
-Rails.logger.debug "*******"
-Rails.logger.debug data
-Rails.logger.debug "*******"
+      Rails.logger.debug "*******"
+      Rails.logger.debug data
+      Rails.logger.debug "*******"
 
       http.request(request)
     end

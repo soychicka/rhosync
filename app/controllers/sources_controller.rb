@@ -2,6 +2,8 @@ require 'sync'
 require 'source_adapter'
 
 class SourcesController < ApplicationController
+  include SourcesHelper
+  include Sync
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
@@ -10,8 +12,6 @@ class SourcesController < ApplicationController
   UNSUPPORTED_VERSIONS = [1]
   SUPPORTED_VERSIONS = [2]
 
-  include SourcesHelper
-  include Sync
   protect_from_forgery :only => [:create, :delete, :update]
 
   def callback
@@ -57,9 +57,6 @@ class SourcesController < ApplicationController
   # IF you wish to have device pinged when by ping method for important events
   # THEN supply params["device_pin"] and params["device_type"]
   def show
-    if params["id"] == "rho_credential"
-      render :text => "[]" and return
-    end
     @app=@source.app
     if !check_access(@app)
       respond_to do |wants|
