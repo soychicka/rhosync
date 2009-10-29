@@ -378,12 +378,12 @@ class SourcesController < ApplicationController
     if Source.find_by_name(@source.name)
       error="Source already exists. Please try a different name."
     end
-    @app=App.find_by_permalink(params[:source][:app_id])
+    @app=App.find(params[:source][:app_id])
     @source.app=@app
     respond_to do |format|
       if !error and @source.save
         flash[:notice] = 'Source was successfully created.'
-        format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.id) }
+        format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.name) }
         format.xml  { render :xml => @source, :status => :created, :location => @source }
       else
         flash[:notice]=error
