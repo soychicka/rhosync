@@ -1,13 +1,6 @@
 require 'json'
 require 'open-uri'
 class Customer < SourceAdapter
-  def initialize(source,credential)
-    super(source,credential)
-  end
- 
-  def login
-  end
- 
   def query(conditions=nil,limit=nil,offset=nil)
     logger = Logger.new('log/store.log', File::WRONLY | File::APPEND)
     logger.debug "query called with conditions=#{conditions} limit=#{limit} and offset=#{offset}"
@@ -43,8 +36,11 @@ class Customer < SourceAdapter
     url
   end
 
-=begin REENABLE THIS IF YOU WANT TO DO PAGED QUERY
   def page(num)
+  	# return nil when we have exhausted the alphabet 
+  	# returning nil will stop page method, {} does not
+  	return nil if num>26
+  	
     letter='A'
     num.times {letter=letter.next}
     if letter.size>1
@@ -61,7 +57,6 @@ class Customer < SourceAdapter
       @result
     end
   end
-=end 
  
   def sync
     # TODO: write code here that converts the data you got back from query into an @result object

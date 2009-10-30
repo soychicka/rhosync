@@ -4,8 +4,19 @@ require 'product'
 # as your rhodes object
 class ProductAdapter < SourceAdapter
   def query(conditions=nil,limit=nil,offset=nil)
-    @result = Product.hashinate_all
-    @result
+  	# unfortuantely activeresource doesnt suport conditions, limit and offset directly
+    @result = Product.find(:all)
+    if limit && offset
+    	@result = @result[offset, offset+limit]
+    end
+    @result = @result ? Product.hashinate(@result) : nil
+  end
+  
+  # ENABLE THIS IF YOU WANT TO TEST BACKGROUND SYNC AKA PAGED QUERY
+  # implemented in terms of query
+  def page(num)
+    Rails.logger.debug "page %d num class is %s" % [num, num.class.to_s]
+    @result = query(nil, 10, num.to_i * 10)
   end
 
   def create(name_value_list)
