@@ -131,6 +131,15 @@ class AeropriseController < ApplicationController
   end
   
   def new_credentials
+  	app = App.find_by_name("Aeroprise")
+    adminuser = app.configurations.find(:first, :conditions => {:name => 'adminuser'})
+    adminpw = app.configurations.find(:first, :conditions => {:name => 'adminpw'})
+  	unless adminuser.nil? or adminpw.nil?
+    	adminuser.value = Base64.decode64(adminuser.value)
+      adminpw.value = Base64.decode64(adminpw.value)
+          
+      @username,@password = Aeroprise.decrypt(adminuser.value,adminpw.value)
+    end
   end
   
   def update_credentials
