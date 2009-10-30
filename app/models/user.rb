@@ -1,10 +1,10 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
 # Table name: users
 #
 #  id                        :integer(4)    not null, primary key
-#  login                     :string(40)    
+#  login                     :string(255)   
 #  name                      :string(100)   default("")
 #  email                     :string(100)   
 #  crypted_password          :string(40)    
@@ -13,8 +13,6 @@
 #  updated_at                :datetime      
 #  remember_token            :string(40)    
 #  remember_token_expires_at :datetime      
-#  password_reset_code       :string(255)   
-#  expires_at                :datetime      
 #
 
 require 'digest/sha1'
@@ -25,9 +23,7 @@ class User < ActiveRecord::Base
   has_many :memberships
   has_many :administrations
   has_many :clients
-  has_many :synctasks
   has_many :users
-  has_many :source_notifies
   has_many :sources, :through => :source_notifies
   
   include Authentication
@@ -68,11 +64,4 @@ class User < ActiveRecord::Base
     end
     @result
   end 
-
-  # checks for changes from all of the user's clients
-  def check_for_changes(source)
-    clients.each do |client|
-      source.check_for_changes_for_client(client)
-    end
-  end
 end

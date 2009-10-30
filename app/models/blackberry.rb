@@ -1,20 +1,22 @@
 # == Schema Information
-# Schema version: 20090624184104
+# Schema version: 20090921184016
 #
-# Table name: devices
+# Table name: clients
 #
-#  id           :integer(4)    not null, primary key
-#  created_at   :datetime      
-#  updated_at   :datetime      
-#  device_type  :string(255)   
-#  carrier      :string(255)   
-#  manufacturer :string(255)   
-#  model        :string(255)   
-#  user_id      :integer(4)    
-#  pin          :string(255)   
-#  host         :string(255)   
-#  serverport   :string(255)   
-#  deviceport   :string(255)   
+#  client_id       :string(36)    primary key
+#  session         :string(255)   
+#  created_at      :datetime      
+#  updated_at      :datetime      
+#  user_id         :integer(4)    
+#  last_sync_token :string(255)   
+#  device_type     :string(255)   
+#  carrier         :string(255)   
+#  manufacturer    :string(255)   
+#  model           :string(255)   
+#  pin             :string(255)   
+#  host            :string(255)   
+#  serverport      :string(255)   
+#  deviceport      :string(255)   
 #
 
 require 'net/http'
@@ -34,7 +36,7 @@ class Blackberry < Client
     begin
       @result=http_post(url,data,headers)   
       Rails.logger.debug "Returning #{@result.inspect}"
-Rails.logger.debug @result.body
+      Rails.logger.debug @result.body
 
     rescue
       Rails.logger.debug "Failed to post "
@@ -58,9 +60,9 @@ Rails.logger.debug @result.body
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data
 
-Rails.logger.debug "*******"
-Rails.logger.debug data
-Rails.logger.debug "*******"
+      Rails.logger.debug "*******"
+      Rails.logger.debug data
+      Rails.logger.debug "*******"
 
       http.request(request)
     end

@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class: ClientMap</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">ClientMap</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../files/app/models/client_map_rb.html">
+                app/models/client_map.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                ActiveRecord::Base
+            </td>
+        </tr>
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <h2>Schema Information</h2>
+<p>
+Schema version: 20090921184016
+</p>
+<p>
+Table name: client_maps
+</p>
+<pre>
+ client_id       :string(36)
+ object_value_id :integer(4)
+ db_operation    :string(255)
+ token           :string(255)
+ dirty           :integer(1)    default(0)
+ ack_token       :integer(1)    default(0)
+</pre>
+
+    </div>
+
+
+   </div>
+
+    <div id="method-list">
+      <h3 class="section-bar">Methods</h3>
+
+      <div class="name-list">
+      <a href="#M000096">get_delete_objs_by_token_status</a>&nbsp;&nbsp;
+      <a href="#M000097">get_delete_objs_for_client</a>&nbsp;&nbsp;
+      <a href="#M000095">get_insert_objs_by_token_status</a>&nbsp;&nbsp;
+      <a href="#M000099">insert_new_client_maps</a>&nbsp;&nbsp;
+      <a href="#M000094">mark_objs_by_ack_token</a>&nbsp;&nbsp;
+      <a href="#M000100">new_delete_obj</a>&nbsp;&nbsp;
+      <a href="#M000098">process_create_objs_for_client</a>&nbsp;&nbsp;
+      </div>
+    </div>
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+    <div id="methods">
+      <h3 class="section-bar">Public Class methods</h3>
+
+      <div id="method-M000096" class="method-detail">
+        <a name="M000096"></a>
+
+        <div class="method-heading">
+          <a href="#M000096" class="method-signature">
+          <span class="method-name">get_delete_objs_by_token_status</span><span class="method-args">(client_id)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+get delete objects based on token status
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000096-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000096-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 42</span>
+42:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">get_delete_objs_by_token_status</span>(<span class="ruby-identifier">client_id</span>)
+43:     <span class="ruby-identifier">objs_to_return</span> = []
+44:     <span class="ruby-identifier">objs_to_delete</span> = <span class="ruby-constant">ClientMap</span>.<span class="ruby-identifier">find_by_sql</span> <span class="ruby-node">&quot;select * from client_maps 
+45:                                             where ack_token = 0 
+46:                                             and db_operation = 'delete'
+47:                                             and client_id='#{client_id}'&quot;</span>
+48:     <span class="ruby-identifier">objs_to_delete</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">map</span><span class="ruby-operator">|</span>
+49:       <span class="ruby-identifier">objs_to_return</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">new_delete_obj</span>(<span class="ruby-identifier">map</span>.<span class="ruby-identifier">object_value_id</span>)
+50:     <span class="ruby-keyword kw">end</span>
+51:     <span class="ruby-identifier">objs_to_return</span>
+52:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000097" class="method-detail">
+        <a name="M000097"></a>
+
+        <div class="method-heading">
+          <a href="#M000097" class="method-signature">
+          <span class="method-name">get_delete_objs_for_client</span><span class="method-args">(token,page_size,client_id)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+look for changes in the current object_values list, return only records for
+the current user if required
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000097-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000097-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 56</span>
+56:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">get_delete_objs_for_client</span>(<span class="ruby-identifier">token</span>,<span class="ruby-identifier">page_size</span>,<span class="ruby-identifier">client_id</span>)
+57:     <span class="ruby-identifier">objs_to_return</span> = []
+58:     <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">transaction</span> <span class="ruby-keyword kw">do</span>
+59:       <span class="ruby-identifier">objs_to_delete</span> = <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;select * from client_maps cm left join object_values ov on
+60:                                                               cm.object_value_id = ov.id
+61:                                                               where cm.client_id='#{client_id}' and ov.id is NULL
+62:                                                               and cm.dirty=0 order by ov.object limit #{page_size}&quot;</span>
+63:       <span class="ruby-identifier">objs_to_delete</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">map</span><span class="ruby-operator">|</span>
+64:         <span class="ruby-identifier">objs_to_return</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">new_delete_obj</span>(<span class="ruby-identifier">map</span>.<span class="ruby-identifier">object_value_id</span>)
+65:         <span class="ruby-comment cmt"># update this client_map record with a dirty flag and the token, </span>
+66:         <span class="ruby-comment cmt"># so we don't send it more than once</span>
+67:         <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;update client_maps set db_operation='delete',token='#{token}',dirty=1,ack_token=0
+68:                                                where object_value_id='#{map.object_value_id}'
+69:                                                and client_id='#{map.client_id}'&quot;</span>
+70:       <span class="ruby-keyword kw">end</span>
+71:     <span class="ruby-keyword kw">end</span>
+72:     <span class="ruby-identifier">objs_to_return</span>
+73:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000095" class="method-detail">
+        <a name="M000095"></a>
+
+        <div class="method-heading">
+          <a href="#M000095" class="method-signature">
+          <span class="method-name">get_insert_objs_by_token_status</span><span class="method-args">(client_id,resend_token)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+get insert objects based on token status
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000095-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000095-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 31</span>
+31:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">get_insert_objs_by_token_status</span>(<span class="ruby-identifier">client_id</span>,<span class="ruby-identifier">resend_token</span>)
+32:     <span class="ruby-identifier">objs_to_return</span> = <span class="ruby-constant">ObjectValue</span>.<span class="ruby-identifier">find_by_sql</span> <span class="ruby-node">&quot;select * from object_values ov where id in
+33:                                               (select object_value_id from client_maps as cm
+34:                                                 where cm.ack_token = 0
+35:                                                 and cm.db_operation != 'delete'
+36:                                                 and cm.client_id = '#{client_id}'
+37:                                                 and cm.token = #{resend_token})&quot;</span>
+38:     <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">objs_to_return</span>.<span class="ruby-identifier">collect!</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">x</span><span class="ruby-operator">|</span> <span class="ruby-identifier">x</span>.<span class="ruby-identifier">db_operation</span> = <span class="ruby-value str">'insert'</span>; <span class="ruby-identifier">x</span>}
+39:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000099" class="method-detail">
+        <a name="M000099"></a>
+
+        <div class="method-heading">
+          <a href="#M000099" class="method-signature">
+          <span class="method-name">insert_new_client_maps</span><span class="method-args">(insert_query)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Add insert objects to client_maps based on join query w/ object_values
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000099-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000099-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 87</span>
+87:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">insert_new_client_maps</span>(<span class="ruby-identifier">insert_query</span>)
+88:     <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">transaction</span> <span class="ruby-keyword kw">do</span>
+89:       <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;insert into client_maps 
+90:                                              (client_id,object_value_id,db_operation,token)
+91:                                              #{insert_query}&quot;</span>                                      
+92:     <span class="ruby-keyword kw">end</span>
+93:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000094" class="method-detail">
+        <a name="M000094"></a>
+
+        <div class="method-heading">
+          <a href="#M000094" class="method-signature">
+          <span class="method-name">mark_objs_by_ack_token</span><span class="method-args">(ack_token)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+remove acknowledged token for client
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000094-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000094-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 21</span>
+21:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">mark_objs_by_ack_token</span>(<span class="ruby-identifier">ack_token</span>)
+22:     <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">transaction</span> <span class="ruby-keyword kw">do</span>
+23:       <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;update client_maps set ack_token=1 where token='#{ack_token}'&quot;</span>
+24:       <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;delete from client_maps where token='#{ack_token}'
+25:                                              and db_operation='delete'&quot;</span>
+26:       <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Base</span>.<span class="ruby-identifier">connection</span>.<span class="ruby-identifier">execute</span> <span class="ruby-node">&quot;delete from client_temp_objects where token='#{ack_token}'&quot;</span>                                       
+27:     <span class="ruby-keyword kw">end</span>
+28:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000100" class="method-detail">
+        <a name="M000100"></a>
+
+        <div class="method-heading">
+          <a href="#M000100" class="method-signature">
+          <span class="method-name">new_delete_obj</span><span class="method-args">(obj_id)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+generates an object_value for the client to delete
+</p>
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000100-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000100-source">
+<pre>
+     <span class="ruby-comment cmt"># File app/models/client_map.rb, line 97</span>
+ 97:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">new_delete_obj</span>(<span class="ruby-identifier">obj_id</span>)
+ 98:     <span class="ruby-identifier">temp_obj</span> = <span class="ruby-constant">ObjectValue</span>.<span class="ruby-identifier">new</span>
+ 99:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">object</span> = <span class="ruby-keyword kw">nil</span>
+100:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">db_operation</span> = <span class="ruby-value str">&quot;delete&quot;</span>
+101:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">created_at</span> = <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">updated_at</span> = <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_s</span>
+102:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">attrib</span> = <span class="ruby-keyword kw">nil</span>
+103:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">value</span> = <span class="ruby-value str">'-'</span>
+104:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">update_type</span> = <span class="ruby-value str">'delete'</span>
+105:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">id</span> = <span class="ruby-identifier">obj_id</span>
+106:     <span class="ruby-identifier">temp_obj</span>.<span class="ruby-identifier">source_id</span> = <span class="ruby-value">0</span>
+107:     <span class="ruby-identifier">temp_obj</span>
+108:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+      <div id="method-M000098" class="method-detail">
+        <a name="M000098"></a>
+
+        <div class="method-heading">
+          <a href="#M000098" class="method-signature">
+          <span class="method-name">process_create_objs_for_client</span><span class="method-args">(client_id,source_id,token)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p><a class="source-toggle" href="#"
+            onclick="toggleCode('M000098-source');return false;">[Source]</a></p>
+          <div class="method-source-code" id="M000098-source">
+<pre>
+    <span class="ruby-comment cmt"># File app/models/client_map.rb, line 75</span>
+75:   <span class="ruby-keyword kw">def</span> <span class="ruby-keyword kw">self</span>.<span class="ruby-identifier">process_create_objs_for_client</span>(<span class="ruby-identifier">client_id</span>,<span class="ruby-identifier">source_id</span>,<span class="ruby-identifier">token</span>)
+76:     <span class="ruby-identifier">conditions</span> = <span class="ruby-node">&quot;client_id = '#{client_id}' and token is NULL and source_id = #{source_id}&quot;</span>
+77:     <span class="ruby-identifier">temp_objects</span> = <span class="ruby-constant">ClientTempObject</span>.<span class="ruby-identifier">find</span>( <span class="ruby-identifier">:all</span>, <span class="ruby-identifier">:conditions</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">conditions</span> )
+78: 
+79:     <span class="ruby-identifier">temp_objects</span>.<span class="ruby-identifier">map</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">tmp_object</span><span class="ruby-operator">|</span>
+80:       <span class="ruby-identifier">tmp_object</span>.<span class="ruby-identifier">update_attribute</span>(<span class="ruby-identifier">:token</span>, <span class="ruby-identifier">token</span>)
+81:       <span class="ruby-identifier">tmp_object</span>.<span class="ruby-identifier">save</span>
+82:     <span class="ruby-keyword kw">end</span>
+83:   <span class="ruby-keyword kw">end</span>
+</pre>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

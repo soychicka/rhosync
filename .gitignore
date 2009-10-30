@@ -7,3 +7,13 @@ nbproject
 config/database.yml
 tmp/.*
 tmp/*
+vendor/sync/*
+!vendor/sync/DataFactory/
+!vendor/sync/FreshBooks/
+!vendor/sync/PivotalTracker/
+!vendor/sync/Store/
+!vendor/sync/SugarCRM/
+!vendor/sync/SystemApiSamples/
+!vendor/sync/Test/
+doc/rspec_report.html
+
