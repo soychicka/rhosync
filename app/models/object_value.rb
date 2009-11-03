@@ -22,6 +22,7 @@
 require 'digest/sha1'
 
 class ObjectValue < ActiveRecord::Base
+  RESERVED_ATTRIB_NAMES = ["attrib_type", "id"] 
   belongs_to :source
   belongs_to :user
   has_many :clients
@@ -30,12 +31,20 @@ class ObjectValue < ActiveRecord::Base
   
   attr_accessor :db_operation, :oo
   
+  validates_presence_of :attrib, :value, :if => "update_type == 'query'"
+  
   def before_save
     if self.pending_id.nil?
       self.pending_id = hash_from_data(self.attrib,self.object,self.update_type,self.source_id,self.user_id,self.value)  
     else
       logger.warn "Record exists: " + self.inspect.to_s
-    end  
+    end
+  end 
+  
+  def validate
+    RESERVED_ATTRIB_NAMES.each do |invalid_name|
+      errors.add(:attrib, "'#{invalid_name}' is not a valid attribute name") if attrib == invalid_name  
+    end
   end
 
   def hash_from_data(attrib=nil,object=nil,update_type=nil,source_id=nil,user_id=nil,value=nil,random=nil)

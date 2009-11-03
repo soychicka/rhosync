@@ -1,11 +1,9 @@
-require 'digest/md5'
-require 'yaml'
-require 'open-uri'
-require 'net/http'
-require 'net/https'
+require 'sync'
 require 'source_adapter'
 
 class SourcesController < ApplicationController
+  include SourcesHelper
+  include Sync
 
   before_filter :login_required, :except => :clientcreate
   before_filter :find_source, :except => :clientcreate
@@ -14,10 +12,6 @@ class SourcesController < ApplicationController
   UNSUPPORTED_VERSIONS = [1]
   SUPPORTED_VERSIONS = [2]
 
-  include SourcesHelper
-  # shows all object values in XML structure given a supplied source
-  # if a :last_update parameter is supplied then only show data that has been
-  # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
 
   def callback
@@ -63,9 +57,6 @@ class SourcesController < ApplicationController
   # IF you wish to have device pinged when by ping method for important events
   # THEN supply params["device_pin"] and params["device_type"]
   def show
-    if params["id"] == "rho_credential"
-      render :text => "[]" and return
-    end
     @app=@source.app
     if !check_access(@app)
       respond_to do |wants|
@@ -115,7 +106,6 @@ class SourcesController < ApplicationController
       end
 
       logger.debug "Searching for #{conditions.inspect.to_s}"
-
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
       get_wrapped_list(@object_values)
@@ -520,6 +510,7 @@ protected
   end
   
   def get_wrapped_list(ovlist)
-    @wrapped_list = wrap_object_values(ovlist,@token) if @version
+    @cmapper = ClientMapper.new(@client,@token,@app)
+    @wrapped_list = @cmapper.wrap_object_values(ovlist) if @version
   end
 end

@@ -27,8 +27,6 @@ class Source < ActiveRecord::Base
   has_many :object_values
   has_many :client_temp_objects
   has_many :source_logs
-  has_many :source_notifies
-  has_many :users, :through => :source_notifies
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
