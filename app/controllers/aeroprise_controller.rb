@@ -2,8 +2,12 @@
 # This class is specific to Aeroprise application, and not a generally reuseable rhosync component
 #
 
+# these gems are not available in normal test env
+unless RAILS_ENV=="test"
 require 'rubyarapi'
 require 'aeroprise'
+end
+
 require 'base64'
 require 'crypt/blowfish'
 
