@@ -25,7 +25,7 @@ class SessionsController < ApplicationController
         if user = @app.authenticate(params[:login], params[:password], session)
           self.current_user = user
         else
-          render(:status => 401) and return
+          render(:nothing=> true, :status => 401) and return
         end
       rescue => e
         logger.debug "exception @app.authenticate #{e.inspect.to_s}"
