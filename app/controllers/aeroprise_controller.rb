@@ -100,7 +100,7 @@ class AeropriseController < ApplicationController
       
     # flag it so device will know to vibrate
     ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
-      :user_id=>user_id, :source_id=>@source.id, :value => "1"))
+      :user_id=>user_id, :source_id=>@source.id, :value => "1")
     
     # ping the user
     user = User.find(user_id)
