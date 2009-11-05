@@ -43,6 +43,7 @@ class AeropriseController < ApplicationController
     ObjectValue.destroy_all(:source_id=>@source.id, :update_type=>'query', :user_id => @user.id, :object=>sr_id)
     
     # this function will add as type pending
+    request["needsattention"]=1 # flag it so device will know to vibrate
     AeropriseRequestRecord.create(request, workinfo, responses, @source.id, @user.id)
     
     # flip it to type query
@@ -96,6 +97,10 @@ class AeropriseController < ApplicationController
     # serialize array of hashes and update 
     ObjectValue.record_object_value(:object=>sr_id, :attrib=>"workinfo",
       :user_id=>user_id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
+      
+    # flag it so device will know to vibrate
+    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
+      :user_id=>user_id, :source_id=>@source.id, :value => "1"))
     
     # ping the user
     user = User.find(user_id)
