@@ -1,5 +1,6 @@
 require 'json'
 require 'open-uri'
+
 class Customer < SourceAdapter
   def initialize(source,credential)
     super(source,credential)
@@ -9,6 +10,8 @@ class Customer < SourceAdapter
   end
  
   def query(conditions=nil,limit=nil,offset=nil)
+    # backend for this source adapter implements condtions
+    
     logger = Logger.new('log/store.log', File::WRONLY | File::APPEND)
     logger.debug "query called with conditions=#{conditions} limit=#{limit} and offset=#{offset}"
     
@@ -20,11 +23,11 @@ class Customer < SourceAdapter
     open(url) do |f|
       parsed=JSON.parse(f.read)
     end
-      logger.debug parsed.inspect.to_s
+    
+    logger.debug parsed.inspect.to_s
     @result={}
     
     parsed.each { |item|@result[item["customer"]["id"].to_s]=item["customer"] } if parsed
-    
     logger.debug @result.inspect.to_s
     
     @result
@@ -82,7 +85,7 @@ class Customer < SourceAdapter
         open(res['location']+".json") do |f|
           parsed=JSON.parse(f.read)
         end
-        return parsed["customer"]["id"]
+        return parsed["customer"]["id"] rescue nil
     end
   end
  

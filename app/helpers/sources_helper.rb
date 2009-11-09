@@ -222,7 +222,7 @@ module SourcesHelper
             res = nil
             tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
             begin
-              res = eval cmd
+              res = eval(cmd)
               if res and res.is_a?(String) and tmp_object
                 tmp_object.update_attributes(:objectid => res, :source_id => id)
               end

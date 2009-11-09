@@ -201,7 +201,7 @@ describe SourcesController do
 
   describe "responding to createobjects, deleteobjects, updateobjects" do
     it "should createobjects" do
-      Source.should_receive(:find).twice.with(37).and_return(mock_source)
+      Source.should_receive(:find).with(37).and_return(mock_source)
       get :createobjects,:id => "37", :attrvals => [{"object"=>"temp1","attrib"=>"name","value"=>"rhomobile"}]
       response.should be_redirect
     end

@@ -162,8 +162,6 @@ class SourcesController < ApplicationController
   # RETURNS:
   #   a hash of the object_values table ID columns as keys and the updated_at times as values
   def createobjects
-    @app=App.find_by_permalink(params[:app_id]) if params[:app_id]
-    @source=Source.find_by_permalink(params[:id]) if params[:id]
     check_access(@source.app)
     objects={}
     @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
