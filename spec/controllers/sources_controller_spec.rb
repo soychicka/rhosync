@@ -198,21 +198,9 @@ describe SourcesController do
 
   end
 
-  describe "responding to GET attributes" do
-
-    it "should retrieve attributes" do
-      pending("Test needs to be brought up to date.")
-      Source.should_receive(:find).with("37").and_return(mock_source)
-      get :attributes, :id => "37"
-      response.should be_success
-    end
-
-  end
-
   describe "responding to createobjects, deleteobjects, updateobjects" do
     it "should createobjects" do
-      pending("Test needs to be brought up to date.")
-      Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
+      Source.should_receive(:find).twice.with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
       get :createobjects,:id => "37", :attrvals => [{"object"=>"temp1","attrib"=>"name","value"=>"rhomobile"}]
       response.should be_redirect
     end
@@ -232,8 +220,8 @@ describe SourcesController do
     it "should refresh" do
       pending("Test needs to be brought up to date.")
       Source.should_receive(:find).with(:first, {:conditions=>["id =:link or name =:link", {:link=>"37"}]}).and_return(mock_source)
-      get :refresh, :id => "37"
-      response.should be_redirect
+      get :show, :id => "37", :refresh => true
+      response.should render_template('show')
     end
 
   end
