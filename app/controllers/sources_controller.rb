@@ -189,7 +189,7 @@ class SourcesController < ApplicationController
         o.blob = params[:blob]
         o.blob.instance_write(:file_name, x["value"])
       end
-      unless @client.client_temp_objects.exists?(:temp_objectid => x['object'])
+      unless @client.nil? or @client.client_temp_objects.exists?(:temp_objectid => x['object'])
         @client.client_temp_objects.create!(:temp_objectid => x['object'], :source_id => @source.id) 
       end
       o.save
