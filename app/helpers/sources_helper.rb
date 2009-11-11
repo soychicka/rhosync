@@ -311,7 +311,7 @@ module SourcesHelper
       @token=@resend_token ? @resend_token : get_new_token
       # get the list of objects
       # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
-      if @source.queuesync and @source.needs_refresh
+      if @source.needs_refresh
         @object_values=[]
       else
         @object_values=ClientMapper.process_objects_for_client(current_user,@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,by_source)
