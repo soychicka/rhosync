@@ -36,7 +36,6 @@ class AeropriseController < ApplicationController
 			return "ERROR sr_needs_attention"
 		end
 				
-    workinfo = api.get_work_info(sr_id)
     responses = api.get_answers_for_request(sr_id)
     
     # destroy old sr 
@@ -44,7 +43,7 @@ class AeropriseController < ApplicationController
     
     # this function will add as type pending
     request["needsattention"]=1 # flag it so device will know to vibrate
-    AeropriseRequestRecord.create(request, workinfo, responses, @source.id, @user.id)
+    AeropriseRequestRecord.create(request, responses, @source.id, @user.id)
     
     # flip it to type query
 		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id} and object='#{sr_id}' and user_id=#{@user.id}"
@@ -90,13 +89,14 @@ class AeropriseController < ApplicationController
       record["type"] = entry["type"]
       record["summary"] = entry["summary"]
       record["notes"] = entry["notes"]
-      record["submitdate"] = entry["submitdate"]
+      record["submitdate"] = entry["submitdate"].to_s
       worklog << record
     end
     
-    # serialize array of hashes and update 
-    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"workinfo",
-      :user_id=>user_id, :source_id=>@source.id, :value => RhomRecord.serialize(worklog))
+    # serialize array of hashes and update
+    @wk_source = Source.find_by_name("AeropriseWorklog")
+    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"data",
+      :user_id=>user_id, :source_id=>@wk_source.id, :value => RhomRecord.serialize(worklog))
       
     # flag it so device will know to vibrate
     ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
@@ -104,8 +104,9 @@ class AeropriseController < ApplicationController
     
     # ping the user
     user = User.find(user_id)
-    result = user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
-     
+    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
+    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
+         
     "OK sr_work_info"
   rescue => e
     logger.debug "exception while responding to WS sr_work_info #{e.inspect.to_s}"
@@ -183,7 +184,7 @@ class AeropriseController < ApplicationController
       login,password = "Demo",""
     end
 
-    api = Rubyarapi.new(login,password,serverip,serverport)
+    api = Rubyarapi.new(login,password,serverip,serverport,login,password)
     
     api.impersonate(user_login) # the user we are impersonating
     api.get_user_info
