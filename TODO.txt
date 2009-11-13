@@ -1,3 +1,0 @@
-1. Add diff function for create,update
-  - creates require whole object
-  - updates require specific oav
