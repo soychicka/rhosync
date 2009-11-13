@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'redis'
+require 'base64'
 
 class RhosyncStore
   attr_accessor :db
@@ -11,13 +12,16 @@ class RhosyncStore
   
   # Adds set with given data, replaces existing set
   # if it exists
-  def put_data(source,user,data={})
-    if source and user
-      key_prefix = _setkey_prefix(source,user)
-      _delete_keys("#{key_prefix}:*")
+  def put_data(doctype,source,user,data={})
+    if doctype and source and user
+      object_set = _setkey(doctype,source,user)
+      object_id_set = "#{object_set}:ids"
+      _delete_keys("#{object_set}*")
+      now = Time.now.to_i
       data.each do |key,value|
-        value.each do |item|
-          @db.sadd(_setkey(key_prefix,key),Marshal.dump(item))
+        @db.sadd(object_id_set, key)
+        value.each do |attrib,value|
+          @db.sadd(object_set,_setelement(key,attrib,value,now))
         end
       end
     end
@@ -25,46 +29,43 @@ class RhosyncStore
   end
   
   # Retrieves set for given source,user
-  def get_data(source,user,client_id=nil)
+  def get_data(doctype,source,user,set=nil)
     res = {}
-    if source and user
-      @db.keys(_setkey_prefix_wild(source,user)).each do |key|
-        skey = key.split(':')[2]
-        res[skey] = {}
-        @db.smembers(key).each do |member|
-          arr = Marshal.load(member)
-          res[skey].merge!(arr[0] => arr[1])
-        end
+    if doctype and source and user
+      @db.smembers(_setkey(doctype,source,user)).each do |element|
+        key,attrib,value,timestamp = _getelement(element)
+        res[key] = {} unless res[key]
+        res[key].merge!({attrib => value})
       end
       res
     end
   end
   
-  # Retrieves set for given source,user,client
-  def get_client_data(source,user,client)
-    res = {}
-    if source and user and client_id
-      @db.keys("#{client_id}:#{_setkey_prefix_wild(source,user)}").each do |key|
-        skey = key.split(':')[3]
-        res[skey] = {}
-        @db.smembers(key).each do |member|
-          
-        end
-      end
+  # Compute difference between two sets
+  def get_deleted(srcdoc,dstdoc,source,user)
+    res = []
+    if srcdoc and dstdoc and source and user
+      res = @db.sdiff(_setkey_ids(dstdoc,source,user),_setkey_ids(srcdoc,source,user))
     end
+    res
   end
   
   private
-  def _setkey_prefix(source,user)
-    "#{source}:#{user.to_s}"
+  def _setkey(doctype,source,user)
+    "#{doctype}:#{source}:#{user.to_s}"
   end
   
-  def _setkey_prefix_wild(source,user)
-    "#{_setkey_prefix(source,user)}:*"
+  def _setkey_ids(doctype,source,user)
+    "#{_setkey(doctype,source,user)}:ids"
   end
   
-  def _setkey(prefix,element)
-    "#{prefix}:#{element.to_s}"
+  def _setelement(obj,attrib,value,timestamp)
+    "#{obj}:#{attrib}:#{Base64.encode64(value)}:#{timestamp}"
+  end
+  
+  def _getelement(element)
+    res = element.split(':')
+    [res[0], res[1], Base64.decode64(res[2]), res[3]]
   end
   
   def _delete_keys(keymask)
