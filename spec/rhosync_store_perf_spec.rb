@@ -6,16 +6,16 @@ describe "RhosyncStore Performance" do
   before(:each) do
     @source = 'MyCustomer'
     @user = 6
-    @sync_store = RhosyncStore.new
-    @sync_store.db.flushdb
+    @store = RhosyncStore::Store.new
+    @store.db.flushdb
   end
 
   it "should process get/put for 1000 records (7000 elements)" do
     @data = get_test_data(1000)
     start = start_timer
-    @sync_store.put_data('doc1',@source,@user,@data).should == true
+    @store.put_data('doc1',@source,@user,@data).should == true
     start = lap_timer('put_data duration',start)
-    @sync_store.get_data('doc1',@source,@user).should == @data
+    @store.get_data('doc1',@source,@user).should == @data
     lap_timer('get_data duration',start)
   end
 
@@ -24,10 +24,10 @@ describe "RhosyncStore Performance" do
     @data1 = get_test_data(1000)
     @data1['900']['Phone1'] = 'This is changed'
     expected = {'900' => {'Phone1' => 'This is changed'}}
-    @sync_store.put_data('doc1',@source,@user,@data).should == true
-    @sync_store.put_data('doc2',@source,@user,@data1).should == true
+    @store.put_data('doc1',@source,@user,@data).should == true
+    @store.put_data('doc2',@source,@user,@data1).should == true
     start = start_timer
-    @sync_store.get_diff_data('doc1','doc2',@source,@user).should == expected
+    @store.get_diff_data('doc1','doc2',@source,@user).should == expected
     lap_timer('get_diff_data duration', start)
   end
 
