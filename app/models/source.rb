@@ -97,7 +97,7 @@ class Source < ActiveRecord::Base
   def refresh(current_user, session, url=nil)
     # if we have page method then entire dosync will be called in the background
     source_adapter=setup_credential_adapter(current_user,session)
-  	if source_adapter.respond_to?(:page) 
+  	if self.is_paged?
     	cmd="ruby script/runner ./jobs/dosync.rb #{current_user.id} #{id} #{url}"
       logger.info "Executing background job: #{cmd}"
       begin 
@@ -165,7 +165,7 @@ class Source < ActiveRecord::Base
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
      
       # if there is a poge method we call that, otherwise the query method
-      if source_adapter.respond_to?(:page)
+      if self.is_paged?
     		pagenum=0      
     		result=true
     		while result 
@@ -231,6 +231,10 @@ class Source < ActiveRecord::Base
   
   def to_param
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
+  end
+  
+  def is_paged?
+    self.source_adapter.respond_to?(:page) 
   end
 
 	# TODO: this is a bit wierd we need to test in this way  
