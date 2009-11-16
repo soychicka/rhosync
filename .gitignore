@@ -16,4 +16,5 @@ vendor/sync/*
 !vendor/sync/SystemApiSamples/
 !vendor/sync/Test/
 doc/rspec_report.html
+rhosync.war
 

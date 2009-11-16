@@ -10,6 +10,12 @@ RAILS_GEM_VERSION = '2.2.2' unless defined? RAILS_GEM_VERSION
 # Bootstrap the Rails environment, frameworks, and default configuration
 require File.join(File.dirname(__FILE__), 'boot')
 
+# Load JDBC drivers if we run on JRuby
+if RUBY_PLATFORM =~ /java/
+  require 'rubygems'
+  RAILS_CONNECTION_ADAPTERS = %w(jdbc)
+end
+
 Rails::Initializer.run do |config|
   # Settings in config/environments/* take precedence over those specified here.
   # Application configuration should go into files in config/initializers
@@ -26,14 +32,14 @@ Rails::Initializer.run do |config|
   # config.gem "hpricot", :version => '0.6', :source => "http://code.whytheluckystiff.net"
   # config.gem "aws-s3", :lib => "aws/s3"
   config.gem 'rubyist-aasm', :lib => 'aasm', :source => "http://gems.github.com"
-  config.gem "httpclient", :version => ">=2.1.5.2"
+  config.gem "httpclient"
   config.gem "soap4r", :lib => "soap/mapping"
   config.gem "uuidtools", :version => ">=2.0.0"
   config.gem "actionmailer",:lib => "actionmailer"
   config.gem "rspec", :lib => "spec"
   config.gem "rspec-rails", :lib => "spec/rake/spectask"
   config.gem "rcov"
-  config.gem "libxml-ruby", :lib => "xml/libxml"
+#  config.gem "libxml-ruby", :lib => "xml/libxml"
   config.gem "datanoise-actionwebservice", :lib => "actionwebservice", :version => "2.2.2"  
   config.gem "ar-extensions", :version => ">=0.9.2"
 
