@@ -10,6 +10,7 @@ module Sync
     def wrap_object_values(ovlist)
       @count = 0
       list = {}
+      return [] if @client.nil?
       temp_count = @client.client_temp_objects.count
 
       # process the ovlist (this will also include successful create objects)

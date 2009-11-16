@@ -67,9 +67,11 @@ class SourcesController < ApplicationController
       if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
         @source.credential=usersub.credential  # this variable is available in your source adapter
       end
+      
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
+      
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end

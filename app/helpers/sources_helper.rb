@@ -289,10 +289,18 @@ module SourcesHelper
   def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil)
     # if client_id is provided, return only relevant objects for that client
     if client_id
+
       @client = setup_client(client_id)
       @ack_token = ack_token
       @first_request=false
       @resend_token=nil
+      
+      if @source.needs_refresh
+        if @source.is_paged?
+          @object_values=[]
+          return
+        end
+      end
 
       # setup the conditions to handle the client request
       if @ack_token
