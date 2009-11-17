@@ -75,7 +75,7 @@ class User < ActiveRecord::Base
     @result
   end
   def must_not_exceed_license_seats
-    maxusers = License::Reader.new(RHOSYNC_LICENSE).seats
-    errors.add_to_base("Your current license only permits #{maxusers} users.") if self.class.count >= maxusers
+#    maxusers = License::Reader.new(RHOSYNC_LICENSE).seats
+#    errors.add_to_base("Your current license only permits #{maxusers} users.") if self.class.count >= maxusers
   end
 end
