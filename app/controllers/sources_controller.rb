@@ -67,9 +67,11 @@ class SourcesController < ApplicationController
       if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
         @source.credential=usersub.credential  # this variable is available in your source adapter
       end
+      
       @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
+      
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end
@@ -162,8 +164,6 @@ class SourcesController < ApplicationController
   # RETURNS:
   #   a hash of the object_values table ID columns as keys and the updated_at times as values
   def createobjects
-    @app=App.find_by_permalink(params[:app_id]) if params[:app_id]
-    @source=Source.find_by_permalink(params[:id]) if params[:id]
     check_access(@source.app)
     objects={}
     @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
@@ -189,7 +189,7 @@ class SourcesController < ApplicationController
         o.blob = params[:blob]
         o.blob.instance_write(:file_name, x["value"])
       end
-      unless @client.client_temp_objects.exists?(:temp_objectid => x['object'])
+      unless @client.nil? or @client.client_temp_objects.exists?(:temp_objectid => x['object'])
         @client.client_temp_objects.create!(:temp_objectid => x['object'], :source_id => @source.id) 
       end
       o.save

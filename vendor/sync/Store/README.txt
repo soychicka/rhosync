@@ -1,0 +1,1 @@
+The Product and Customer adapters here are provided for educational and testing purposes. In a real production system, you would want to consolidate them in a single base class to reduce the duplication of code, and provide better error handling among other things.

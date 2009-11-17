@@ -1,6 +1,6 @@
 <h2>Creating Object for Sync </h2>
 Creates an object with up to five attribute value pairs
-<% form_for :source, :url => "/apps/#{@source.app.id}/sources/#{@source.id}/createobjects" do |f| %>
+<% form_for :source, :url => createobjects_source_path(@source) do |f| %>
 <input type="Submit" value="Create Object Value"/><br/>
 <input type="hidden" name="attrvals[][object]" value="temp1"/>
 Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
