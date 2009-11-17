@@ -42,8 +42,9 @@ describe "RhosyncClientSync" do
     @store.put_data('cd',@source,@user,@cd)
     @store.get_data('cd',@source,@user).should == @cd
       
-    @expected = {'D'=>{'4'=>'name,brand,price'}}
-    @client.put_deleted_page('md',2).should == @expected
+    @expected = ['brand','name','price']
+    # Delete page should be {'D' => {'4' => 'brand,name,price'}}
+    @client.put_deleted_page('md',2)['D']['4'].split(',').sort.should == @expected
   end  
       
 end
