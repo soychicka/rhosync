@@ -8,14 +8,13 @@ module RhosyncStore
     end
   
     # Adds set with given data, replaces existing set
-    # if it exists
-    def put_data(doctype,source,user,data={})
+    # if it exists or appends data to the existing set
+    # if append flag set to true
+    def put_data(doctype,source,user,data={},append=false)
       if doctype and source and user
         object_set = _setkey(doctype,source,user)
-        object_id_set = "#{object_set}:ids"
-        _delete_keys("#{object_set}*")
+        _delete_keys("#{object_set}*") unless append
         data.each do |key,value|
-          @db.sadd(object_id_set, key)
           value.each do |attrib,value|
             @db.sadd(object_set,_setelement(key,attrib,value))
           end
@@ -56,25 +55,12 @@ module RhosyncStore
       ts = @db.get(_key_timestamp(doctype,source,user))
       ts ? ts.to_i : nil
     end
-  
-    # Compute difference between two sets
-    def get_diff_ids(srcdoc,dstdoc,source,user)
-      res = []
-      if srcdoc and dstdoc and source and user
-        res = @db.sdiff(_setkey_ids(dstdoc,source,user),_setkey_ids(srcdoc,source,user))
-      end
-      res
-    end
-  
+    
     private
     def _setkey(doctype,source,user)
       "#{doctype}:#{source}:#{user.to_s}"
     end
   
-    def _setkey_ids(doctype,source,user)
-      "#{_setkey(doctype,source,user)}:ids"
-    end
-
     def _setelement(obj,attrib,value)
       "#{obj}:#{attrib}:#{Base64.encode64(value)}"
     end

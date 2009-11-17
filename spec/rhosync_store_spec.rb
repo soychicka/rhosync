@@ -24,27 +24,7 @@ describe "RhosyncStore" do
     @store.put_data('doc1',@source,@user,new_data)
     @store.get_data('doc1',@source,@user).should == new_data
   end
-  
-  it "should return ids that were deleted in doc2" do
-    @data1,@data1['1'],@data1['2'] = {},@product1,@product2
-    expected = ['3']
-    @store.put_data('doc1',@source,@user,@data).should == true
-    @store.get_data('doc1',@source,@user).should == @data
-    @store.put_data('doc2',@source,@user,@data1)
-    @store.get_data('doc2',@source,@user).should == @data1
-    @store.get_diff_ids('doc2','doc1',@source,@user).should == expected
-  end
-  
-  it "should return ids that were created in doc2" do
-    @data1,@data1['1'],@data1['2'],@data1['3'],@data['4'] = {},@product1,@product2,@product3,@product4
-    expected = ['4']
-    @store.put_data('doc1',@source,@user,@data).should == true
-    @store.get_data('doc1',@source,@user).should == @data
-    @store.put_data('doc2',@source,@user,@data1)
-    @store.get_data('doc2',@source,@user).should == @data1
-    @store.get_diff_ids('doc2','doc1',@source,@user).should == expected
-  end
-  
+    
   it "should return attributes modified in doc2" do
     @store.put_data('doc1',@source,@user,@data).should == true
     @store.get_data('doc1',@source,@user).should == @data

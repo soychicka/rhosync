@@ -30,6 +30,6 @@ describe "RhosyncStoreDataHelper", :shared => true do
       'price' => '249.99'
     }
     
-    @data,@data['1'],@data['2'],@data['3'] = {},@product1,@product2,@product3
+    @data = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
   end
 end  

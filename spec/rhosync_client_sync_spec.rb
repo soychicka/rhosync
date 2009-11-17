@@ -10,31 +10,40 @@ describe "RhosyncClientSync" do
   before(:each) do
     @store = Store.new
     @store.db.flushdb
-    @client = Client.new(@store,@source,@user,'cid')
+    @client = Client.new(@store,@source,@user,'cd')
   end
   
-  it "should return diffs between md and client" do
+  it "should return diffs between master documents and client documents limited by page size" do
     @store.put_data('md',@source,@user,@data).should == true
     @store.get_data('md',@source,@user).should == @data
-
-    @cd = {}    
-    @store.put_data('cd',@source,@user,@cd)
-    @store.get_data('cd',@source,@user).should == @cd
 
     @expected = {'1'=>@product1,'2'=>@product2}
     @client.put_page('md',2).should == @expected
     @client.get_page.should == @expected      
   end
   
-  it "should set md and cd documents states and return sync-page after first client sync request" do
-    @store.put_data('md',@source,@user,@data).should == true
-    @store.get_data('md',@source,@user).should == @data
-    
-    @cd = {}    
+  it "appends diff to the client document" do
+    @cd = {'3'=>@product3}  
     @store.put_data('cd',@source,@user,@cd)
     @store.get_data('cd',@source,@user).should == @cd
-    
-    @store.get_diff_data('cd','md',@source,@user).should == @data
+
+    @page = {'1'=>@product1,'2'=>@product2}
+    @expected = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
+
+    @store.put_data('cd',@source,@user,@page,true).should == true
+    @store.get_data('cd',@source,@user).should == @expected
   end
     
+  it "should return deleted objects in the client document" do
+    @store.put_data('md',@source,@user,@data).should == true
+    @store.get_data('md',@source,@user).should == @data
+
+    @cd = {'1'=>@product1,'2'=>@product2,'3'=>@product3,'4'=>@product4}  
+    @store.put_data('cd',@source,@user,@cd)
+    @store.get_data('cd',@source,@user).should == @cd
+      
+    @expected = {'D'=>{'4'=>'name,brand,price'}}
+    @client.put_deleted_page('md',2).should == @expected
+  end  
+      
 end
