@@ -18,7 +18,6 @@ class AeropriseController < ApplicationController
   web_service_scaffold :invocation if Rails.env == 'development'
   
   def sr_needs_attention(login, sr_id)
-  
   	logger.debug "login = #{login}"
   	logger.debug "sr_id = #{sr_id}"
   
@@ -57,8 +56,8 @@ class AeropriseController < ApplicationController
     
     "OK sr_needs_attention"
   rescue =>e
-    logger.debug "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
-    logger.debug e.backtrace.join("\n")
+    logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
+    logger.info e.backtrace.join("\n")
     "ERROR sr_needs_attention"
   end
   
@@ -73,7 +72,7 @@ class AeropriseController < ApplicationController
     	user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqnumber",
         :source_id=>@source.id}).user_id
     rescue
-      logger.debug "worklog notification for existing SR but SR is not found in sync data. Retrieving SR."
+      logger.info "worklog notification for existing SR but #{sr} is not found in sync data. Retrieving SR from remedy."
       return sr_needs_attention(login,sr_id)
     end
     # login as this user
@@ -109,8 +108,8 @@ class AeropriseController < ApplicationController
          
     "OK sr_work_info"
   rescue => e
-    logger.debug "exception while responding to WS sr_work_info #{e.inspect.to_s}"
-    logger.debug e.backtrace.join("\n")
+    logger.info "exception while responding to WS sr_work_info #{e.inspect.to_s}"
+    logger.info e.backtrace.join("\n")
     "ERROR sr_work_info"
   end
   
