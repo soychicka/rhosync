@@ -45,6 +45,7 @@ describe "RhosyncClientSync" do
     @expected = ['brand','name','price']
     # Delete page should be {'D' => {'4' => 'brand,name,price'}}
     @client.put_deleted_page('md',2)['D']['4'].split(',').sort.should == @expected
+    @client.get_deleted_page['D']['4'].split(',').sort.should == @expected
   end  
       
 end
