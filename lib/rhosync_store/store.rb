@@ -10,26 +10,26 @@ module RhosyncStore
     # Adds set with given data, replaces existing set
     # if it exists or appends data to the existing set
     # if append flag set to true
-    def put_data(doctype,source,user,data={},append=false)
-      if doctype and source and user
-        object_set = _setkey(doctype,source,user)
+    def put_data(document,data={},append=false)
+      if document
+        object_set = document.get_key
         _delete_keys("#{object_set}*") unless append
         data.each do |key,value|
           value.each do |attrib,value|
-            @db.sadd(object_set,_setelement(key,attrib,value))
+            @db.sadd(object_set,setelement(key,attrib,value))
           end
         end
-        @db.set(_key_timestamp(doctype,source,user), (Time.now.to_f * 1000).to_i)
+        @db.set(_key_timestamp(document), (Time.now.to_f * 1000).to_i)
       end
       true
     end
   
     # Retrieves set for given doctype,source,user
-    def get_data(doctype,source,user)
+    def get_data(document)
       res = {}
-      if doctype and source and user
-        @db.smembers(_setkey(doctype,source,user)).each do |element|
-          key,attrib,value = _getelement(element)
+      if document
+        @db.smembers(document.get_key).each do |element|
+          key,attrib,value = getelement(element)
           res[key] = {} unless res[key]
           res[key].merge!({attrib => value})
         end
@@ -38,11 +38,11 @@ module RhosyncStore
     end
   
     # Retrieves diff data hash between two sets
-    def get_diff_data(srcdoc,dstdoc,source,user)
+    def get_diff_data(srcdoc,dstdoc)
       res = {}
-      if srcdoc and dstdoc and source and user
-        @db.sdiff(_setkey(dstdoc,source,user),_setkey(srcdoc,source,user)).each do |element|
-          key,attrib,value = _getelement(element)
+      if srcdoc and dstdoc
+        @db.sdiff(dstdoc.get_key,srcdoc.get_key).each do |element|
+          key,attrib,value = getelement(element)
           res[key] = {} unless res[key]
           res[key].merge!({attrib => value})
         end
@@ -51,27 +51,27 @@ module RhosyncStore
     end
   
     # Returns timestamp (integer) for given doctype,source,user
-    def get_timestamp(doctype,source,user)
-      ts = @db.get(_key_timestamp(doctype,source,user))
+    def get_timestamp(doc)
+      ts = @db.get(_key_timestamp(doc))
       ts ? ts.to_i : nil
     end
     
-    private
-    def _setkey(doctype,source,user)
-      "#{doctype}:#{source}:#{user.to_s}"
+    # Deletes data from a given doctype,source,user
+    def delete_data(document,data={})
+      if document
+        object_set = document.get_key
+        data.each do |key,value|
+          value.each do |attrib,val|
+            @db.srem(object_set,setelement(key,attrib,val))
+          end
+        end
+      end
+      true
     end
-  
-    def _setelement(obj,attrib,value)
-      "#{obj}:#{attrib}:#{Base64.encode64(value)}"
-    end
-  
-    def _getelement(element)
-      res = element.split(':')
-      [res[0], res[1], Base64.decode64(res[2])]
-    end
-  
-    def _key_timestamp(doctype,source,user)
-      "#{_setkey(doctype,source,user)}:ts"
+    
+    private  
+    def _key_timestamp(doc)
+      "#{doc.get_key}:ts"
     end
   
     def _delete_keys(keymask)

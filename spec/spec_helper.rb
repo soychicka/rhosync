@@ -31,5 +31,8 @@ describe "RhosyncStoreDataHelper", :shared => true do
     }
     
     @data = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
+    
+    @mdoc = Document.new('md',@source,@user)
+    @cdoc = Document.new('cd',@source,@user)
   end
 end  

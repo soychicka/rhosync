@@ -3,9 +3,9 @@ require 'rhosync_store'
 require 'faker'
 
 describe "RhosyncStore Performance" do
+  it_should_behave_like "RhosyncStoreDataHelper"
+  
   before(:each) do
-    @source = 'MyCustomer'
-    @user = 6
     @store = RhosyncStore::Store.new
     @store.db.flushdb
   end
@@ -13,21 +13,21 @@ describe "RhosyncStore Performance" do
   it "should process get/put for 1000 records (7000 elements)" do
     @data = get_test_data(1000)
     start = start_timer
-    @store.put_data('doc1',@source,@user,@data).should == true
+    @store.put_data(@mdoc,@data).should == true
     start = lap_timer('put_data duration',start)
-    @store.get_data('doc1',@source,@user).should == @data
+    @store.get_data(@mdoc).should == @data
     lap_timer('get_data duration',start)
   end
 
   it "should process single attribute update 1000-record doc" do
     @data = get_test_data(1000)
     @data1 = get_test_data(1000)
-    @data1['900']['Phone1'] = 'This is changed'
-    expected = {'900' => {'Phone1' => 'This is changed'}}
-    @store.put_data('doc1',@source,@user,@data).should == true
-    @store.put_data('doc2',@source,@user,@data1).should == true
+    @data1['950']['Phone1'] = 'This is changed'
+    expected = {'950' => {'Phone1' => 'This is changed'}}
+    @store.put_data(@mdoc,@data).should == true
+    @store.put_data(@cdoc,@data1).should == true
     start = start_timer
-    @store.get_diff_data('doc1','doc2',@source,@user).should == expected
+    @store.get_diff_data(@mdoc,@cdoc).should == expected
     lap_timer('get_diff_data duration', start)
   end
 
