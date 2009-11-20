@@ -50,4 +50,19 @@ describe "RhosyncStore" do
     @store.get_data(@cdoc).should == @data1
     @store.get_diff_data(@cdoc,@mdoc).should == expected
   end  
+  
+  it "should ignore reserved attributes" do
+    @newproduct = {
+      'name' => 'iPhone',
+      'brand' => 'Apple',
+      'price' => '199.99',
+      'id' => 1234,
+      'attrib_type' => 'someblob'
+    }
+    
+    @data1 = {'1'=>@newproduct,'2'=>@product2,'3'=>@product3}
+    
+    @store.put_data(@mdoc,@data1).should == true
+    @store.get_data(@mdoc).should == @data
+  end
 end

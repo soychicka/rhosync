@@ -1,5 +1,6 @@
 module RhosyncStore
   class Store
+    RESERVED_ATTRIB_NAMES = ["attrib_type", "id"] 
     attr_accessor :db
 
     def initialize
@@ -16,7 +17,7 @@ module RhosyncStore
         _delete_keys("#{object_set}*") unless append
         data.each do |key,value|
           value.each do |attrib,value|
-            @db.sadd(object_set,setelement(key,attrib,value))
+            @db.sadd(object_set,setelement(key,attrib,value)) unless _is_reserved?(attrib,value)
           end
         end
         @db.set(_key_timestamp(document), (Time.now.to_f * 1000).to_i)
@@ -77,6 +78,15 @@ module RhosyncStore
     def _delete_keys(keymask)
       @db.keys(keymask).each do |key|
         @db.del(key)
+      end
+    end
+    
+    def _is_reserved?(attrib,value)
+      if RESERVED_ATTRIB_NAMES.include? attrib 
+        Logger.error "Ignoring attrib-value pair: #{{attrib => value}.inspect}."
+        true
+      else
+        false
       end
     end
   end
