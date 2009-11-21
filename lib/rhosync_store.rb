@@ -1,11 +1,19 @@
 require 'rubygems'
 require 'redis'
+require 'json'
 require 'base64'
+require 'rhosync_store/model'
+require 'rhosync_store/source'
 require 'rhosync_store/document'
 require 'rhosync_store/store'
 require 'rhosync_store/client'
+require 'rhosync_store/source_adapter'
 
 module RhosyncStore
+  
+  def set_adapter_path(path)
+    $:.unshift path
+  end
   
   # Serializes oav to set element
   def setelement(obj,attrib,value)
@@ -16,6 +24,14 @@ module RhosyncStore
   def getelement(element)
     res = element.split(':')
     [res[0], res[1], Base64.decode64(res[2])]
+  end
+  
+  def underscore(camel_cased_word)
+    camel_cased_word.to_s.gsub(/::/, '/').
+    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+    gsub(/([a-z\d])([A-Z])/,'\1_\2').
+    tr("-", "_").
+    downcase
   end
   
   # TODO: replace with real logger

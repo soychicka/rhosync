@@ -9,22 +9,13 @@ module RhosyncStore
     end
     
     def process
+      # setup credentials
       _init_adapter(@user_id,session)
+      
+      # run create,update,delete,query
       
       @store.put_data(@doc,@sync_data)
       
-    end
-    
-    def _init_adapter(credential,session)
-      if @source
-        begin
-          Logger.info "Creating class for #{@source}"
-          @source_adapter=(Object.const_get(@source)).new(self,credential) 
-          @source_adapter.session = session if session
-        rescue Exception=>e
-          Logger.error "Failure to create adapter from class #{@source}: #{e.inspect.to_s}"
-        end
-      end
     end
   end
 end

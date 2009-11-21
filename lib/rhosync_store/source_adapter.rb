@@ -9,10 +9,25 @@ module RhosyncStore
   class SourceAdapterServerErrorException < SourceAdapterException; end
 
   class SourceAdapter
-    attr_accessor :session,:default_sync
+    attr_accessor :session
     
-    def initialize(source=nil,credential=nil)
-      @source = source.nil? ? self : source
+    def initialize(source,credential=nil)
+      @source = source
+    end
+    
+    def self.create(source,credential=nil)
+      adapter=nil
+      if source
+        begin
+          Logger.info "Creating class for #{source.name}"
+          require underscore(source.name)
+          adapter=(Object.const_get(source.name)).new(source,credential) 
+        rescue Exception=>e
+          Logger.error "Failure to create adapter from class #{source.name}: #{e.inspect.to_s}"
+          raise e
+        end
+      end
+      adapter
     end
 
     def login; end
