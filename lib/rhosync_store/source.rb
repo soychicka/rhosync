@@ -10,7 +10,6 @@ module RhosyncStore
     field :callback_url,:string
     field :user_id,:integer
     field :app_id,:integer
-    
     attr_reader :document
     
     def self.create(fields={})
@@ -23,16 +22,19 @@ module RhosyncStore
       super(fields)
     end
     
+    # Return the rhosync document for the source
     def document
       @document.nil? ? @document = Document.new('md',self.name,self.user.id) : @document
     end
     
+    # Return the user associated with a source
     def user
-      User.with_key(@user_id)
+      User.with_key(self.user_id)
     end
     
+    # Return the app the source belongs to
     def app
-      App.with_key(@app_id)
+      App.with_key(self.app_id)
     end
   end
 end

@@ -71,17 +71,17 @@ module RhosyncStore
     end
     
     private  
-    def _key_timestamp(doc)
+    def _key_timestamp(doc) #:nodoc:
       "#{doc.get_key}:ts"
     end
   
-    def _delete_keys(keymask)
+    def _delete_keys(keymask) #:nodoc:
       @db.keys(keymask).each do |key|
         @db.del(key)
       end
     end
     
-    def _is_reserved?(attrib,value)
+    def _is_reserved?(attrib,value) #:nodoc:
       if RESERVED_ATTRIB_NAMES.include? attrib 
         Logger.error "Ignoring attrib-value pair: #{{attrib => value}.inspect}."
         true

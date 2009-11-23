@@ -3,6 +3,9 @@ require 'rhosync_store'
 
 describe "RhosyncStoreDataHelper", :shared => true do
   before(:each) do
+    @store = RhosyncStore::Store.new
+    @store.db.flushdb
+    
     @source = 'Product'
     @user = 5
     
@@ -36,3 +39,26 @@ describe "RhosyncStoreDataHelper", :shared => true do
     @cdoc = Document.new('cd',@source,@user)
   end
 end  
+
+describe "SourceAdapterHelper", :shared => true do
+  it_should_behave_like "RhosyncStoreDataHelper"
+  
+  before(:each) do
+    @a_fields = { :name => 'testapp' }
+    @a = App.create(@a_fields)
+    @u_fields = {
+      :login => 'testuser',
+      :password => 'testpass'
+    }
+    @u = User.create(@u_fields) 
+    @fields = {
+      :name => 'SampleAdapter',
+      :url => 'http://example.com',
+      :login => 'testuser',
+      :password => 'testpass',
+      :user_id => @u.id,
+      :app_id => @a.id
+    }
+    @s = Source.create(@fields)
+  end
+end

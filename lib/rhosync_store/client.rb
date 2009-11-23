@@ -1,11 +1,11 @@
 module RhosyncStore
   class Client
-
     def initialize(store,clientdoc)
       @store,@clientdoc = store,clientdoc       
     end
       
-    #computes diffs between master doc and client doc, trims it to page size, stores page, and returns page as hash  
+    # Computes diffs between master doc and client doc, trims it to page size, 
+    # stores page, and returns page as hash  
     def put_page(masterdoc,page_size)
       res = {}
       @store.get_diff_data(@clientdoc,masterdoc).each do |key,item|
@@ -17,8 +17,8 @@ module RhosyncStore
       res
     end
     
-    #computes deleted objects (down to individual attributes) 
-    #in the client documet, trims it to page size, stores page, and returns page as hash      
+    # Computes deleted objects (down to individual attributes) 
+    # in the client documet, trims it to page size, stores page, and returns page as hash      
     def put_deleted_page(masterdoc,page_size)
       res = {}
       delkey = @clientdoc.get_deleted_doc.get_key
@@ -33,15 +33,14 @@ module RhosyncStore
       res
     end
       
-    #gets stored diffs page
+    # Gets stored diffs page
     def get_page
       @store.get_data(@clientdoc.get_page_doc)
     end
 
-    #gets stored deleted page
+    # Gets stored deleted page
     def get_deleted_page
       @store.get_data(@clientdoc.get_deleted_doc)
-    end
-              
+    end         
   end
 end

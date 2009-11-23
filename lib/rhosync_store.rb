@@ -13,7 +13,8 @@ require 'rhosync_store/source_adapter'
 
 module RhosyncStore
   
-  def set_adapter_path(path)
+  # Adds given path to top of ruby load path
+  def add_adapter_path(path)
     $:.unshift path
   end
   
@@ -28,6 +29,7 @@ module RhosyncStore
     [res[0], res[1], Base64.decode64(res[2])]
   end
   
+  # Returns require-friendly filename for a class
   def underscore(camel_cased_word)
     camel_cased_word.to_s.gsub(/::/, '/').
     gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').

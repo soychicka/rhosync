@@ -15,6 +15,7 @@ module RhosyncStore
       @source = source
     end
     
+    # Returns an instance of a SourceAdapter by source name
     def self.create(source,credential=nil)
       adapter=nil
       if source
@@ -36,7 +37,8 @@ module RhosyncStore
   
     # this base class sync method expects a hash of hashes, 'object' will be the key
     def sync
-      @store.put_data(@doc,@result)
+      return if result_nil? or result_empty?
+      @source.app.store.put_data(@source.document,@result)
     end
   
     def create(name_value_list); end
@@ -53,15 +55,20 @@ module RhosyncStore
   
     MSG_NO_OBJECTS = "No objects returned from query"
     MSG_NIL_RESULT_ATTRIB = "You might have expected a synchronization but the @result attribute was 'nil'"
+    
+    protected
+    def current_user
+      @source.user
+    end
   
     #################################################
     private 
-    def result_empty?
+    def result_empty? #:nodoc:
       Logger.info MSG_NO_OBJECTS if @result.empty? 
       @result.empty?
     end
 
-    def result_nil?
+    def result_nil? #:nodoc:
       Logger.error MSG_NIL_RESULT_ATTRIB if @result.nil?
       @result.nil?
     end

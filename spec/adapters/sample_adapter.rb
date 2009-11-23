@@ -4,7 +4,7 @@ class SampleAdapter < SourceAdapter
   end
  
   def login
-    @source.login and @source.password and @source.url and @source.name ? true : false 
+    @source.login and @source.password and @source.url and @source.name and current_user ? true : false 
   end
  
   def query

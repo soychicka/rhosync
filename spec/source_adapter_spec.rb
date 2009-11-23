@@ -2,28 +2,22 @@ require File.join(File.dirname(__FILE__),'spec_helper')
 $:.unshift File.join(__FILE__,'..','lib')
 require 'rhosync_store'
 
+class RhosyncStore::SourceAdapter 
+  def inject_result(result) 
+    @result = result
+  end
+end
+
 describe "SourceAdapter" do
+  it_should_behave_like "SourceAdapterHelper"
   
-  it_should_behave_like  "RhosyncStoreDataHelper"
-  
-  before(:each) do
-    @store = RhosyncStore::Store.new
-    @store.db.flushdb
-    
+  before(:each) do    
     @path = File.join(File.dirname(__FILE__),'adapters')
-    RhosyncStore.set_adapter_path(@path)
-    
-    @fields = {
-      :name => 'SampleAdapter',
-      :url => 'http://example.com',
-      :login => 'testuser',
-      :password => 'testpass'
-    }
-    @src = Source.create(@fields)
+    RhosyncStore.add_adapter_path(@path)
   end
   
   it "should create SourceAdapter with source" do
-    @sa = SourceAdapter.create(@src)
+    @sa = SourceAdapter.create(@s)
     @sa.class.name.should == @fields[:name]
   end
   
@@ -36,7 +30,7 @@ describe "SourceAdapter" do
   describe "SourceAdapter methods" do
     
     before(:each) do
-      @sa = SourceAdapter.create(@src)
+      @sa = SourceAdapter.create(@s)
     end
 
     it "should execute SourceAdapter login method with source vars" do
@@ -48,6 +42,33 @@ describe "SourceAdapter" do
       @sa.query.should == expected
     end
     
+    it "should execute SourceAdapter login with current_user" do
+      @sa.should_receive(:current_user).with(no_args()).and_return( @u )
+      @sa.login
+    end
     
+    it "should execute SourceAdapter sync method" do
+      expected = {'1'=>@product1,'2'=>@product2}
+      @sa.query.should == expected
+      @sa.sync.should == true
+      @s.app.store.get_data(@s.document).should == expected
+    end
+    
+    it "should fail gracefully if @result is missing" do
+      @sa.inject_result nil
+      lambda { @sa.query }.should_not raise_error
+    end
+    
+    it "should log warning if @result is missing" do
+      Logger.should_receive(:error).with(SourceAdapter::MSG_NIL_RESULT_ATTRIB)
+      @sa.inject_result nil
+      @sa.sync
+    end
+    
+    it "should log at debug level when result is empty" do 
+      Logger.should_receive(:info).with(SourceAdapter::MSG_NO_OBJECTS)
+      @sa.inject_result({ }) 
+      @sa.sync
+    end
   end
 end
