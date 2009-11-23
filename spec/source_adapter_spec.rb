@@ -3,6 +3,9 @@ $:.unshift File.join(__FILE__,'..','lib')
 require 'rhosync_store'
 
 describe "SourceAdapter" do
+  
+  it_should_behave_like  "RhosyncStoreDataHelper"
+  
   before(:each) do
     @store = RhosyncStore::Store.new
     @store.db.flushdb
@@ -28,5 +31,23 @@ describe "SourceAdapter" do
     @fields[:name] = 'Broken'
     broken_source = Source.create(@fields)
     lambda { SourceAdapter.create(broken_source) }.should raise_error(Exception)
+  end
+  
+  describe "SourceAdapter methods" do
+    
+    before(:each) do
+      @sa = SourceAdapter.create(@src)
+    end
+
+    it "should execute SourceAdapter login method with source vars" do
+      @sa.login.should == true
+    end
+
+    it "should execute SourceAdapter query method" do
+      expected = {'1'=>@product1,'2'=>@product2}
+      @sa.query.should == expected
+    end
+    
+    
   end
 end

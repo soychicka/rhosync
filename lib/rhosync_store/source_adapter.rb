@@ -35,7 +35,9 @@ module RhosyncStore
     def query; end
   
     # this base class sync method expects a hash of hashes, 'object' will be the key
-    def sync; end
+    def sync
+      @store.put_data(@doc,@result)
+    end
   
     def create(name_value_list); end
 

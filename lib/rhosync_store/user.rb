@@ -1,9 +1,11 @@
 module RhosyncStore
-  class User
-    attr_accessor :uid
+  class User < Model
+    field :login,:string
+    field :email,:string
+    field :password,:string
     
-    def initialize(uid)
-      @uid = uid
+    def self.create(fields={})
+      super(fields)
     end
   end
 end

@@ -4,22 +4,26 @@ class SampleAdapter < SourceAdapter
   end
  
   def login
-    #TODO: Write some code here
-    # use the variable @source.login and @source.password
-    raise "Please provide some code to perform an authenticated login to the backend application"
+    @source.login and @source.password and @source.url and @source.name ? true : false 
   end
  
   def query
-    # TODO: write some code here, Query your backend for objects. Put into some variable that is used in sync method below
-    raise "Please provide some code to read records from the backend application"
+    product1 = {
+      'name' => 'iPhone',
+      'brand' => 'Apple',
+      'price' => '199.99'
+    }
+    
+    product2 = {
+      'name' => 'G2',
+      'brand' => 'Android',
+      'price' => '99.99'
+    }
+    @result = {'1'=>product1,'2'=>product2}
   end
  
   def sync
-    # TODO: write code here that converts the data you got back from query into an @result object
-    # where @result is a hash of hashes,  each array item representing an object
-    # for example: @result={"1"=>{"name"=>"Acme","industry"=>"Electronics"},"2"=>{"name"=>"Best","industry"=>"Software"}}
-    # if you have such a hash of hashes, then you can just call "super" as shown below
-    super # this creates object value triples from an @result variable that contains a hash of hashes 
+    super
   end
  
   def create(name_value_list,blob=nil)
