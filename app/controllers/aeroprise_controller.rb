@@ -42,7 +42,10 @@ class AeropriseController < ApplicationController
     
     # this function will add as type pending
     request["needsattention"]=1 # flag it so device will know to vibrate
-    AeropriseRequestRecord.create(request, responses, @source.id, @user.id)
+    hash_values = AeropriseRequestRecord.create(request, responses)
+    hash_values.each do |k,v|
+    	ObjectValue.create(:source_id=>@source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => @user.id, :object=>sr_id)
+    end
     
     # flip it to type query
 		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id} and object='#{sr_id}' and user_id=#{@user.id}"
