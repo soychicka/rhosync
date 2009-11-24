@@ -10,8 +10,10 @@ require 'rhosync_store/document'
 require 'rhosync_store/store'
 require 'rhosync_store/client'
 require 'rhosync_store/source_adapter'
+require 'rhosync_store/source_sync'
 
 module RhosyncStore
+  class InvalidArgumentError < RuntimeError; end
   
   # Adds given path to top of ruby load path
   def add_adapter_path(path)

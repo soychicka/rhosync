@@ -38,6 +38,7 @@ module RhosyncStore
     # this base class sync method expects a hash of hashes, 'object' will be the key
     def sync
       return if result_nil? or result_empty?
+      puts "inside source_adapter sync"
       @source.app.store.put_data(@source.document,@result)
     end
   

@@ -1,21 +1,27 @@
 module RhosyncStore
   class SourceSync
 
-    attr_reader :store,:sync_data,:source,:user_id,:doc
+    attr_reader :adapter,:app,:user,:source
     
-    def initialize(store,source,user_id=nil)
-      @store,@source_id,@user_id = store,source_id,user_id
-      @doc = Document.new('md',@source,@user_id)
+    def initialize(app,user,source)
+      @app,@user,@source = app,user,source
+      raise InvalidArgumentError.new('Invalid app') if app.nil?
+      raise InvalidArgumentError.new('Invalid user') if user.nil?
+      raise InvalidArgumentError.new('Invalid source') if source.nil?
+      @adapter = SourceAdapter.create(@source)
     end
     
     def process
-      # setup credentials
-      _init_adapter(@user_id,session)
-      
-      # run create,update,delete,query
-      
-      @store.put_data(@doc,@sync_data)
-      
+      begin
+        @adapter.login
+        @adapter.query
+        @adapter.sync
+        @adapter.logoff
+      rescue SourceAdapterException => sae
+        Logger.error "SourceAdapter raised exception: #{sae}: #{sae.message}"
+        raise sae
+      end
+      true
     end
   end
 end
