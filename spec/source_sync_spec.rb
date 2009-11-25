@@ -29,28 +29,9 @@ describe "SourceSync" do
     lambda { @ss.process }.should raise_error(SourceAdapterLoginException, 'Error logging in')
   end
   
-  describe "process" do
+  describe "methods" do
     before(:each) do
       @ss = SourceSync.new(@a,@u,@s)
-    end
-    
-    it "should do create where adapter.create returns nil" do
-      created_data = {'4'=>@product4}
-      @ss.adapter.should_receive(:create).once.with(created_data['4']).and_return(nil)
-      @crd = @s.document.get_created_doc
-      @a.store.put_data(@crd,created_data)
-      @ss.create.should == true
-      @a.store.get_data(@s.document.get_created_errors_doc).should == {}
-      @a.store.get_data(@crd).should == {}
-    end
-    
-    it "should raise exception on adapter.create" do
-      created_data = {'4'=>@product4,'3'=>@product3,'2'=>@product2}
-      @crd = @s.document.get_created_doc
-      @a.store.put_data(@crd,created_data)
-      @ss.create.should == true
-      @a.store.get_data(@s.document.get_created_errors_doc).should == {'3'=>@product3}
-      @a.store.get_data(@crd).should == {'4'=>@product4}
     end
     
     it "should process source adapter" do
@@ -66,6 +47,77 @@ describe "SourceSync" do
       @ss.adapter.should_receive(:sync).once.with(no_args()).and_return(true)
       @ss.adapter.should_receive(:logoff).once.with(no_args()).and_return(nil)
       @ss.process.should == true
+    end
+    
+    describe "create" do
+      it "should do create where adapter.create returns nil" do
+        created_data = {'2'=>@product2}
+        @crd = @s.document.get_created_doc
+        @a.store.put_data(@crd,created_data)
+        @ss.create.should == true
+        @a.store.get_data(@s.document.get_created_errors_doc).should == {}
+        @a.store.get_data(@s.document.get_created_links_doc).should == {}
+        @a.store.get_data(@crd).should == {}
+      end
+    
+      it "should do create where adapter.create returns object link" do
+        created_data = {'4'=>@product4}
+        @crd = @s.document.get_created_doc
+        @a.store.put_data(@crd,created_data)
+        @ss.create.should == true
+        @a.store.get_data(@s.document.get_created_errors_doc).should == {}
+        @a.store.get_data(@s.document.get_created_links_doc).should == { '4' => { 'l' => 'obj4' } }
+        @a.store.get_data(@crd).should == {}
+      end
+    
+      it "should raise exception on adapter.create" do
+        created_data = {'4'=>@product4,'3'=>@product3,'2'=>@product2}
+        @crd = @s.document.get_created_doc
+        @a.store.put_data(@crd,created_data)
+        @ss.create.should == true
+        @a.store.get_data(@s.document.get_created_errors_doc).should == {'3'=>@product3}
+        @a.store.get_data(@crd).should == {'4'=>@product4}
+      end
+    end
+    
+    describe "update" do
+      it "should do update with no errors" do
+        update_data = {'4'=> { 'price' => '199.99' }}
+        @ud = @s.document.get_updated_doc
+        @a.store.put_data(@ud,update_data)
+        @ss.update.should == true
+        @a.store.get_data(@s.document.get_updated_errors_doc).should == {}
+        @a.store.get_data(@ud).should == {}
+      end
+      
+      it "should do update with errors" do
+        update_data = {'4'=> { 'price' => '199.99' },'3'=>{ 'name' => 'Fuze' }}
+        @ud = @s.document.get_updated_doc
+        @a.store.put_data(@ud,update_data)
+        @ss.update.should == true
+        @a.store.get_data(@s.document.get_updated_errors_doc).should == { '3' => { 'name' => 'Fuze' }}
+        @a.store.get_data(@ud).should == {'4'=> { 'price' => '199.99' }}
+      end
+    end
+    
+    describe "delete" do
+      it "should do delete with no errors" do
+        delete_data = {'4'=>@product4}
+        @dd = @s.document.get_deleted_doc
+        @a.store.put_data(@dd,delete_data)
+        @ss.delete.should == true
+        @a.store.get_data(@s.document.get_deleted_errors_doc).should == {}
+        @a.store.get_data(@dd).should == {}
+      end
+      
+      it "should do delete with errors" do
+        delete_data = {'4'=>@product4,'3'=>@product3,'2'=>@product2}
+        @dd = @s.document.get_deleted_doc
+        @a.store.put_data(@dd,delete_data)
+        @ss.delete.should == true
+        @a.store.get_data(@s.document.get_deleted_errors_doc).should == {'3'=>@product3}
+        @a.store.get_data(@dd).should == {'4'=>@product4}
+      end
     end
   end
 end

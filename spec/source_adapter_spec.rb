@@ -60,9 +60,7 @@ describe "SourceAdapter" do
     end
     
     it "should execute SourceAdapter create method" do
-      expected = 'newobjid'
-      @sa.inject_result expected
-      @sa.create(nil).should == expected
+      @sa.create(@product4).should == 'obj4'
     end
     
     it "should log warning if @result is missing" do

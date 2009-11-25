@@ -3,14 +3,14 @@ $:.unshift File.join(__FILE__,'..','lib')
 require 'rhosync_store'
 include RhosyncStore
 
-describe "RhosyncClientSync" do
+describe "ClientStore" do
 
   it_should_behave_like  "RhosyncStoreDataHelper"
   
   before(:each) do
     @store = Store.new
     @store.db.flushdb
-    @client = Client.new(@store,@cdoc)
+    @client = ClientStore.new(@store,@cdoc)
   end
   
   it "should return diffs between master documents and client documents limited by page size" do

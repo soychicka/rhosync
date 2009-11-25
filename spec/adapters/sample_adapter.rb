@@ -31,23 +31,22 @@ class SampleAdapter < SourceAdapter
   end
  
   def create(name_value_list,blob=nil)
-    if name_value_list and name_value_list['name'] == 'Fuze'
-      raise SourceAdapterServerErrorException.new("Error creating record") 
+    _kill_fuze(name_value_list,"Error creating record") 
+    if name_value_list and name_value_list['name'] == 'Droid'
+      'obj4'
+    else
+      nil
     end
-    @result
   end
  
   def update(name_value_list)
-    #TODO: write some code here
-    # be sure to have a hash key and value for "object"
-    raise "Please provide some code to update a single object in the backend application using the hash values in name_value_list"
+    _kill_fuze(name_value_list,"Error updating record") 
+    nil
   end
  
   def delete(name_value_list)
-    #TODO: write some code here if applicable
-    # be sure to have a hash key and value for "object"
-    # for now, we'll say that its OK to not have a delete operation
-    # raise "Please provide some code to delete a single object in the backend application using the hash values in name_value_list"
+    _kill_fuze(name_value_list,"Error deleting record") 
+    nil
   end
  
   def logoff
@@ -58,5 +57,11 @@ class SampleAdapter < SourceAdapter
   private
   def _is_empty?(str)
     str.length <= 0
+  end
+  
+  def _kill_fuze(name_value_list,msg)
+    if name_value_list and name_value_list['name'] == 'Fuze'
+      raise SourceAdapterServerErrorException.new(msg) 
+    end
   end
 end
