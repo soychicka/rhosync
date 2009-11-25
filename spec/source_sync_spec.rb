@@ -17,15 +17,40 @@ describe "SourceSync" do
     @ss.source.should == @s
   end
   
-  it "should fail to create SourceSync with IllegalArgumentError" do
-    lambda { SourceSync.new(nil,@u,@s).should raise_error(IllegalArgumentError, 'Invalid app') }
-    lambda { SourceSync.new(@a,nil,@s).should raise_error(IllegalArgumentError, 'Invalid user') }
-    lambda { SourceSync.new(@a,@u,nil).should raise_error(IllegalArgumentError, 'Invalid source') }
+  it "should fail to create SourceSync with InvalidArgumentError" do
+    lambda { SourceSync.new(nil,@u,@s) }.should raise_error(InvalidArgumentError, 'Invalid app')
+    lambda { SourceSync.new(@a,nil,@s) }.should raise_error(InvalidArgumentError, 'Invalid user')
+    lambda { SourceSync.new(@a,@u,nil) }.should raise_error(InvalidArgumentError, 'Invalid source')
   end
   
-  describe "SourceSync process" do
+  it "should raise SourceAdapterLoginException if login fails" do
+    @u.login = nil
+    @ss = SourceSync.new(@a,@u,@s)
+    lambda { @ss.process }.should raise_error(SourceAdapterLoginException, 'Error logging in')
+  end
+  
+  describe "process" do
     before(:each) do
       @ss = SourceSync.new(@a,@u,@s)
+    end
+    
+    it "should do create where adapter.create returns nil" do
+      created_data = {'4'=>@product4}
+      @ss.adapter.should_receive(:create).once.with(created_data['4']).and_return(nil)
+      @crd = @s.document.get_created_doc
+      @a.store.put_data(@crd,created_data)
+      @ss.create.should == true
+      @a.store.get_data(@s.document.get_created_errors_doc).should == {}
+      @a.store.get_data(@crd).should == {}
+    end
+    
+    it "should raise exception on adapter.create" do
+      created_data = {'4'=>@product4,'3'=>@product3,'2'=>@product2}
+      @crd = @s.document.get_created_doc
+      @a.store.put_data(@crd,created_data)
+      @ss.create.should == true
+      @a.store.get_data(@s.document.get_created_errors_doc).should == {'3'=>@product3}
+      @a.store.get_data(@crd).should == {'4'=>@product4}
     end
     
     it "should process source adapter" do

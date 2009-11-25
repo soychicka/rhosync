@@ -34,6 +34,6 @@ describe "Source" do
   
   it "should create source with app and document" do
     @s.app.name.should == @a_fields[:name]
-    @s.document.get_key.should == "md:#{@fields[:name]}:#{@u.id}"
+    @s.document.get_key.should == "md:#{@s.app.id}:#{@u.id}:#{@fields[:name]}"
   end
 end

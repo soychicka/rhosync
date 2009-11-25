@@ -21,7 +21,7 @@ module RhosyncStore
     # in the client documet, trims it to page size, stores page, and returns page as hash      
     def put_deleted_page(masterdoc,page_size)
       res = {}
-      delkey = @clientdoc.get_deleted_doc.get_key
+      delkey = @clientdoc.get_deleted_page_doc.get_key
       @store.get_diff_data(masterdoc,@clientdoc).each do |key,value|
         res[key] = value
         value.each do |attrib,val|
@@ -40,7 +40,7 @@ module RhosyncStore
 
     # Gets stored deleted page
     def get_deleted_page
-      @store.get_data(@clientdoc.get_deleted_doc)
+      @store.get_data(@clientdoc.get_deleted_page_doc)
     end         
   end
 end

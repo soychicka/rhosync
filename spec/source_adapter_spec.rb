@@ -59,6 +59,12 @@ describe "SourceAdapter" do
       lambda { @sa.query }.should_not raise_error
     end
     
+    it "should execute SourceAdapter create method" do
+      expected = 'newobjid'
+      @sa.inject_result expected
+      @sa.create(nil).should == expected
+    end
+    
     it "should log warning if @result is missing" do
       Logger.should_receive(:error).with(SourceAdapter::MSG_NIL_RESULT_ATTRIB)
       @sa.inject_result nil

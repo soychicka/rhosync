@@ -4,7 +4,11 @@ class SampleAdapter < SourceAdapter
   end
  
   def login
-    @source.login and @source.password and @source.url and @source.name and current_user ? true : false 
+    unless _is_empty?(current_user.login)
+      true
+    else
+      raise SourceAdapterLoginException.new('Error logging in')
+    end
   end
  
   def query
@@ -27,9 +31,10 @@ class SampleAdapter < SourceAdapter
   end
  
   def create(name_value_list,blob=nil)
-    #TODO: write some code here
-    # the backend application will provide the object hash key and corresponding value
-    raise "Please provide some code to create a single object in the backend application using the hash values in name_value_list"
+    if name_value_list and name_value_list['name'] == 'Fuze'
+      raise SourceAdapterServerErrorException.new("Error creating record") 
+    end
+    @result
   end
  
   def update(name_value_list)
@@ -48,5 +53,10 @@ class SampleAdapter < SourceAdapter
   def logoff
     #TODO: write some code here if applicable
     # no need to do a raise here
+  end
+  
+  private
+  def _is_empty?(str)
+    str.length <= 0
   end
 end

@@ -24,7 +24,7 @@ module RhosyncStore
     
     # Return the rhosync document for the source
     def document
-      @document.nil? ? @document = Document.new('md',self.name,self.user.id) : @document
+      @document.nil? ? @document = Document.new('md',self.app_id,self.user_id,self.name) : @document
     end
     
     # Return the user associated with a source
