@@ -52,11 +52,15 @@ class AeropriseController < ApplicationController
 
     # ping the user
     result = @user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
-    logger.debug result.inspect.to_s
-    logger.debug result.code
-    logger.debug result.message
-    logger.debug result.body
-    
+    begin
+    	logger.info result.inspect.to_s
+    	logger.info result.code
+    	logger.info result.message
+    	logger.info result.body
+  	rescue
+			logger.info "problem with push request"
+  	end
+	
     "OK sr_needs_attention"
   rescue =>e
     logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
@@ -101,8 +105,17 @@ class AeropriseController < ApplicationController
       :user_id=>user_id, :source_id=>@wk_source.id, :value => RhomRecord.serialize(worklog))
       
     # flag it so device will know to vibrate
-    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
-      :user_id=>user_id, :source_id=>@source.id, :value => "1")
+    
+    # if login != reqbyid || login != reqforid
+    reqbyid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqbyid",
+        :source_id=>@source.id}).value rescue nil
+    reqforid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqforid",
+        :source_id=>@source.id}).value rescue nil
+                
+    if (login != reqbyid && login != reqforid)
+    	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
+      	:user_id=>user_id, :source_id=>@source.id, :value => "1")
+    end
     
     # ping the user
     user = User.find(user_id)
