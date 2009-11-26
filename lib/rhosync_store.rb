@@ -10,6 +10,7 @@ require 'rhosync_store/document'
 require 'rhosync_store/store'
 require 'rhosync_store/client_store'
 require 'rhosync_store/client'
+require 'rhosync_store/client_sync'
 require 'rhosync_store/source_adapter'
 require 'rhosync_store/source_sync'
 

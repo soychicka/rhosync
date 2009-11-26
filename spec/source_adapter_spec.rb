@@ -39,6 +39,7 @@ describe "SourceAdapter" do
 
     it "should execute SourceAdapter query method" do
       expected = {'1'=>@product1,'2'=>@product2}
+      @sa.inject_result expected
       @sa.query.should == expected
     end
     
@@ -49,6 +50,7 @@ describe "SourceAdapter" do
     
     it "should execute SourceAdapter sync method" do
       expected = {'1'=>@product1,'2'=>@product2}
+      @sa.inject_result expected
       @sa.query.should == expected
       @sa.sync.should == true
       @s.app.store.get_data(@s.document).should == expected

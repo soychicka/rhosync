@@ -12,18 +12,8 @@ class SampleAdapter < SourceAdapter
   end
  
   def query
-    product1 = {
-      'name' => 'iPhone',
-      'brand' => 'Apple',
-      'price' => '199.99'
-    }
-    
-    product2 = {
-      'name' => 'G2',
-      'brand' => 'Android',
-      'price' => '99.99'
-    }
-    @result = {'1'=>product1,'2'=>product2}
+    _kill_fuze(@result['3'],"Error during query") if @result
+    @result
   end
  
   def sync
@@ -50,8 +40,9 @@ class SampleAdapter < SourceAdapter
   end
  
   def logoff
-    #TODO: write some code here if applicable
-    # no need to do a raise here
+    if @result and @result['1']['name'] == 'logoff'
+      raise SourceAdapterLogoffException.new("Error logging off") 
+    end
   end
   
   private

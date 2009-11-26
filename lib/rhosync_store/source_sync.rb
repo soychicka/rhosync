@@ -25,30 +25,39 @@ module RhosyncStore
     end
     
     # Read Operation
-    # def read
-    #   begin
-    #     @adapter.query
-    #     @adapter.sync
-    #     # TODO: store read errors
-    #   rescue SourceAdapterException => sae
-    #     Logger.error "SourceAdapter raised exception: #{sae}"
-    #   end
-    # end
-    
-    def process
+    def read
       begin
-        @adapter.login
         @adapter.query
         @adapter.sync
-        @adapter.logoff
-      rescue SourceAdapterException => sae
-        Logger.error "SourceAdapter raised exception: #{sae}"
-        raise sae
+      rescue Exception => e
+        Logger.error "SourceAdapter raised query exception: #{e}"
+        # TODO: Notify client about the error
       end
       true
     end
     
+    def process
+      return if _auth_op('login') == false
+      
+      self.create
+      self.update
+      self.delete
+      self.read
+        
+      _auth_op('logoff')
+    end
+    
     private
+    def _auth_op(operation)
+      begin
+        @adapter.send operation
+      rescue Exception => e
+        Logger.error "SourceAdapter raised #{operation} exception: #{e}"
+        return false
+      end
+      true
+    end
+    
     def _process_cud(operation)
       errors = {}
       object_links = {}

@@ -4,6 +4,8 @@ module RhosyncStore
   # raise this to cause client to be logged out during a sync
   class SourceAdapterLoginException < SourceAdapterException; end
 
+  class SourceAdapterLogoffException < SourceAdapterException; end
+
   # raise these to trigger rhosync sending an error to the client
   class SourceAdapterServerTimeoutException < SourceAdapterException; end
   class SourceAdapterServerErrorException < SourceAdapterException; end
@@ -72,6 +74,5 @@ module RhosyncStore
       Logger.error MSG_NIL_RESULT_ATTRIB if @result.nil?
       @result.nil?
     end
-
   end
 end

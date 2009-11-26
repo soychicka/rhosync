@@ -8,8 +8,8 @@ describe "RhosyncStoreDataHelper", :shared => true do
     
     @source = 'Product'
     @user_id = 5
-    @client_id = 0
-    @app = 2
+    @client_id = 1
+    @app_id = 2
     
     @product1 = {
       'name' => 'iPhone',
@@ -37,8 +37,8 @@ describe "RhosyncStoreDataHelper", :shared => true do
     
     @data = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
     
-    @mdoc = Document.new('md',@app,@user_id,@client_id,@source)
-    @cdoc = Document.new('cd',@app,@user_id,@client_id,@source)
+    @mdoc = Document.new('md',@app_id,@user_id,@client_id,@source)
+    @cdoc = Document.new('cd',@app_id,@user_id,@client_id,@source)
   end
 end  
 

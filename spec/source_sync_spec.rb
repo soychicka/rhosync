@@ -24,9 +24,18 @@ describe "SourceSync" do
   end
   
   it "should raise SourceAdapterLoginException if login fails" do
+    Logger.should_receive(:error).with("SourceAdapter raised login exception: Error logging in")
     @u.login = nil
     @ss = SourceSync.new(@a,@u,@s)
-    lambda { @ss.process }.should raise_error(SourceAdapterLoginException, 'Error logging in')
+    @ss.adapter.inject_result({'3'=>@product3})
+    @ss.process
+  end
+  
+  it "should raise SourceAdapterLogoffException if logoff fails" do
+    Logger.should_receive(:error).with("SourceAdapter raised logoff exception: Error logging off")
+    @ss = SourceSync.new(@a,@u,@s)
+    @ss.adapter.inject_result({'1'=>{'name'=>'logoff'}})
+    @ss.process
   end
   
   describe "methods" do
@@ -36,7 +45,8 @@ describe "SourceSync" do
     
     it "should process source adapter" do
       expected = {'1'=>@product1,'2'=>@product2}
-      @ss.process.should == true
+      @ss.adapter.inject_result expected
+      @ss.process
       @a.store.get_data(@ss.source.document).should == expected
     end
     
@@ -46,7 +56,7 @@ describe "SourceSync" do
       @ss.adapter.should_receive(:query).once.with(no_args()).and_return(expected)
       @ss.adapter.should_receive(:sync).once.with(no_args()).and_return(true)
       @ss.adapter.should_receive(:logoff).once.with(no_args()).and_return(nil)
-      @ss.process.should == true
+      @ss.process
     end
     
     describe "create" do
@@ -117,6 +127,22 @@ describe "SourceSync" do
         @ss.delete.should == true
         @a.store.get_data(@s.document.get_deleted_errors_doc).should == {'3'=>@product3}
         @a.store.get_data(@dd).should == {'4'=>@product4}
+      end
+    end
+    
+    describe "read" do
+      it "should do read with no exception" do
+        expected = {'1'=>@product1,'2'=>@product2}
+        @ss.adapter.inject_result expected
+        @ss.read.should == true
+        @a.store.get_data(@s.document).should == expected
+      end
+      
+      it "should do read with exception raised" do
+        Logger.should_receive(:error).with("SourceAdapter raised query exception: Error during query")
+        @ss.adapter.inject_result({'3'=>@product3})
+        @ss.read.should == true
+        @a.store.get_data(@s.document).should == {}
       end
     end
   end

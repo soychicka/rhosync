@@ -1,5 +1,7 @@
 module RhosyncStore
   class ClientStore
+    attr_accessor :clientdoc
+    
     def initialize(store,clientdoc)
       @store,@clientdoc = store,clientdoc       
     end
