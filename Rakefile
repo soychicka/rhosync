@@ -2,28 +2,23 @@ require 'rubygems'
 require 'spec/rake/spectask'
 require 'rcov/rcovtask'
 
-task :default => :spec
+task :default => :all
+
+OPTS = { :spec_opts => %w(-fs --color), 
+         :rcov      => true,
+         :rcov_opts => ['--exclude', 'spec/*,gems/*'] }
+         
+TYPES = { :spec   => 'spec/*_spec.rb',
+          :perf   => 'spec/perf/*_spec.rb',
+          :server => 'spec/server/*_spec.rb',
+          :all    => 'spec/**/*_spec.rb' }
  
-desc "Run specs"
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = FileList['spec/*_spec.rb']
-  t.spec_opts = %w(-fs --color)
-  t.rcov = true
-  t.rcov_opts = ['--exclude', 'spec/*,gems/*']
-end
-
-desc "Run performance specs"
-Spec::Rake::SpecTask.new('spec:perf') do |t|
-  t.spec_files = FileList['spec/perf/*_spec.rb']
-  t.spec_opts = %w(-fs --color)
-  t.rcov = true
-  t.rcov_opts = ['--exclude', 'spec/*,gems/*']
-end
-
-desc "Run server specs"
-Spec::Rake::SpecTask.new('spec:server') do |t|
-  t.spec_files = FileList['spec/server/*_spec.rb']
-  t.spec_opts = %w(-fs --color)
-  t.rcov = true
-  t.rcov_opts = ['--exclude', 'spec/*,gems/*']
+TYPES.each do |type,files|
+  desc "Run #{type} specs"
+  Spec::Rake::SpecTask.new(type) do |t|
+    t.spec_files = FileList[TYPES[type]]
+    t.spec_opts = OPTS[:spec_opts]
+    t.rcov = OPTS[:rcov]
+    t.rcov_opts = OPTS[:rcov_opts]
+  end
 end
