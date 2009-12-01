@@ -17,16 +17,40 @@ class AeropriseController < ApplicationController
   web_service_api AeropriseApi
   web_service_scaffold :invocation if Rails.env == 'development'
   
+  # updates SR and toggle needs attention for it depending on login
   def sr_needs_attention(login, sr_id)
   	logger.debug "login = #{login}"
   	logger.debug "sr_id = #{sr_id}"
   
-    # toggle needs attention for this SR
-    @source = Source.find_by_name("AeropriseRequest")
-    @user = User.find_by_login(login)
-
-    # login as this user
-    api = login(login)
+  	source = Source.find_by_name("AeropriseRequest")
+  	    
+  	# find all existing copies of the SR in the rhosync cache, summary is required field so we key off that
+  	# this code assumes it is possible that more than 1 user has visibility and that user is not the login
+  	existing_copies = ObjectValue.find(:all, :conditions => {:source_id=>source.id, :update_type=>'query', :attrib => "summary", :object=>sr_id})
+  	
+  	users_with_sr = []
+  	existing_copies.each do |sr|
+  		users_with_sr << sr.user
+  	end
+  	users_with_sr.uniq!
+  	
+  	# now for each user that has it
+  	users_with_sr.each do |user|
+  		process_needs_attention(user, source, login, sr_id)
+		end
+	
+    "OK sr_needs_attention"
+  rescue =>e
+    logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
+    logger.info e.backtrace.join("\n")
+    "ERROR sr_needs_attention"
+  end
+  
+  def process_needs_attention(user, source, login, sr_id)
+  	logger.info "process_needs_attention for #{user.login}, #{login}, #{sr_id}"
+  	
+    # login as this user, each user might have diferent visibility
+    api = login(user.login)
     
 		# get this SR from remedy
 		request = api.get_user_requests(sr_id)
@@ -38,20 +62,27 @@ class AeropriseController < ApplicationController
     responses = api.get_answers_for_request(sr_id)
     
     # destroy old sr 
-    ObjectValue.destroy_all(:source_id=>@source.id, :update_type=>'query', :user_id => @user.id, :object=>sr_id)
+    ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>sr_id)
+    
+    reqbyid = request["reqbyid"]
+    reqforid = request["reqforid"]
+
+    if (login != user.login && (user.login == reqbyid || user.login == reqforid))
+    	logger.info "Set NEEDS ATTENTION = 1"
+    	request["needsattention"]=1 # flag it so device will know to vibrate
+    end
     
     # this function will add as type pending
-    request["needsattention"]=1 # flag it so device will know to vibrate
     hash_values = AeropriseRequestRecord.create(request, responses)
     hash_values.each do |k,v|
-    	ObjectValue.create(:source_id=>@source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => @user.id, :object=>sr_id)
+    	ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
     end
     
     # flip it to type query
-		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{@source.id} and object='#{sr_id}' and user_id=#{@user.id}"
+		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
 
     # ping the user
-    result = @user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
+    result = user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
     begin
     	logger.info result.inspect.to_s
     	logger.info result.code
@@ -60,12 +91,6 @@ class AeropriseController < ApplicationController
   	rescue
 			logger.info "problem with push request"
   	end
-	
-    "OK sr_needs_attention"
-  rescue =>e
-    logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
-    logger.info e.backtrace.join("\n")
-    "ERROR sr_needs_attention"
   end
   
   # loginID [Name of the aeroprise user]
@@ -106,7 +131,7 @@ class AeropriseController < ApplicationController
       
     # flag it so device will know to vibrate
     
-    # if login != reqbyid || login != reqforid
+    # if login != reqbyid && login != reqforid
     reqbyid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqbyid",
         :source_id=>@source.id}).value rescue nil
     reqforid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqforid",
