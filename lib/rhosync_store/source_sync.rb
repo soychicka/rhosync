@@ -1,13 +1,10 @@
 module RhosyncStore
   class SourceSync
-
-    attr_reader :adapter,:app,:user,:source
+    attr_reader :adapter
     
-    def initialize(app,user,source)
-      @app,@user,@source = app,user,source
-      raise InvalidArgumentError.new('Invalid app') if app.nil?
-      raise InvalidArgumentError.new('Invalid user') if user.nil?
-      raise InvalidArgumentError.new('Invalid source') if source.nil?
+    def initialize(source)
+      @source = source
+      raise InvalidArgumentError.new('Invalid source') if @source.nil?
       @adapter = SourceAdapter.create(@source)
     end
     
@@ -61,8 +58,8 @@ module RhosyncStore
     def _process_cud(operation)
       errors = {}
       object_links = {}
-      modified_doc = _op_doc(operation)
-      modified = @app.store.get_data(modified_doc)
+      modified_doc = _op_dockey(operation)
+      modified = @source.app.store.get_data(modified_doc)
       modified.each do |key,value|
         begin
           modified.delete(key)
@@ -76,14 +73,14 @@ module RhosyncStore
           break
         end
       end
-      @app.store.put_data(_op_doc(operation,'_errors'),errors)
-      @app.store.put_data(_op_doc(operation),modified)
-      @app.store.put_data(_op_doc(operation,'_links'),object_links) if object_links.length > 0
+      @source.app.store.put_data(_op_dockey(operation,'_errors'),errors)
+      @source.app.store.put_data(_op_dockey(operation),modified)
+      @source.app.store.put_data(_op_dockey(operation,'_links'),object_links) if object_links.length > 0
       true
     end
     
-    def _op_doc(operation,suffix='')
-      @source.document.send "get_#{operation}d#{suffix}_doc"
+    def _op_dockey(operation,suffix='')
+      @source.document.send "get_#{operation}d#{suffix}_dockey"
     end
   end
 end

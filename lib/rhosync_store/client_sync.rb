@@ -1,11 +1,11 @@
 module RhosyncStore
   class ClientSync
-    attr_accessor :app,:user,:client,:source,:p_size,:source_sync,:client_store
+    attr_accessor :source,:p_size,:source_sync,:clientdoc
     
-    def initialize(app,user,client,source,p_size=500)
-      @app,@user,@client,@source,@p_size = app,user,client,source,p_size
-      @source_sync = SourceSync.new(@app,@user,@source)
-      @client_store = ClientStore.new(@app.store,Document.new('cd',@app,@user,@client,@source))
+    def initialize(source,p_size=500)
+      @source,@p_size = source,p_size
+      @source_sync = SourceSync.new(@source)
+      @clientdoc = Document.new('cd',@source.app,@source.user,@source.user.client,@source)
     end
     
     def receive_cud(params)
@@ -23,18 +23,49 @@ module RhosyncStore
     
     def send_cud
       res = {}
-      res['insert'] = @client_store.put_page(@source.document,@p_size)
-      res['delete'] = @client_store.put_deleted_page(@source.document,@p_size)
-      @app.store.put_data(@client_store.clientdoc,res['insert'],true)
-      @app.store.delete_data(@client_store.clientdoc,res['delete'])
+      res['insert'] = compute_page
+      res['delete'] = compute_deleted_page
+      @source.app.store.put_data(@clientdoc,res['insert'],true)
+      @source.app.store.delete_data(@clientdoc,res['delete'])
+      res
+    end
+    
+    # Computes diffs between master doc and client doc, trims it to page size, 
+    # stores page, and returns page as hash  
+    def compute_page
+      res = {}
+      page_size = @p_size
+      @source.app.store.get_diff_data(@clientdoc.get_key,@source.document.get_key).each do |key,item|
+        res[key] = item
+        page_size -= 1
+        break if page_size <= 0          
+      end
+      @source.app.store.put_data(@clientdoc.get_page_dockey,res)
+      res
+    end
+    
+    # Computes deleted objects (down to individual attributes) 
+    # in the client documet, trims it to page size, stores page, and returns page as hash      
+    def compute_deleted_page
+      res = {}
+      deleted_page_key = @clientdoc.get_deleted_page_dockey
+      page_size = @p_size
+      @source.app.store.get_diff_data(@source.document.get_key,@clientdoc.get_key).each do |key,value|
+        res[key] = value
+        value.each do |attrib,val|
+          @source.app.store.db.sadd(deleted_page_key,setelement(key,attrib,val))
+        end
+        page_size -= 1
+        break if page_size <= 0          
+      end
       res
     end
     
     private
     def _receive_cud(operation,params)
       return if not ['create','update','delete'].include?(operation)
-      doc = @source.document.send "get_#{operation}d_doc"
-      @app.store.put_data(doc,params,true)
+      dockey = @source.document.send "get_#{operation}d_dockey"
+      @source.app.store.put_data(dockey,params,true)
     end
   end
 end

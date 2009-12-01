@@ -1,5 +1,6 @@
 $:.unshift File.join(__FILE__,'..','lib')
 require 'rhosync_store'
+include RhosyncStore
 
 describe "RhosyncStoreDataHelper", :shared => true do
   before(:each) do

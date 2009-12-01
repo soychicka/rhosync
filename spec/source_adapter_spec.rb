@@ -30,7 +30,7 @@ describe "SourceAdapter" do
   describe "SourceAdapter methods" do
     
     before(:each) do
-      @sa = SourceAdapter.create(@s)
+      @sa = SourceAdapter.create(@s,@ss)
     end
 
     it "should execute SourceAdapter login method with source vars" do

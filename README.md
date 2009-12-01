@@ -21,3 +21,4 @@ TODO
 3. Implement protocol
 4. Finish ClientSync (tokens, errors)
 5. Review store class
+6. Add sinatra server

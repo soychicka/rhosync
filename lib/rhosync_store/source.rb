@@ -4,7 +4,6 @@ module RhosyncStore
     field :url,:string
     field :login,:string
     field :password,:string
-    field :app,:string
     field :pollinterval,:integer
     field :priority,:integer
     field :callback_url,:string
@@ -22,11 +21,6 @@ module RhosyncStore
       super(fields)
     end
     
-    # Return the rhosync document for the source
-    def document
-      @document.nil? ? @document = Document.new('md',self.app_id,self.user_id,self.user.client.id,self.name) : @document
-    end
-    
     # Return the user associated with a source
     def user
       User.with_key(self.user_id)
@@ -35,6 +29,10 @@ module RhosyncStore
     # Return the app the source belongs to
     def app
       App.with_key(self.app_id)
+    end
+    
+    def document
+      @document.nil? ? @document = Document.new('md',self.app_id,self.user_id,self.user.client.id,self.name) : @document
     end
   end
 end
