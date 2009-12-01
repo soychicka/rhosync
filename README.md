@@ -16,9 +16,10 @@ INSTALL
 
 TODO
 -------------------------------------------------------------
-1. Cleanup class hierarchy (document, client_store, etc.)
-2. Add queue layer for background adapters
-3. Implement protocol
-4. Finish ClientSync (tokens, errors)
-5. Review store class
-6. Add sinatra server
+* Finish ClientSync Scenarios (tokens, errors, CRUD)
+* Add sinatra server
+* Implement protocol
+* Integration tests (client<->server<->backend)
+* Performance tests (ClientSync, SourceSync)
+* Add queue layer for background adapters
+* Installation scripts/process
