@@ -27,16 +27,45 @@ class AeropriseController < ApplicationController
   	# find all existing copies of the SR in the rhosync cache, summary is required field so we key off that
   	# this code assumes it is possible that more than 1 user has visibility and that user is not the login
   	existing_copies = ObjectValue.find(:all, :conditions => {:source_id=>source.id, :update_type=>'query', :attrib => "summary", :object=>sr_id})
-  	
   	users_with_sr = []
-  	existing_copies.each do |sr|
-  		users_with_sr << sr.user
-  	end
-  	users_with_sr.uniq!
+  	  	
+  	# what if SR is not found?
+  	# login as admin to retrieve it and add to reqby and reqfo users if they are already mobilized
+  	if existing_copies.empty?
+  		api = login
+  		request = api.get_user_requests(sr_id)
+			if request.blank? || api.error
+				logger.fatal "Unable to get SR from remedy #{sr_id}"
+				return "ERROR sr_needs_attention"
+			end
+			
+			# now see if we have mobilized users for req for and by and if so add to list 
+			# the next step will get the SR for the user
+			reqbyid = request["reqbyid"]
+			if user = User.find_by_login(reqbyid)
+				users_with_sr << user
+			end
+			
+    	reqforid = request["reqforid"]
+    	if user = User.find_by_login(reqforid)
+				users_with_sr << user
+			end
+		else
+	  	existing_copies.each do |sr|
+  			users_with_sr << sr.user
+  		end
+		end
   	
-  	# now for each user that has it
-  	users_with_sr.each do |user|
-  		process_needs_attention(user, source, login, sr_id)
+		# de dup if same user is both reqby and for or admin
+		users_with_sr.uniq!
+  	
+		if users_with_sr.empty?
+			logger.info "No mobilized users found at all for this SR--ignoring"
+		else
+  		# now for each user that has it, process update which will fetch it and push
+  		users_with_sr.each do |user|
+  			process_needs_attention(user, source, login, sr_id)
+			end
 		end
 	
     "OK sr_needs_attention"
@@ -199,7 +228,7 @@ class AeropriseController < ApplicationController
  
  protected
  
-  def login(user_login)
+  def login(user_login=nil)
     app = App.find_by_name("Aeroprise")
     ip = app.configurations.find(:first, :conditions => {:name => 'remedyip'})
     port = app.configurations.find(:first, :conditions => {:name => 'remedyport'})
@@ -226,11 +255,13 @@ class AeropriseController < ApplicationController
 
     api = Rubyarapi.new(login,password,serverip,serverport,login,password)
     
-    api.impersonate(user_login) # the user we are impersonating
+    # the user we are impersonating
+    api.impersonate(user_login) if user_login
+    
     api.get_user_info
-      if api.error
-        raise "admin login failure" 
-       end
+    if api.error
+      raise "admin login failure" 
+    end
     
     logger.debug "login succeeded"
     api
