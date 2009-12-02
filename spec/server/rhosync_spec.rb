@@ -1,4 +1,3 @@
-require File.join(File.dirname(__FILE__),'..','..','rhosync.rb')
 require File.join(File.dirname(__FILE__),'..','spec_helper')
 require 'rubygems'
 require 'sinatra'
@@ -11,9 +10,11 @@ set :environment, :test
 set :run, false
 set :raise_errors, true
 set :logging, false
+set :views, File.join(File.dirname(__FILE__),'..','..','views')
+
+require File.join(File.dirname(__FILE__),'..','..','rhosync.rb')
 
 describe "Rhosync" do
-  
   include Rack::Test::Methods
   include RhosyncStore
   
@@ -47,7 +48,6 @@ describe "Rhosync" do
   end
   
   describe "client management routes" do
-    
     before(:each) do
       post "/apps/#{@a.name}/sources/client_login", "login" => @u.login, "password" => 'testpass'
     end
@@ -75,6 +75,46 @@ describe "Rhosync" do
       get "/apps/#{@a.name}/sources/clientreset", :client_id => @c.id
       @store.get_data(doc1.get_key).should == {}
       @store.get_data(doc2.get_key).should == {}
+    end
+  end
+  
+  describe "source member routes" do
+    before(:each) do
+      post "/apps/#{@a.name}/sources/client_login", "login" => @u.login, "password" => 'testpass'
+      @fields = {
+        :name => 'StorageAdapter',
+        :url => 'http://example.com',
+        :login => 'testuser',
+        :password => 'testpass',
+        :user_id => @u.id,
+        :app_id => @a.id
+      }
+      @s = Source.create(@fields)
+    end
+    
+    it "should post records for create" do
+      @product1['_id'] = '1'
+      params = {'create'=>{'1'=>@product1}}
+      post "/apps/#{@a.name}/sources/#{@s.name}", params
+      last_response.should be_ok
+      last_response.body.should == ''
+      @store.get_data("test_create_storage").should == {'1'=>@product1}
+    end
+    
+    it "should post records for update" do
+      params = {'update'=>{'1'=>@product1}}
+      post "/apps/#{@a.name}/sources/#{@s.name}", params
+      last_response.should be_ok
+      last_response.body.should == ''
+      @store.get_data("test_update_storage").should == {'1'=>@product1}
+    end
+    
+    it "should post records for delete" do
+      params = {'delete'=>{'1'=>@product1}}
+      post "/apps/#{@a.name}/sources/#{@s.name}", params
+      last_response.should be_ok
+      last_response.body.should == ''
+      @store.get_data("test_delete_storage").should == {'1'=>@product1}
     end
   end
 end

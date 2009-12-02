@@ -21,6 +21,7 @@ class SampleAdapter < SourceAdapter
   end
  
   def create(name_value_list,blob=nil)
+    raise SourceAdapterException.new("ID provided in name_value_list") if name_value_list['id']
     _kill_fuze(name_value_list,"Error creating record") 
     if name_value_list and name_value_list['name'] == 'Droid'
       'obj4'
@@ -30,11 +31,13 @@ class SampleAdapter < SourceAdapter
   end
  
   def update(name_value_list)
+    raise SourceAdapterException.new("No id provided in name_value_list") unless name_value_list['id']
     _kill_fuze(name_value_list,"Error updating record") 
     nil
   end
  
   def delete(name_value_list)
+    raise SourceAdapterException.new("No id provided in name_value_list") unless name_value_list['id']
     _kill_fuze(name_value_list,"Error deleting record") 
     nil
   end

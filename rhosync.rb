@@ -1,16 +1,23 @@
+$:.unshift File.join(File.dirname(__FILE__),'lib')
 require 'rubygems'
 require 'sinatra'
 require 'erb'
 require 'json'
-
-dir = File.dirname(File.expand_path(__FILE__))
+require 'rhosync_store'
 
 enable :static, :raise_errors
+
+include RhosyncStore
 
 use Rack::Session::Cookie, :key => 'rhosync_session',
                            :path => '/',
                            :expire_after => 31536000,
                            :secret => 'b4990ed033389801c9ca1fe7844c07f9a719d48adc211f64412f53e7147ad2c36a36bcd334ccddc633a4ea6d35c2bbbeae1f6e3b833340a711e76edef734abee'
+
+configure :test do 
+  add_adapter_path(File.join(File.dirname(__FILE__),'spec','adapters'))
+end
+
 helpers do
   def login_required
     current_user.nil?
@@ -81,5 +88,9 @@ get '/apps/:app_name/sources/:source_name' do
 end
 
 post '/apps/:app_name/sources/:source_name' do
+  @cs = ClientSync.new(Source.with_key(params[:source_name]),
+                       Client.with_key(params[:client_id]),
+                       params[:p_size])
+  @cs.process(params)
   status 200
 end

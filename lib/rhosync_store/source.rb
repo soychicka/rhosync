@@ -13,6 +13,7 @@ module RhosyncStore
     
     def self.create(fields={})
       fields[:name] ||= self.class.name
+      fields[:id] = fields[:name]
       fields[:url] ||= ''
       fields[:login] ||= ''
       fields[:password] ||= ''

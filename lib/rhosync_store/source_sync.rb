@@ -63,6 +63,7 @@ module RhosyncStore
       modified.each do |key,value|
         begin
           modified.delete(key)
+          value['id'] = key unless operation == 'create'
           link = @adapter.send operation, value
           if operation == 'create' and link and link.is_a?(String)
             object_links[key] = { 'l' => link }

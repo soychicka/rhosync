@@ -41,6 +41,8 @@ module RhosyncStore
     downcase
   end
   
+  module_function :add_adapter_path
+  
   # TODO: replace with real logger
   class Logger
     def self.info(*args)
