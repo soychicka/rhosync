@@ -2,11 +2,17 @@ $:.unshift File.join(__FILE__,'..','lib')
 require 'rhosync_store'
 include RhosyncStore
 
-describe "RhosyncStoreDataHelper", :shared => true do
+describe "RhosyncStoreHelper", :shared => true do
   before(:each) do
     @store = RhosyncStore::Store.new
     @store.db.flushdb
-    
+  end
+end
+
+describe "RhosyncStoreDataHelper", :shared => true do
+  it_should_behave_like "RhosyncStoreHelper"
+  
+  before(:each) do
     @source = 'Product'
     @user_id = 5
     @client_id = 1
@@ -51,11 +57,10 @@ describe "SourceAdapterHelper", :shared => true do
     @a = App.create(@a_fields)
     @c = Client.create({:device_type => 'iPhone'})
     @u_fields = {
-      :login => 'testuser',
-      :password => 'testpass',
-      :client_id => @c.id
+      :login => 'testuser'
     }
     @u = User.create(@u_fields) 
+    @u.password = 'testpass'
     @fields = {
       :name => 'SampleAdapter',
       :url => 'http://example.com',

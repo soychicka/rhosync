@@ -13,7 +13,7 @@ module RhosyncStore
     # if append flag set to true
     def put_data(dockey,data={},append=false)
       if dockey
-        _delete_keys("#{dockey}*") unless append
+        flash_data("#{dockey}*") unless append
         data.each do |key,value|
           value.each do |attrib,value|
             @db.sadd(dockey,setelement(key,attrib,value)) unless _is_reserved?(attrib,value)
@@ -61,13 +61,19 @@ module RhosyncStore
       true
     end
     
-    private  
-    def _delete_keys(keymask) #:nodoc:
+    # Deletes all keys matching a given mask
+    def flash_data(keymask)
       @db.keys(keymask).each do |key|
         @db.del(key)
       end
     end
     
+    # Returns array of keys matching a given keymask
+    def get_keys(keymask)
+      @db.keys(keymask)
+    end
+    
+    private  
     def _is_reserved?(attrib,value) #:nodoc:
       if RESERVED_ATTRIB_NAMES.include? attrib 
         Logger.error "Ignoring attrib-value pair: #{{attrib => value}.inspect}."

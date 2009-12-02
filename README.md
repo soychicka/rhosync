@@ -25,3 +25,5 @@ TODO
 * Performance tests (ClientSync, SourceSync)
 * Add queue layer for background adapters
 * Installation scripts/process
+* Add uniqueness validation to app,client,user models
+* Refactor User.is_exist? method (not very clean)

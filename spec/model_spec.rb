@@ -58,6 +58,11 @@ describe RhosyncStore::Model do
       @x.stub!(:redis).and_return(@xRedisMock)
       @y.stub!(:redis).and_return(@yRedisMock)
     end
+    
+    it "should create with string id" do
+      @x = TestType.create(:id => 'test')
+      @x.id.should == 'test'
+    end
   
     it "should save string as is" do
       @xRedisMock.should_receive(:[]=).with('test_type:1:foo_string', 'xxx')

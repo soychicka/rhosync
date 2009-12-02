@@ -63,5 +63,18 @@ describe "RhosyncStore" do
       @store.put_data(@mdoc.get_key,@data1).should == true
       @store.get_data(@mdoc.get_key).should == @data
     end
+    
+    it "should flash_data" do
+      @store.put_data(@mdoc.get_key,@data)
+      @store.flash_data(@mdoc.get_key)
+      @store.get_data(@mdoc.get_key).should == {}
+    end
+    
+    it "should get_keys" do
+      expected = ['doc1:1:1:1:source1','doc1:1:1:1:source2']
+      @store.put_data(expected[0],@data)
+      @store.put_data(expected[1],@data)
+      @store.get_keys('doc1:1:1:1:*').should == expected
+    end
   end
 end

@@ -10,7 +10,6 @@ describe "Source" do
     @s1.name.should == @fields[:name]
     @s1.url.should == @fields[:url]
     @s1.login.should == @fields[:login]
-    @s1.password.should == @fields[:password]
     @s1.app.name.should == @a_fields[:name]
     @s1.pollinterval.should == 300
     @s1.priority.should == 3
@@ -20,7 +19,6 @@ describe "Source" do
     @s2.name.should == @s1.name
     @s2.url.should == @s1.url
     @s2.login.should == @s1.login
-    @s2.password.should == @s1.password
     @s2.app.name.should == @s1.app.name
     @s2.pollinterval.should == 300
     @s2.priority.should == 3
@@ -29,11 +27,10 @@ describe "Source" do
   
   it "should create source with user" do
     @s.user.login.should == @u_fields[:login]
-    @s.user.password.should == @u_fields[:password]
   end
   
   it "should create source with app and document" do
     @s.app.name.should == @a_fields[:name]
-    @s.document.get_key.should == "md:#{@s.app.id}:#{@u.id}:#{@u.client_id}:#{@fields[:name]}"
+    @s.document.get_key.should == "md:#{@s.app.id}:#{@u.id}:0:#{@fields[:name]}"
   end
 end

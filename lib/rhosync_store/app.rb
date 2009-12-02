@@ -1,9 +1,10 @@
 module RhosyncStore
   class App < Model
-    field :name,:string
+    field :name, :string
     attr_reader :store
     
     def self.create(fields={})
+      fields[:id] = fields[:name]
       super(fields)
     end
     

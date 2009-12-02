@@ -64,9 +64,9 @@ module RhosyncStore
     end
   
     def field_key(name) #:nodoc:
-      "#{prefix}:#{id}:#{name}"
+      self.class._field_key(prefix,id,name)
     end
-  
+
     # Increment the specified integer field by 1 or the
     # specified amount.
     def increment!(name,amount=1)
@@ -87,23 +87,34 @@ module RhosyncStore
   
   protected
     def prefix #:nodoc:
-      @prefix ||= self.class.prefix || self.class.to_s.
-        sub(%r{(.*::)}, '').
-        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-        gsub(/([a-z\d])([A-Z])/,'\1_\2').
-        downcase
+      @prefix ||= self.class.prefix || self.class.class_prefix(self.class)
     end
  
     class << self
       # Defaults to model_name.dasherize
       attr_accessor :prefix
+    
+      def _prefix
+        class_prefix(self)
+      end
   
+      def _field_key(p,i,n) #:nodoc:
+        "#{p}:#{i}:#{n}"
+      end
+
+      def class_prefix(classname)
+        classname.to_s.
+          sub(%r{(.*::)}, '').
+          gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+          gsub(/([a-z\d])([A-Z])/,'\1_\2').
+          downcase
+      end
   
       # Creates new model instance with new uniqid
       # NOTE: "sequence:model_name:id" key is used
       def create(fields = {})
         o = self.new
-        o.id = o.next_id
+        o.id = fields[:id].nil? ? o.next_id : fields[:id]
         populate_model(o,fields)
       end
   

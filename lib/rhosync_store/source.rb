@@ -7,8 +7,8 @@ module RhosyncStore
     field :pollinterval,:integer
     field :priority,:integer
     field :callback_url,:string
-    field :user_id,:integer
-    field :app_id,:integer
+    field :user_id,:string
+    field :app_id,:string
     attr_reader :document
     
     def self.create(fields={})
@@ -32,7 +32,7 @@ module RhosyncStore
     end
     
     def document
-      @document.nil? ? @document = Document.new('md',self.app_id,self.user_id,self.user.client.id,self.name) : @document
+      @document.nil? ? @document = Document.new('md',self.app_id,self.user_id,'0',self.name) : @document
     end
   end
 end

@@ -1,11 +1,11 @@
 module RhosyncStore
   class ClientSync
-    attr_accessor :source,:p_size,:source_sync,:clientdoc
+    attr_accessor :source,:client,:p_size,:source_sync,:clientdoc
     
-    def initialize(source,p_size=500)
-      @source,@p_size = source,p_size
+    def initialize(source,client,p_size=500)
+      @source,@client,@p_size = source,client,p_size
       @source_sync = SourceSync.new(@source)
-      @clientdoc = Document.new('cd',@source.app,@source.user,@source.user.client,@source)
+      @clientdoc = Document.new('cd',@source.app.id,@source.user.id,@client.id,@source.name)
     end
     
     def receive_cud(params)
@@ -59,6 +59,14 @@ module RhosyncStore
         break if page_size <= 0          
       end
       res
+    end
+    
+    # Resets the store for a given app,client
+    def self.reset(app,user,client)
+      doc = Document.new('cd',app.id,user.id,client.id,'*')
+      app.store.get_keys(doc.get_key).each do |key|
+        app.store.flash_data(key)
+      end
     end
     
     private

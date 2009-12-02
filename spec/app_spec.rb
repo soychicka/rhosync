@@ -11,9 +11,9 @@ describe "App" do
   it "should create app with fields" do
     fields = { :name => 'myapp' }
     @a = App.create(fields)
-    @a.id.should == 1
+    @a.id.should == fields[:name]
 
-    @a1 = App.with_key(1)
+    @a1 = App.with_key(fields[:name])
     @a1.id.should == @a.id
     @a1.name.should == fields[:name]
   end
