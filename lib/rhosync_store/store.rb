@@ -22,6 +22,19 @@ module RhosyncStore
       end
       true
     end
+    
+    # Adds a simple key/value pair
+    def put_value(dockey,value)
+      if dockey and value
+        @db.del(dockey)
+        @db.set(dockey,value.to_s)
+      end
+    end
+    
+    # Retrieves value for a given key
+    def get_value(dockey)
+      @db.get(dockey) if dockey
+    end
   
     # Retrieves set for given doctype,source,user
     def get_data(dockey)

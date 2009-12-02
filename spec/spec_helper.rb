@@ -72,3 +72,11 @@ describe "SourceAdapterHelper", :shared => true do
     @s = Source.create(@fields)
   end
 end
+
+describe "StorageStateHelper", :shared => true do
+  it_should_behave_like "SourceAdapterHelper"
+  
+  before(:each) do
+    @s.name = 'StorageStateAdapter'
+  end
+end

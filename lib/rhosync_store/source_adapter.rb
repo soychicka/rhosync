@@ -35,12 +35,12 @@ module RhosyncStore
 
     def login; end
   
-    def query; end
+    def query(params=nil); end
   
     # this base class sync method expects a hash of hashes, 'object' will be the key
     def sync
       return if result_nil? or result_empty?
-      @source.app.store.put_data(@source.document,@result)
+      @source.app.store.put_data(@source.document.get_key,@result)
     end
   
     def create(name_value_list); end
@@ -48,6 +48,8 @@ module RhosyncStore
     def update(name_value_list); end
 
     def delete(name_value_list); end
+    
+    def ask(params=nil); end
 
     def logoff; end
   

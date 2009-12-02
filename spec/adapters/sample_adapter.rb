@@ -11,13 +11,17 @@ class SampleAdapter < SourceAdapter
     end
   end
  
-  def query
+  def query(params=nil)
     _kill_fuze(@result['3'],"Error during query") if @result
+    @result.reject! {|key,value| value['name'] != params['name']} if params
     @result
   end
  
   def sync
     super
+  end
+  
+  def ask(params=nil)
   end
  
   def create(name_value_list,blob=nil)

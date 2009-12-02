@@ -24,6 +24,10 @@ describe "Document" do
     @d.get_page_dockey.should == "#{@doctype}-page:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
+  it "should get_page_token_dockey" do
+    @d.get_page_token_dockey.should == "#{@doctype}-page-token:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  end
+  
   it "should get_updated_dockey" do
     @d.get_updated_dockey.should == "#{@doctype}-updated:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end

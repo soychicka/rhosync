@@ -22,9 +22,9 @@ module RhosyncStore
     end
     
     # Read Operation
-    def read
+    def read(params=nil)
       begin
-        @adapter.query
+        params ? @adapter.query(params) : @adapter.query
         @adapter.sync
       rescue Exception => e
         Logger.error "SourceAdapter raised query exception: #{e}"
@@ -33,13 +33,13 @@ module RhosyncStore
       true
     end
     
-    def process
+    def process(params=nil)
       return if _auth_op('login') == false
       
       self.create
       self.update
       self.delete
-      self.read
+      self.read(params)
         
       _auth_op('logoff')
     end

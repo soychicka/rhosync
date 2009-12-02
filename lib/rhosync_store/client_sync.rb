@@ -2,8 +2,8 @@ module RhosyncStore
   class ClientSync
     attr_accessor :source,:client,:p_size,:source_sync,:clientdoc
     
-    def initialize(source,client,p_size=500)
-      @source,@client,@p_size = source,client,p_size
+    def initialize(source,client,p_size=nil)
+      @source,@client,@p_size = source,client,p_size ? p_size : 500
       @source_sync = SourceSync.new(@source)
       @clientdoc = Document.new('cd',@source.app.id,@source.user.id,@client.id,@source.name)
     end
@@ -14,19 +14,20 @@ module RhosyncStore
       end
     end
     
-    def process(params)
+    def process(cud_params=nil,query_params=nil)
       #TODO handle ack insert and delete pages
-      receive_cud(params)
-      @source_sync.process
-      send_cud
+      receive_cud(cud_params) if cud_params
+      @source_sync.process(query_params)
     end
     
     def send_cud
       res = {}
       res['insert'] = compute_page
       res['delete'] = compute_deleted_page
-      @source.app.store.put_data(@clientdoc,res['insert'],true)
-      @source.app.store.delete_data(@clientdoc,res['delete'])
+      res['token'] = compute_token
+      @source.app.store.put_data(@clientdoc.get_key,res['insert'],true)
+      @source.app.store.delete_data(@clientdoc.get_key,res['delete'])
+      res.reject! {|key,value| value.empty? }
       res
     end
     
@@ -38,7 +39,7 @@ module RhosyncStore
       @source.app.store.get_diff_data(@clientdoc.get_key,@source.document.get_key).each do |key,item|
         res[key] = item
         page_size -= 1
-        break if page_size <= 0          
+        break if page_size <= 0         
       end
       @source.app.store.put_data(@clientdoc.get_page_dockey,res)
       res
@@ -61,6 +62,13 @@ module RhosyncStore
       res
     end
     
+    # Computes token for a single client request
+    def compute_token
+      token = _token
+      @source.app.store.put_value(@clientdoc.get_page_token_dockey,token)
+      token.to_s
+    end
+    
     # Resets the store for a given app,client
     def self.reset(app,user,client)
       doc = Document.new('cd',app.id,user.id,client.id,'*')
@@ -74,6 +82,10 @@ module RhosyncStore
       return if not ['create','update','delete'].include?(operation)
       dockey = @source.document.send "get_#{operation}d_dockey"
       @source.app.store.put_data(dockey,params,true)
+    end
+    
+    def _token
+      ((Time.now.to_f - Time.mktime(2009,"jan",1,0,0,0,0).to_f) * 10**6).to_i
     end
   end
 end

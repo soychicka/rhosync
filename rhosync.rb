@@ -42,6 +42,14 @@ helpers do
   def logout
     session[:login] = nil
   end
+  
+  def current_source
+    Source.with_key(params[:source_name]) if params[:source_name]
+  end
+  
+  def current_client
+    Client.with_key(params[:client_id]) if params[:client_id]
+  end
 end
 
 before do
@@ -65,32 +73,28 @@ post '/apps/:app_name/sources/client_login' do
 end
 
 get '/apps/:app_name/sources/clientcreate' do
-  @client = Client.create(:user_id => current_user.id)
-  { "client" => { "client_id" =>  @client.id.to_s } }.to_json
+  client = Client.create(:user_id => current_user.id)
+  { "client" => { "client_id" =>  client.id.to_s } }.to_json
 end
 
 post '/apps/:app_name/sources/clientregister' do
-  @client = Client.with_key(params[:client_id])
-  @client.device_type = params[:device_type]
+  current_client.device_type = params[:device_type]
   status 200
 end
 
 get '/apps/:app_name/sources/clientreset' do
-  ClientSync.reset(App.with_key(params[:app_name]),
-                   User.with_key(current_user.id),
-                   Client.with_key(params[:client_id]))
+  ClientSync.reset(App.with_key(params[:app_name]),User.with_key(current_user.id),current_client)
   status 200
 end
 
 # Member routes
 get '/apps/:app_name/sources/:source_name' do
-  erb :show
+  cs = ClientSync.new(current_source,current_client,params[:p_size])
+  cs.send_cud.to_json
 end
 
 post '/apps/:app_name/sources/:source_name' do
-  @cs = ClientSync.new(Source.with_key(params[:source_name]),
-                       Client.with_key(params[:client_id]),
-                       params[:p_size])
-  @cs.process(params)
+  cs = ClientSync.new(current_source,current_client,params[:p_size]) 
+  cs.process(params)
   status 200
 end

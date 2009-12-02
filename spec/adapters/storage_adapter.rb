@@ -8,7 +8,7 @@ class StorageAdapter < SourceAdapter
   end
  
   def query
-    @result = {}
+    @result = {'1'=>{'foo'=>'bar'}}
   end
  
   def sync

@@ -94,7 +94,7 @@ describe "Rhosync" do
     
     it "should post records for create" do
       @product1['_id'] = '1'
-      params = {'create'=>{'1'=>@product1}}
+      params = {'create'=>{'1'=>@product1},:client_id => @c.id}
       post "/apps/#{@a.name}/sources/#{@s.name}", params
       last_response.should be_ok
       last_response.body.should == ''
@@ -102,7 +102,7 @@ describe "Rhosync" do
     end
     
     it "should post records for update" do
-      params = {'update'=>{'1'=>@product1}}
+      params = {'update'=>{'1'=>@product1},:client_id => @c.id}
       post "/apps/#{@a.name}/sources/#{@s.name}", params
       last_response.should be_ok
       last_response.body.should == ''
@@ -110,11 +110,20 @@ describe "Rhosync" do
     end
     
     it "should post records for delete" do
-      params = {'delete'=>{'1'=>@product1}}
+      params = {'delete'=>{'1'=>@product1},:client_id => @c.id}
       post "/apps/#{@a.name}/sources/#{@s.name}", params
       last_response.should be_ok
       last_response.body.should == ''
       @store.get_data("test_delete_storage").should == {'1'=>@product1}
+    end
+    
+    it "should get send_cud json" do
+      cs = ClientSync.new(@s,@c,1)
+      cs.process
+      get "/apps/#{@a.name}/sources/#{@s.name}", :client_id => @c.id
+      last_response.should be_ok
+      token = @store.get_value(cs.clientdoc.get_page_token_dockey)
+      last_response.body.should == {'token'=>token.to_s,'insert'=>{'1'=>{'foo'=>'bar'}}}.to_json
     end
   end
 end

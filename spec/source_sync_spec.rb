@@ -43,7 +43,7 @@ describe "SourceSync" do
       expected = {'1'=>@product1,'2'=>@product2}
       @ss.adapter.inject_result expected
       @ss.process
-      @a.store.get_data(@s.document).should == expected
+      @a.store.get_data(@s.document.get_key).should == expected
     end
     
     it "should call methods in source adapter" do
@@ -131,7 +131,7 @@ describe "SourceSync" do
         expected = {'1'=>@product1,'2'=>@product2}
         @ss.adapter.inject_result expected
         @ss.read.should == true
-        @a.store.get_data(@s.document).should == expected
+        @a.store.get_data(@s.document.get_key).should == expected
       end
       
       it "should do read with exception raised" do

@@ -53,7 +53,7 @@ describe "SourceAdapter" do
       @sa.inject_result expected
       @sa.query.should == expected
       @sa.sync.should == true
-      @s.app.store.get_data(@s.document).should == expected
+      @s.app.store.get_data(@s.document.get_key).should == expected
     end
     
     it "should fail gracefully if @result is missing" do

@@ -23,6 +23,11 @@ describe "RhosyncStore" do
       @store.get_data(@mdoc.get_key).should == new_data
     end
     
+    it "should put_value and get_value" do
+      @store.put_value('foo','bar')
+      @store.get_value('foo').should == 'bar'
+    end
+    
     it "should return attributes modified in doc2" do
       @store.put_data(@mdoc.get_key,@data).should == true
       @store.get_data(@mdoc.get_key).should == @data
