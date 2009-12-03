@@ -81,7 +81,8 @@ describe "SourceSync" do
         @crd = @s.document.get_created_dockey
         @a.store.put_data(@crd,created_data)
         @ss.create.should == true
-        @a.store.get_data(@s.document.get_created_errors_dockey).should == {'3'=>@product3}
+        expected = {"3-error"=>{"message"=>"Error creating record"}, "3"=>@product3}
+        @a.store.get_data(@s.document.get_created_errors_dockey).should == expected
         @a.store.get_data(@crd).should == {'4'=>@product4}
       end
     end
@@ -101,7 +102,8 @@ describe "SourceSync" do
         @ud = @s.document.get_updated_dockey
         @a.store.put_data(@ud,update_data)
         @ss.update.should == true
-        @a.store.get_data(@s.document.get_updated_errors_dockey).should == { '3' => { 'name' => 'Fuze' }}
+        expected = {"3-error"=>{"message"=>"Error updating record"}, "3"=>{"name"=>"Fuze"}}
+        @a.store.get_data(@s.document.get_updated_errors_dockey).should == expected
         @a.store.get_data(@ud).should == {'4'=> { 'price' => '199.99' }}
       end
     end
@@ -121,7 +123,8 @@ describe "SourceSync" do
         @dd = @s.document.get_deleted_dockey
         @a.store.put_data(@dd,delete_data)
         @ss.delete.should == true
-        @a.store.get_data(@s.document.get_deleted_errors_dockey).should == {'3'=>@product3}
+        expected = {"3-error"=>{"message"=>"Error deleting record"}, "3"=>@product3}
+        @a.store.get_data(@s.document.get_deleted_errors_dockey).should == expected
         @a.store.get_data(@dd).should == {'4'=>@product4}
       end
     end

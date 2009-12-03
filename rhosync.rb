@@ -22,12 +22,6 @@ helpers do
   def login_required
     current_user.nil?
   end
-
-  def current_user
-    if User.is_exist?(session[:login])
-      User.with_key(session[:login])
-    end
-  end
   
   def login
     user = User.authenticate(params[:login], params[:password])
@@ -41,6 +35,16 @@ helpers do
   
   def logout
     session[:login] = nil
+  end
+  
+  def current_user
+    if User.is_exist?(session[:login])
+      User.with_key(session[:login])
+    end
+  end
+  
+  def current_app
+    App.with_key(params[:app_name]) if params[:app_name]
   end
   
   def current_source
@@ -63,7 +67,7 @@ get "/" do
 end
 
 # Collection routes
-post '/apps/:app_name/sources/client_login' do
+post '/apps/:app_name/client_login' do
   logout
   if login
     status 200
@@ -72,28 +76,28 @@ post '/apps/:app_name/sources/client_login' do
   end
 end
 
-get '/apps/:app_name/sources/clientcreate' do
+get '/apps/:app_name/clientcreate' do
   client = Client.create(:user_id => current_user.id)
   { "client" => { "client_id" =>  client.id.to_s } }.to_json
 end
 
-post '/apps/:app_name/sources/clientregister' do
+post '/apps/:app_name/clientregister' do
   current_client.device_type = params[:device_type]
   status 200
 end
 
-get '/apps/:app_name/sources/clientreset' do
-  ClientSync.reset(App.with_key(params[:app_name]),User.with_key(current_user.id),current_client)
+get '/apps/:app_name/clientreset' do
+  ClientSync.reset(current_app,current_user,current_client)
   status 200
 end
 
 # Member routes
-get '/apps/:app_name/sources/:source_name' do
+get '/apps/:app_name' do
   cs = ClientSync.new(current_source,current_client,params[:p_size])
   cs.send_cud.to_json
 end
 
-post '/apps/:app_name/sources/:source_name' do
+post '/apps/:app_name' do
   cs = ClientSync.new(current_source,current_client,params[:p_size]) 
   cs.process(params)
   status 200

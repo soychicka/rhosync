@@ -71,6 +71,7 @@ module RhosyncStore
         rescue Exception => e
           Logger.error "SourceAdapter raised #{operation} exception: #{e}"
           errors[key] = value
+          errors["#{key}-error"] = {'message'=>e.message}
           break
         end
       end

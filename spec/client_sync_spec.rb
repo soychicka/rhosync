@@ -107,5 +107,18 @@ describe "ClientSync" do
       @store.delete_data(@cs.clientdoc.get_key,@cs.compute_deleted_page).should == true
       @store.get_data(@cs.clientdoc.get_key).should == @data 
     end
+    
+    it "should resend page if page exists and no token provided" do
+      expected = {'1'=>@product1}
+      @cs.source_sync.adapter.inject_result({'1'=>@product1,'2'=>@product2,'4'=>@product4})
+      params = {'name' => 'iPhone'}
+      @cs.process({},params)
+      @cs.send_cud
+      token = @store.get_value(@cs.clientdoc.get_page_token_dockey)
+      @cs.send_cud.should == {'insert' => expected, 'token'=>token}
+      @cs.send_cud(token).should == {}
+      @store.get_data(@cs.clientdoc.get_page_dockey).should == {}              
+      @store.get_value(@cs.clientdoc.get_page_token_dockey).should == nil
+    end
   end
 end

@@ -14,20 +14,41 @@ module RhosyncStore
       end
     end
     
+    
     def process(cud_params=nil,query_params=nil)
       #TODO handle ack insert and delete pages
       receive_cud(cud_params) if cud_params
       @source_sync.process(query_params)
     end
     
-    def send_cud
-      res = {}
+    def send_cud(token=nil)
+      res = send_exceptions(token)
+      return res unless res.empty?
       res['insert'] = compute_page
       res['delete'] = compute_deleted_page
-      res['token'] = compute_token
       @source.app.store.put_data(@clientdoc.get_key,res['insert'],true)
       @source.app.store.delete_data(@clientdoc.get_key,res['delete'])
-      res.reject! {|key,value| value.empty? }
+      res.reject! {|key,value| value.empty?}
+      res['token'] = compute_token unless res.empty?
+      res
+    end
+    
+    # Resend token for a client, also sends exceptions
+    def send_exceptions(token=nil)
+      res = {}
+      if not token
+        old_token = @source.app.store.get_value(@clientdoc.get_page_token_dockey)
+        if old_token
+          res['insert'] = @source.app.store.get_data(@clientdoc.get_page_dockey)
+          res['delete'] = @source.app.store.get_data(@clientdoc.get_deleted_page_dockey)
+          res['token'] = old_token
+          res.reject! {|key,value| value.empty?}
+        end
+      else
+        puts "token is: #{token.inspect}"
+        @source.app.store.put_value(@clientdoc.get_page_token_dockey,nil)
+      end
+      #TODO: Check for errors
       res
     end
     
