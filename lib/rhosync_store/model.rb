@@ -1,46 +1,8 @@
-# Taken from http://github.com/voloko/redis-model
-#
-# Simple models for redis-rb.
-# It maps ruby properties to <tt>model_name:id:field_name</tt> keys in redis.
-# It also adds marshaling for string fields and more OOP style access for sets and lists
-#
-# == Define
-#
-# require 'redis/model'
-# class User < RhosyncStore::Model
-# value :name, :string
-# value :created, :datetime
-# value :profile, :json
-# list :posts
-# set :followers
-# end
-#
-# See Redis::Marshal for more types
-#
-#
-# == Write
-#
-# u = User.with_key(1)
-# u.name = 'Joe' # set user:1:name Joe
-# u.created = DateTime.now # set user:1:created 2009-10-05T12:09:56+0400
-# u.profile = { # set user:1:profile {"sex":"M","about":"Lorem","age":23}
-# :age => 23,
-# :sex => 'M',
-# :about => 'Lorem'
-# }
-# u.posts << "Hello world!" # rpush user:1:posts 'Hello world!'
-# u.followers << 2 # sadd user:1:followers 2
-#
-# == Read
-#
-# u = User.with_key(1)
-# p u.name # get user:1:name
-# p u.created.strftime('%m/%d/%Y') # get user:1:created
-# p u.posts[0,20] # lrange user:1:posts 0 20
-# p u.followers.has_key?(2) # sismember user:1:followers 2
-#
- 
 module RhosyncStore
+  # Taken from http://github.com/voloko/redis-model
+  #
+  # Simple models for redis-rb.
+  
   class Model
     attr_accessor :id
   
