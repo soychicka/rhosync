@@ -25,10 +25,11 @@ module RhosyncStore
       res = send_exceptions(token)
       return res unless res.empty?
       res['insert'] = compute_page
+      res['links'] = @source.app.store.get_data(@clientdoc.get_created_links_dockey)
       res['delete'] = compute_deleted_page
       @source.app.store.put_data(@clientdoc.get_key,res['insert'],true)
       @source.app.store.delete_data(@clientdoc.get_key,res['delete'])
-      res.reject! {|key,value| value.empty?}
+      res.reject! {|key,value| value.nil? or value.empty?}
       res['token'] = compute_token unless res.empty?
       res
     end
@@ -36,17 +37,12 @@ module RhosyncStore
     # Resend token for a client, also sends exceptions
     def send_exceptions(token=nil)
       res = {}
-      if not token
-        old_token = @source.app.store.get_value(@clientdoc.get_page_token_dockey)
-        if old_token
-          res['insert'] = @source.app.store.get_data(@clientdoc.get_page_dockey)
-          res['delete'] = @source.app.store.get_data(@clientdoc.get_deleted_page_dockey)
-          res['token'] = old_token
-          res.reject! {|key,value| value.empty?}
-        end
-      else
-        puts "token is: #{token.inspect}"
-        @source.app.store.put_value(@clientdoc.get_page_token_dockey,nil)
+      if not _ack_token(token)     
+        res['insert'] = @source.app.store.get_data(@clientdoc.get_page_dockey)
+        res['links'] = @source.app.store.get_data(@clientdoc.get_created_links_dockey)
+        res['delete'] = @source.app.store.get_data(@clientdoc.get_deleted_page_dockey)
+        res['token'] = @source.app.store.get_value(@clientdoc.get_page_token_dockey)
+        res.reject! {|key,value| value.nil? or value.empty?}
       end
       #TODO: Check for errors
       res
@@ -102,11 +98,30 @@ module RhosyncStore
     def _receive_cud(operation,params)
       return if not ['create','update','delete'].include?(operation)
       dockey = @source.document.send "get_#{operation}d_dockey"
+      if operation == 'create'
+        params.each do |key,value|
+          value['rhomobile.rhoclient'] = @client.id.to_s
+        end
+      end
       @source.app.store.put_data(dockey,params,true)
     end
     
     def _token
       ((Time.now.to_f - Time.mktime(2009,"jan",1,0,0,0,0).to_f) * 10**6).to_i
+    end
+    
+    def _ack_token(token)
+      stored_token = @source.app.store.get_value(@clientdoc.get_page_token_dockey)
+      if stored_token 
+        if token and stored_token == token
+          @source.app.store.put_value(@clientdoc.get_page_token_dockey,nil)
+          @source.app.store.put_value(@clientdoc.get_created_links_dockey,nil)
+          return true
+        end
+      else
+        return true    
+      end    
+      false
     end
   end
 end

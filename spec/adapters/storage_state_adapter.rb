@@ -16,6 +16,8 @@ class StorageStateAdapter < SourceAdapter
   end
  
   def create(name_value_list,blob=nil)
+    @source.app.store.put_data('storageadapter',{'1'=>name_value_list})
+    '1'
   end
  
   def update(name_value_list)

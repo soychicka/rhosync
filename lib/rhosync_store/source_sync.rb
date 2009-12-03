@@ -64,9 +64,15 @@ module RhosyncStore
         begin
           modified.delete(key)
           value['id'] = key unless operation == 'create'
+          client_id = nil
+          if operation == 'create'
+            client_id = value['rhomobile.rhoclient']
+            value.delete('rhomobile.rhoclient')
+          end
           link = @adapter.send operation, value
           if operation == 'create' and link and link.is_a?(String)
-            object_links[key] = { 'l' => link }
+            object_links[client_id] ||= {}
+            object_links[client_id][key] = { 'l' => link }
           end
         rescue Exception => e
           Logger.error "SourceAdapter raised #{operation} exception: #{e}"
@@ -77,7 +83,13 @@ module RhosyncStore
       end
       @source.app.store.put_data(_op_dockey(operation,'_errors'),errors)
       @source.app.store.put_data(_op_dockey(operation),modified)
-      @source.app.store.put_data(_op_dockey(operation,'_links'),object_links) if object_links.length > 0
+      if operation == 'create'
+        doc = Document.new('cd',@source.app.id,@source.user.id,'',@source.name)
+        object_links.each do |client_id,objects|
+          doc.client_id = client_id
+          @source.app.store.put_data(doc.get_created_links_dockey,objects,true)
+        end
+      end
       true
     end
     

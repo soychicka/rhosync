@@ -68,11 +68,13 @@ describe "SourceSync" do
     
       it "should do create where adapter.create returns object link" do
         created_data = {'4'=>@product4}
+        created_data['4']['rhomobile.rhoclient'] = @c.id.to_s
         @crd = @s.document.get_created_dockey
         @a.store.put_data(@crd,created_data)
         @ss.create.should == true
         @a.store.get_data(@s.document.get_created_errors_dockey).should == {}
-        @a.store.get_data(@s.document.get_created_links_dockey).should == { '4' => { 'l' => 'obj4' } }
+        clientdoc = Document.new('cd',@a.id,@s.user.id,@c.id,@s.name)
+        @a.store.get_data(clientdoc.get_created_links_dockey).should == { '4' => { 'l' => 'obj4' } }
         @a.store.get_data(@crd).should == {}
       end
     
