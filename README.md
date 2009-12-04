@@ -12,8 +12,12 @@ INSTALL
 	redis
 	sinatra
 	rack-test
+	relevance-rcov (make sure to uninstall rcov first due to known memory issues)
+	
 2. Install and start a redis server (see http://code.google.com/p/redis/wiki/QuickStart)
+
 3. run "rake" to make sure all the specs pass
+
 4. Checkout the API documentation: http://rdoc.info/projects/rhomobile/rhosync-datacache
 
 NOTE: Run "rm -rf tmp coverage" before each run of "rake spec" or "rake all"
