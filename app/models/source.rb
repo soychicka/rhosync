@@ -74,19 +74,26 @@ class Source < ActiveRecord::Base
     logger.debug "dosearch called"
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
+    
     begin
       source_adapter.login  # should set up @session_id
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to login #{e}"      
       logger.debug e.backtrace.join("\n")
       return
     end
+    
     clear_pending_records(self.credential)
+    
     begin  
       logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
       source_adapter.sync
       update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to sync #{e}"
       logger.debug e.backtrace.join("\n")

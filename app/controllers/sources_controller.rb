@@ -114,6 +114,10 @@ class SourcesController < ApplicationController
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    logger.debug "e.to_s #{e.to_s}"
+    render :text => e.to_s, :status => 401
   end
 
   # generate a new client for this source
