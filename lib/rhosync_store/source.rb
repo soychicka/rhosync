@@ -4,7 +4,8 @@ module RhosyncStore
     field :url,:string
     field :login,:string
     field :password,:string
-    field :pollinterval,:integer
+    field :poll_interval,:integer
+    field :refresh_time,:integer
     field :priority,:integer
     field :callback_url,:string
     field :user_id,:string
@@ -17,8 +18,9 @@ module RhosyncStore
       fields[:url] ||= ''
       fields[:login] ||= ''
       fields[:password] ||= ''
-      fields[:pollinterval] ||= 300
       fields[:priority] ||= 3
+      fields[:poll_interval] ||= 300
+      fields[:refresh_time] ||= Time.now.to_i
       super(fields)
     end
     

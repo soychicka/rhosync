@@ -38,6 +38,35 @@ describe "SourceSync" do
     @a.store.get_data(@s.document.get_source_errors_dockey).should == {'logoff-error'=>{'message'=>msg}}
   end
   
+  it "should hold on read on subsequent call of process" do
+    expected = {'1'=>@product1}
+    @ss = SourceSync.new(@s)
+    @ss.adapter.inject_result(expected)
+    @ss.process
+    @ss.adapter.inject_result({'2'=>@product2})
+    @ss.process
+    @a.store.get_data(@s.document.get_key).should == expected    
+  end
+  
+  it "should read on every subsequent call of process" do
+    expected = {'2'=>@product2}
+    @s.poll_interval = 0
+    @ss = SourceSync.new(@s)
+    @ss.adapter.inject_result({'1'=>@product1})
+    @ss.process
+    @ss.adapter.inject_result(expected)
+    @ss.process
+    @a.store.get_data(@s.document.get_key).should == expected    
+  end
+
+  it "should never call read on any call of process" do
+    @s.poll_interval = -1
+    @ss = SourceSync.new(@s)
+    @ss.adapter.inject_result({'1'=>@product1})
+    @ss.process
+    @a.store.get_data(@s.document.get_key).should == {}    
+  end
+    
   describe "methods" do
     before(:each) do
       @ss = SourceSync.new(@s)

@@ -24,7 +24,6 @@ NOTE: Run "rm -rf tmp coverage" before each run of "rake spec" or "rake all"
 
 TODO
 -------------------------------------------------------------
-* Add source timeout
 * Finish ClientSync Scenarios (tokens, errors, CRUD)
 * Add sinatra server
 * Implement protocol

@@ -21,7 +21,7 @@ module RhosyncStore
       _process_cud('delete')
     end
     
-    # Read Operation
+    # Read Operation; params are query arguments
     def read(params=nil)
       begin
         # run query,sync
@@ -44,7 +44,12 @@ module RhosyncStore
       self.create
       self.update
       self.delete
-      self.read(params)
+
+      if @source.poll_interval == 0 or 
+        (@source.poll_interval != -1 and @source.refresh_time <= Time.now.to_i)
+        self.read(params)
+        @source.refresh_time = Time.now.to_i + @source.poll_interval
+      end
       
       _auth_op('logoff')
     end

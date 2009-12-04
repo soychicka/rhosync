@@ -11,16 +11,18 @@ describe "Source" do
     @s1.url.should == @fields[:url]
     @s1.login.should == @fields[:login]
     @s1.app.name.should == @a_fields[:name]
-    @s1.pollinterval.should == 300
+    @s1.poll_interval.should == 300
     @s1.priority.should == 3
     @s1.callback_url.should be_nil
+    @s1.refresh_time.should >= Time.now.to_i 
+    @s1.refresh_time.should <= Time.now.to_i + 1 
 
     @s2 = Source.with_key(@s1.id)
     @s2.name.should == @s1.name
     @s2.url.should == @s1.url
     @s2.login.should == @s1.login
     @s2.app.name.should == @s1.app.name
-    @s2.pollinterval.should == 300
+    @s2.poll_interval.should == 300
     @s2.priority.should == 3
     @s2.callback_url.should be_nil
   end

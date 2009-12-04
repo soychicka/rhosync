@@ -47,7 +47,7 @@ class SampleAdapter < SourceAdapter
   end
  
   def logoff
-    if @result and @result['1']['name'] == 'logoff'
+    if @result and @result['1'] and @result['1']['name'] == 'logoff'
       raise SourceAdapterLogoffException.new("Error logging off") 
     end
   end
