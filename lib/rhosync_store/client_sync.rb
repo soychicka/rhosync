@@ -22,29 +22,30 @@ module RhosyncStore
     end
     
     def send_cud(token=nil)
-      res = send_exceptions(token)
+      res = resend_page(token)
       return res unless res.empty?
       res['insert'] = compute_page
-      res['links'] = @source.app.store.get_data(@clientdoc.get_created_links_dockey)
+      res['links'] = @source.app.store.get_data(@clientdoc.get_create_links_dockey)
       res['delete'] = compute_deleted_page
       @source.app.store.put_data(@clientdoc.get_key,res['insert'],true)
       @source.app.store.delete_data(@clientdoc.get_key,res['delete'])
       res.reject! {|key,value| value.nil? or value.empty?}
       res['token'] = compute_token unless res.empty?
+      res.merge!(_send_errors)
       res
     end
     
     # Resend token for a client, also sends exceptions
-    def send_exceptions(token=nil)
+    def resend_page(token=nil)
       res = {}
       if not _ack_token(token)     
         res['insert'] = @source.app.store.get_data(@clientdoc.get_page_dockey)
-        res['links'] = @source.app.store.get_data(@clientdoc.get_created_links_dockey)
-        res['delete'] = @source.app.store.get_data(@clientdoc.get_deleted_page_dockey)
-        res['token'] = @source.app.store.get_value(@clientdoc.get_page_token_dockey)
+        res['links'] = @source.app.store.get_data(@clientdoc.get_create_links_dockey)
+        res['delete'] = @source.app.store.get_data(@clientdoc.get_delete_page_dockey)
         res.reject! {|key,value| value.nil? or value.empty?}
+        res['token'] = @source.app.store.get_value(@clientdoc.get_page_token_dockey) unless res.empty?
+        res.merge!(_send_errors)
       end
-      #TODO: Check for errors
       res
     end
     
@@ -66,12 +67,12 @@ module RhosyncStore
     # in the client documet, trims it to page size, stores page, and returns page as hash      
     def compute_deleted_page
       res = {}
-      deleted_page_key = @clientdoc.get_deleted_page_dockey
+      delete_page_key = @clientdoc.get_delete_page_dockey
       page_size = @p_size
       @source.app.store.get_diff_data(@source.document.get_key,@clientdoc.get_key).each do |key,value|
         res[key] = value
         value.each do |attrib,val|
-          @source.app.store.db.sadd(deleted_page_key,setelement(key,attrib,val))
+          @source.app.store.db.sadd(delete_page_key,setelement(key,attrib,val))
         end
         page_size -= 1
         break if page_size <= 0          
@@ -97,11 +98,9 @@ module RhosyncStore
     private
     def _receive_cud(operation,params)
       return if not ['create','update','delete'].include?(operation)
-      dockey = @source.document.send "get_#{operation}d_dockey"
-      if operation == 'create'
-        params.each do |key,value|
-          value['rhomobile.rhoclient'] = @client.id.to_s
-        end
+      dockey = @source.document.send "get_#{operation}_dockey"
+      params.each do |key,value|
+        value['rhomobile.rhoclient'] = @client.id.to_s
       end
       @source.app.store.put_data(dockey,params,true)
     end
@@ -115,13 +114,23 @@ module RhosyncStore
       if stored_token 
         if token and stored_token == token
           @source.app.store.put_value(@clientdoc.get_page_token_dockey,nil)
-          @source.app.store.put_value(@clientdoc.get_created_links_dockey,nil)
+          @source.app.store.put_value(@clientdoc.get_create_links_dockey,nil)
           return true
         end
       else
         return true    
       end    
       false
+    end
+    
+    def _send_errors
+      res = {}
+      ['create','update','delete'].each do |operation|
+        res["#{operation}-error"] = @source.app.store.get_data(@clientdoc.send("get_#{operation}_errors_dockey"))
+      end
+      res["source-error"] = @source.app.store.get_data(@source.document.get_source_errors_dockey)
+      res.reject! {|key,value| value.nil? or value.empty?}
+      res
     end
   end
 end

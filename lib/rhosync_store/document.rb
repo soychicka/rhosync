@@ -6,10 +6,6 @@ module RhosyncStore
       @doctype,@app_id,@user_id,@client_id,@source_name = doctype,app_id,user_id,client_id,source_name
     end
     
-    def get_deleted_page_dockey
-      _get_doc("deleted-page")
-    end
-    
     def get_page_dockey
       _get_doc("page")
     end
@@ -18,32 +14,40 @@ module RhosyncStore
       _get_doc("page-token")
     end
     
-    def get_deleted_dockey
-      _get_doc("deleted")
+    def get_delete_page_dockey
+      _get_doc("delete-page")
     end
     
-    def get_deleted_errors_dockey
-      _get_doc("deleted-errors")
+    def get_delete_dockey
+      _get_doc("delete")
     end
     
-    def get_updated_dockey
-      _get_doc("updated")
+    def get_delete_errors_dockey
+      _get_doc("delete-errors")
     end
     
-    def get_updated_errors_dockey
-      _get_doc("updated-errors")
+    def get_update_dockey
+      _get_doc("update")
     end
     
-    def get_created_dockey
-      _get_doc("created")
+    def get_update_errors_dockey
+      _get_doc("update-errors")
     end
     
-    def get_created_errors_dockey
-      _get_doc("created-errors")
+    def get_create_dockey
+      _get_doc("create")
     end
     
-    def get_created_links_dockey
-      _get_doc("created-links")
+    def get_create_errors_dockey
+      _get_doc("create-errors")
+    end
+    
+    def get_create_links_dockey
+      _get_doc("create-links")
+    end
+    
+    def get_source_errors_dockey
+      _get_doc("source-errors")
     end
 
     def get_key

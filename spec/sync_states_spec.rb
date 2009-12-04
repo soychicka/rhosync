@@ -23,7 +23,6 @@ describe "Sync Server States" do
       @s.app.store.get_data(@cs.clientdoc.get_page_dockey).should == expected
       @s.app.store.get_data(@cs.clientdoc.get_key).should == expected
     end
-    
   end
   
   describe "client creates objects" do
@@ -33,7 +32,7 @@ describe "Sync Server States" do
       params = {'create'=>{'temp1'=>@product1}}
       @cs.source_sync.adapter.inject_result result
       @cs.process(params)
-      @s.app.store.get_data(@cs.clientdoc.get_created_links_dockey).should == exp_links
+      @s.app.store.get_data(@cs.clientdoc.get_create_links_dockey).should == exp_links
       @s.app.store.get_data(@s.document.get_key).should == result
       res = @cs.send_cud
       token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)

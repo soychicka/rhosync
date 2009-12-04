@@ -16,8 +16,8 @@ describe "Document" do
     @d.get_key.should == "#{@doctype}:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_deleted_page_dockey" do
-    @d.get_deleted_page_dockey.should == "#{@doctype}-deleted-page:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_delete_page_dockey" do
+    @d.get_delete_page_dockey.should == "#{@doctype}-delete-page:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
   it "should get_page_dockey" do
@@ -28,27 +28,31 @@ describe "Document" do
     @d.get_page_token_dockey.should == "#{@doctype}-page-token:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_updated_dockey" do
-    @d.get_updated_dockey.should == "#{@doctype}-updated:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_update_dockey" do
+    @d.get_update_dockey.should == "#{@doctype}-update:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_deleted_dockey" do
-    @d.get_deleted_dockey.should == "#{@doctype}-deleted:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_delete_dockey" do
+    @d.get_delete_dockey.should == "#{@doctype}-delete:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_deleted_errors_dockey" do
-    @d.get_deleted_errors_dockey.should == "#{@doctype}-deleted-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_delete_errors_dockey" do
+    @d.get_delete_errors_dockey.should == "#{@doctype}-delete-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_created_dockey" do
-    @d.get_created_dockey.should == "#{@doctype}-created:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_create_dockey" do
+    @d.get_create_dockey.should == "#{@doctype}-create:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_created_errors_dockey" do
-    @d.get_created_errors_dockey.should == "#{@doctype}-created-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  it "should get_source_errors_dockey" do
+    @d.get_source_errors_dockey.should == "#{@doctype}-source-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
-  it "should get_created_links_dockey" do
-    @d.get_created_links_dockey.should == "#{@doctype}-created-links:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"    
+  it "should get_create_errors_dockey" do
+    @d.get_create_errors_dockey.should == "#{@doctype}-create-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  end
+  
+  it "should get_create_links_dockey" do
+    @d.get_create_links_dockey.should == "#{@doctype}-create-links:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"    
   end
 end
