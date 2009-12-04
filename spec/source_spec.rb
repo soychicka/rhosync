@@ -14,7 +14,7 @@ describe "Source" do
     @s1.poll_interval.should == 300
     @s1.priority.should == 3
     @s1.callback_url.should be_nil
-    @s1.refresh_time.should >= Time.now.to_i 
+    (@s1.refresh_time + 1).should >= Time.now.to_i
     @s1.refresh_time.should <= Time.now.to_i + 1 
 
     @s2 = Source.with_key(@s1.id)
