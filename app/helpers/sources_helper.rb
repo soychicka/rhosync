@@ -126,41 +126,18 @@ module SourcesHelper
     end
   end
 
-  # this function performs pending to final convert one at a time and is 
-  # robust to failures to to do a pending to final for a single object
-  def update_pendings(credential,check_existing=false)
+  # merge in pending objects created by search
+  def update_pendings(credential)
     conditions="source_id=#{id}"
     usr_condition=" and user_id=#{credential.user.id}" if credential
     conditions << usr_condition if usr_condition
-    if check_existing
-      ActiveRecord::Base.transaction do
-        objs=ObjectValue.find(:all, :conditions=>conditions +" and update_type is NULL" )
-        #current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query' #{usr_condition}"
-        objs.each do |obj|
-          begin
-            # if check_existing, look for existing query object-attribute, then update it and delete pending row
-            existing = ObjectValue.find :first, :conditions => "object='#{obj.object}' and attrib='#{obj.attrib}' and 
-                                                                update_type='query' and #{conditions}"
-                                                                
-            if existing
-              update_fields = "pending_id=#{obj.pending_id},id=#{obj.pending_id},value='#{obj.value}'"
-              obj.destroy
-            else
-              update_fields = "id=pending_id,update_type='query'"
-            end
- 
-            ActiveRecord::Base.connection.execute "update object_values set id=pending_id,#{update_fields} where 
-                          object='#{obj.object}' and attrib='#{obj.attrib}' and #{conditions}"
-                          
-          rescue Exception => e
-            slog(e,"Failed to finalize object value for object "+obj.inspect.to_s)
-          end
-        end
+    ActiveRecord::Base.transaction do
+      # for each unique object, delete entire old version, and finalize new version
+      objects = ActiveRecord::Base.connection.select_values "select distinct(object) from object_values where update_type is NULL and #{conditions}"
+      objects.each do |obj|
+        ActiveRecord::Base.connection.execute "delete from object_values where object='#{obj}' and update_type='query' and #{conditions}"
+        ActiveRecord::Base.connection.execute "update object_values set id=pending_id, update_type='query' where object='#{obj}' and #{conditions}"
       end
-      self.refreshtime=Time.new
-      save
-      # TODO: This is bad... These collided but we can't update them, so we delete for now.
-      ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
     end
   end
 

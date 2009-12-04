@@ -91,7 +91,7 @@ class Source < ActiveRecord::Base
       logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
       source_adapter.sync
-      update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+      update_pendings(@credential)  # copy over records that arent already in the sandbox
     rescue SourceAdapterException
       raise
     rescue Exception=>e
