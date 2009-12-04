@@ -45,7 +45,7 @@ module RhosyncStore
       self.update
       self.delete
       self.read(params)
-
+      
       _auth_op('logoff')
     end
     

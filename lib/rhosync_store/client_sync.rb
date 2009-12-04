@@ -8,22 +8,23 @@ module RhosyncStore
       @clientdoc = Document.new('cd',@source.app.id,@source.user.id,@client.id,@source.name)
     end
     
-    def receive_cud(params)
-      params.each do |key,value|
+    def receive_cud(cud_params={},query_params=nil)
+      cud_params.each do |key,value|
         _receive_cud(key,value)
       end
-    end
-    
-    
-    def process(cud_params=nil,query_params=nil)
-      #TODO handle ack insert and delete pages
-      receive_cud(cud_params) if cud_params
       @source_sync.process(query_params)
     end
     
-    def send_cud(token=nil)
+    # def process(cud_params=nil,query_params=nil)
+    #   #TODO handle ack insert and delete pages
+    #   receive_cud(cud_params) if cud_params
+    #   
+    # end
+    
+    def send_cud(token=nil,query_params=nil)
       res = resend_page(token)
       return res unless res.empty?
+      @source_sync.process(query_params)
       res['insert'] = compute_page
       res['links'] = @source.app.store.get_data(@clientdoc.get_create_links_dockey)
       res['delete'] = compute_deleted_page

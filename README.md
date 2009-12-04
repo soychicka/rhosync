@@ -16,15 +16,18 @@ INSTALL
 3. run "rake" to make sure all the specs pass
 4. Checkout the API documentation: http://rdoc.info/projects/rhomobile/rhosync-datacache
 
+NOTE: Run "rm -rf tmp coverage" before each run of "rake spec" or "rake all"
+
 TODO
 -------------------------------------------------------------
 * Finish ClientSync Scenarios (tokens, errors, CRUD)
 * Add sinatra server
 * Implement protocol
-* Integration tests (client<->server<->backend)
+* Finish Sync States (client<->server<->backend)
 * Performance tests (ClientSync, SourceSync)
 * Add queue layer for background adapters
 * Installation scripts/process
 * Management/Testing web console w/ import support
 * Add uniqueness validation to app,client,user models
 * Refactor User.is_exist? method (not very clean)
+* Fix Rakefile spec tasks

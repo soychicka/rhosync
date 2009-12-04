@@ -99,6 +99,6 @@ end
 
 post '/apps/:app_name' do
   cs = ClientSync.new(current_source,current_client,params[:p_size]) 
-  cs.process(params)
+  cs.receive_cud(params)
   status 200
 end

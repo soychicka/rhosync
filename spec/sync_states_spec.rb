@@ -15,7 +15,6 @@ describe "Sync Server States" do
     it "should sync with backend, setup masterdoc, clientdoc, and page documents" do
       expected = {'1'=>@product1,'2'=>@product2}
       @cs.source_sync.adapter.inject_result @data
-      @cs.process
       res = @cs.send_cud
       exp_token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
       res.should == {'token'=>exp_token,'insert'=>expected}
@@ -31,7 +30,7 @@ describe "Sync Server States" do
       result = {'1'=>@product1}
       params = {'create'=>{'temp1'=>@product1}}
       @cs.source_sync.adapter.inject_result result
-      @cs.process(params)
+      @cs.receive_cud(params)
       @s.app.store.get_data(@cs.clientdoc.get_create_links_dockey).should == exp_links
       @s.app.store.get_data(@s.document.get_key).should == result
       res = @cs.send_cud

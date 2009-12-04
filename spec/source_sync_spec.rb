@@ -165,7 +165,6 @@ describe "SourceSync" do
         @ss.adapter.inject_result({'3'=>@product3})
         @ss.read.should == true
         @a.store.get_data(@s.document).should == {}
-        puts" in source sync spec #{@s.document.get_source_errors_dockey}"
         @a.store.get_data(@s.document.get_source_errors_dockey).should == {'read-error'=>{'message'=>msg}}
       end
     end

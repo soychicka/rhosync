@@ -15,9 +15,9 @@ describe "ClientSync" do
     it "should handle receive cud" do
       params = {'create'=>{'1'=>@product1},'update'=>{'2'=>@product2},'delete'=>{'3'=>@product3}}
       @cs.receive_cud(params)
-      @a.store.get_data(@s.document.get_create_dockey).should == params['create']
-      @a.store.get_data(@s.document.get_update_dockey).should == params['update']
-      @a.store.get_data(@s.document.get_delete_dockey).should == params['delete']
+      @a.store.get_data(@s.document.get_create_dockey).should == {}
+      @a.store.get_data(@s.document.get_update_dockey).should == {}
+      @a.store.get_data(@s.document.get_delete_dockey).should == {}
     end
   
     it "should handle send cud" do
@@ -36,20 +36,17 @@ describe "ClientSync" do
     it "should return read errors in send cud" do
       injection = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
       @cs.source_sync.adapter.inject_result injection
-      @cs.process
       @cs.send_cud.should == {'source-error'=>{"read-error"=>{"message"=>"Error during query"}}}
     end
     
     it "should return login errors in send cud" do
       @u.login = nil
-      @cs.process
       @cs.send_cud.should == {'source-error'=>{"login-error"=>{"message"=>"Error logging in"}}}
     end
     
     it "should return logoff errors in send cud" do
       data = {'1'=>{'name'=>'logoff'}}
       @cs.source_sync.adapter.inject_result(data)
-      @cs.process
       res = @cs.send_cud
       token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
       res.should == {'source-error'=>{"logoff-error"=>{"message"=>"Error logging off"}},'insert'=>data,'token'=>token}      
@@ -60,13 +57,14 @@ describe "ClientSync" do
         created_data = {'create'=>{'4'=>@product4,'3'=>@product3}}
         injection = {'1'=>@product1,'2'=>@product2}
         @cs.source_sync.adapter.inject_result injection
-        @cs.process(created_data)
+        @cs.receive_cud(created_data)
         res = @cs.send_cud
         @product3.delete('rhomobile.rhoclient')
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
         expected = {'insert'=>injection,
                     'create-error'=>{"3-error"=>{"message"=>"Error creating record"},'3'=>@product3},
-                    'token'=>token}
+                    'token'=>token,
+                    'links'=>{"4"=>{"l"=>"obj4"}}}
         res.should == expected
       end
       
@@ -74,7 +72,7 @@ describe "ClientSync" do
         update_data = {'update'=>{'3'=>{'name'=>'Fuze'}}}
         injection = {'1'=>@product1,'2'=>@product2}
         @cs.source_sync.adapter.inject_result injection
-        @cs.process(update_data)
+        @cs.receive_cud(update_data)
         res = @cs.send_cud
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
         expected = {'insert'=>injection,
@@ -87,7 +85,7 @@ describe "ClientSync" do
         delete_data = {'delete'=>{'3'=>@product3}}
         injection = {'1'=>@product1,'2'=>@product2}
         @cs.source_sync.adapter.inject_result injection
-        @cs.process(delete_data)
+        @cs.receive_cud(delete_data)
         res = @cs.send_cud
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
         @product3.delete('rhomobile.rhoclient')
@@ -102,7 +100,7 @@ describe "ClientSync" do
       expected = {'1'=>@product1,'2'=>@product2}
       @cs.source_sync.adapter.inject_result expected
       params = {'create'=>{'1'=>@product1},'update'=>{'2'=>@product2},'delete'=>{'3'=>@product3}}
-      @cs.process(params)
+      @cs.receive_cud(params)
       @a.store.get_data(@s.document.get_create_dockey).should == {}
       @a.store.get_data(@s.document.get_update_dockey).should == {}
       @a.store.get_data(@s.document.get_delete_dockey).should == {}
@@ -113,8 +111,7 @@ describe "ClientSync" do
       expected = {'1'=>@product1}
       @cs.source_sync.adapter.inject_result({'1'=>@product1,'2'=>@product2,'4'=>@product4})
       params = {'name' => 'iPhone'}
-      @cs.process({},params)
-      @cs.send_cud
+      @cs.send_cud(nil,params)
       @a.store.get_data(@s.document.get_key).should == expected
       @a.store.get_data(@cs.clientdoc.get_page_dockey).should == expected
     end
@@ -177,8 +174,7 @@ describe "ClientSync" do
       expected = {'1'=>@product1}
       @cs.source_sync.adapter.inject_result({'1'=>@product1,'2'=>@product2,'4'=>@product4})
       params = {'name' => 'iPhone'}
-      @cs.process({},params)
-      @cs.send_cud
+      @cs.send_cud(nil,params)
       token = @store.get_value(@cs.clientdoc.get_page_token_dockey)
       @cs.send_cud.should == {'insert' => expected, 'token'=>token}
       @cs.send_cud(token).should == {}

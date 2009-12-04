@@ -119,7 +119,6 @@ describe "Rhosync" do
     
     it "should get send_cud json" do
       cs = ClientSync.new(@s,@c,1)
-      cs.process
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)

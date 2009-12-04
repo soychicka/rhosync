@@ -36,7 +36,7 @@ class SampleAdapter < SourceAdapter
  
   def update(name_value_list)
     raise SourceAdapterException.new("No id provided in name_value_list") unless name_value_list['id']
-    _kill_fuze(name_value_list,"Error updating record") 
+    _kill_fuze(name_value_list,"Error updating record")
     nil
   end
  
