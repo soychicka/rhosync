@@ -8,7 +8,7 @@ class StorageAdapter < SourceAdapter
   end
  
   def query
-    @result = {'1'=>{'foo'=>'bar'}}
+    @result = @source.app.store.get_data('test_db_storage')
   end
  
   def sync

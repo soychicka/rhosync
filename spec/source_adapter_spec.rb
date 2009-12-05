@@ -70,11 +70,5 @@ describe "SourceAdapter" do
       @sa.inject_result nil
       @sa.sync
     end
-    
-    it "should log at debug level when result is empty" do 
-      Logger.should_receive(:info).with(SourceAdapter::MSG_NO_OBJECTS)
-      @sa.inject_result({ }) 
-      @sa.sync
-    end
   end
 end

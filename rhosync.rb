@@ -94,7 +94,7 @@ end
 # Member routes
 get '/apps/:app_name' do
   cs = ClientSync.new(current_source,current_client,params[:p_size])
-  cs.send_cud.to_json
+  cs.send_cud(params[:token],params[:search]).to_json
 end
 
 post '/apps/:app_name' do

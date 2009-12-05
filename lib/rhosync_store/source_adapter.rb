@@ -39,8 +39,12 @@ module RhosyncStore
   
     # this base class sync method expects a hash of hashes, 'object' will be the key
     def sync
-      return if result_nil? or result_empty?
-      @source.app.store.put_data(@source.document.get_key,@result)
+      return if _result_nil?
+      if @result.empty?
+        @source.app.store.flash_data(@source.document.get_key)
+      else
+        @source.app.store.put_data(@source.document.get_key,@result)
+      end  
     end
   
     def create(name_value_list); end
@@ -57,7 +61,6 @@ module RhosyncStore
     # def set_callback(notify_url)
     # end
   
-    MSG_NO_OBJECTS = "No objects returned from query"
     MSG_NIL_RESULT_ATTRIB = "You might have expected a synchronization but the @result attribute was 'nil'"
     
     protected
@@ -65,14 +68,8 @@ module RhosyncStore
       @source.user
     end
   
-    #################################################
     private 
-    def result_empty? #:nodoc:
-      Logger.info MSG_NO_OBJECTS if @result.empty? 
-      @result.empty?
-    end
-
-    def result_nil? #:nodoc:
+    def _result_nil? #:nodoc:
       Logger.error MSG_NIL_RESULT_ATTRIB if @result.nil?
       @result.nil?
     end

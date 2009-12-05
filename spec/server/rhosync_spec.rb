@@ -78,7 +78,7 @@ describe "Rhosync" do
     end
   end
   
-  describe "source member routes" do
+  describe "source routes" do
     before(:each) do
       post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
       @fields = {
@@ -117,12 +117,46 @@ describe "Rhosync" do
       @store.get_data("test_delete_storage").should == {'1'=>@product1}
     end
     
-    it "should get send_cud json" do
+    it "should get inserts json" do
       cs = ClientSync.new(@s,@c,1)
+      injection = {'1'=>@product1,'2'=>@product2}
+      @store.put_data('test_db_storage',injection)
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>{'1'=>{'foo'=>'bar'}}}
+      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+    end
+    
+    it "should get inserts json and confirm token" do
+      cs = ClientSync.new(@s,@c,1)
+      injection = {'1'=>@product1,'2'=>@product2}
+      @store.put_data('test_db_storage',injection)
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      last_response.should be_ok
+      token = @store.get_value(cs.clientdoc.get_page_token_dockey)
+      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+      last_response.should be_ok
+      last_response.body.should == "{}"
+    end
+    
+    it "should get deletes json" do
+      cs = ClientSync.new(@s,@c,1)
+      injection = {'1'=>@product1,'2'=>@product2}
+      @store.put_data('test_db_storage',injection)
+      
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      last_response.should be_ok
+      token = @store.get_value(cs.clientdoc.get_page_token_dockey)
+      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+      
+      @store.flash_data('test_db_storage')
+      @s.refresh_time = Time.now.to_i      
+      
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+      last_response.should be_ok
+      token = @store.get_value(cs.clientdoc.get_page_token_dockey)
+      JSON.parse(last_response.body).should == {'token'=>token.to_s,'delete'=>injection}
     end
   end
 end
