@@ -61,7 +61,7 @@ describe "Rhosync Protocol" do
     
     describe "- clientcreate" do
       it "end clientcreate" do 
-        get "/apps/#{@a.name}/clientcreate", :foo => "bar"
+        get "/apps/#{@a.name}/clientcreate"
       end
     end
     
