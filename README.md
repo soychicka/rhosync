@@ -28,6 +28,7 @@ TODO
 * Refactor cud payload (c,u,d instead of create,update,delete), accept JSON post body
 * Finish protocol documentation (rake doc) - needs errors,links
 * Add version,count and maybe total_count
+* Implement search
 * Finish Sync States (client<->server<->backend)
 * Add comments & DRYness to specs (refactor sample/storage adapters to run from db)
 * Performance tests (ClientSync, SourceSync)

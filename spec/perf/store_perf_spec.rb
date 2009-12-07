@@ -11,12 +11,12 @@ describe "RhosyncStore Performance" do
     @store.db.flushdb
   end
 
-  it "should process get/put for 1000 records (7000 elements)" do
+  it "should process get/put for 1000 records (6000 elements)" do
     @data = get_test_data(1000)
     start = start_timer
-    @store.put_data(@mdoc,@data).should == true
+    @store.put_data(@mdoc.get_key,@data).should == true
     start = lap_timer('put_data duration',start)
-    @store.get_data(@mdoc).should == @data
+    @store.get_data(@mdoc.get_key).should == @data
     lap_timer('get_data duration',start)
   end
 
