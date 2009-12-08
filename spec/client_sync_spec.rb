@@ -26,8 +26,9 @@ describe "ClientSync" do
       expected = {'insert'=>data}
       @a.store.put_data(master_doc.get_key,data)
       res = @cs.send_cud
-      expected['token'] = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == expected
+      token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
+      res.should == [{'token'=>token},{'count'=>data.size},{'progress_count'=>data.size},
+        {'total_count'=>data.size},{'version'=>ClientSync::VERSION},expected]
       @a.store.get_data(@cs.clientdoc.get_page_dockey).should == data
       @a.store.get_data(@cs.clientdoc.get_delete_page_dockey).should == {}
       @a.store.get_data(@cs.clientdoc.get_key).should == data
@@ -36,12 +37,16 @@ describe "ClientSync" do
     it "should return read errors in send cud" do
       injection = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
       @cs.source_sync.adapter.inject_result injection
-      @cs.send_cud.should == {'source-error'=>{"read-error"=>{"message"=>"Error during query"}}}
+      @cs.send_cud.should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>0}, 
+        {"total_count"=>0}, {"version"=>3}, 
+        {"source-error"=>{"read-error"=>{"message"=>"Error during query"}}}]
     end
     
     it "should return login errors in send cud" do
       @u.login = nil
-      @cs.send_cud.should == {'source-error'=>{"login-error"=>{"message"=>"Error logging in"}}}
+      @cs.send_cud.should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>0}, 
+        {"total_count"=>0}, {"version"=>3},
+        {'source-error'=>{"login-error"=>{"message"=>"Error logging in"}}}]
     end
     
     it "should return logoff errors in send cud" do
@@ -49,7 +54,9 @@ describe "ClientSync" do
       @cs.source_sync.adapter.inject_result(data)
       res = @cs.send_cud
       token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == {'source-error'=>{"logoff-error"=>{"message"=>"Error logging off"}},'insert'=>data,'token'=>token}      
+      res.should == [{"token"=>token}, {"count"=>1}, {"progress_count"=>1}, 
+        {"total_count"=>1}, {"version"=>3},
+        {'source-error'=>{"logoff-error"=>{"message"=>"Error logging off"}},'insert'=>data}]
     end
     
     describe "send errors in send_cud" do
@@ -61,10 +68,11 @@ describe "ClientSync" do
         res = @cs.send_cud
         @product3.delete('rhomobile.rhoclient')
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-        expected = {'insert'=>injection,
-                    'create-error'=>{"3-error"=>{"message"=>"Error creating record"},'3'=>@product3},
-                    'token'=>token,
-                    'links'=>{"4"=>{"l"=>"obj4"}}}
+        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+                    {"total_count"=>2}, {"version"=>3},
+                    {'insert'=>injection,
+                     'create-error'=>{"3-error"=>{"message"=>"Error creating record"},'3'=>@product3},
+                     'links'=>{"4"=>{"l"=>"obj4"}}}]
         res.should == expected
       end
       
@@ -75,9 +83,10 @@ describe "ClientSync" do
         @cs.receive_cud(update_data)
         res = @cs.send_cud
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-        expected = {'insert'=>injection,
-                    'update-error'=>{"3-error"=>{"message"=>"Error updating record"},'3'=>{'name'=>'Fuze'}},
-                    'token'=>token}
+        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+                    {"total_count"=>2}, {"version"=>3},
+                    {'insert'=>injection,
+                     'update-error'=>{"3-error"=>{"message"=>"Error updating record"},'3'=>{'name'=>'Fuze'}}}]
         res.should == expected
       end
       
@@ -89,9 +98,10 @@ describe "ClientSync" do
         res = @cs.send_cud
         token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
         @product3.delete('rhomobile.rhoclient')
-        expected = {'insert'=>injection,
-                    'delete-error'=>{"3-error"=>{"message"=>"Error deleting record"},'3'=>@product3},
-                    'token'=>token}
+        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+                    {"total_count"=>2}, {"version"=>3},
+                    {'insert'=>injection,
+                     'delete-error'=>{"3-error"=>{"message"=>"Error deleting record"},'3'=>@product3}}]
         res.should == expected
       end
     end
@@ -176,8 +186,10 @@ describe "ClientSync" do
       params = {'name' => 'iPhone'}
       @cs.send_cud(nil,params)
       token = @store.get_value(@cs.clientdoc.get_page_token_dockey)
-      @cs.send_cud.should == {'insert' => expected, 'token'=>token}
-      @cs.send_cud(token).should == {}
+      @cs.send_cud.should == [{"token"=>token}, {"count"=>1}, {"progress_count"=>1}, 
+        {"total_count"=>1}, {"version"=>3},{'insert' => expected}]
+      @cs.send_cud(token).should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>1}, 
+        {"total_count"=>1}, {"version"=>3}, {}]
       @store.get_data(@cs.clientdoc.get_page_dockey).should == {}              
       @store.get_value(@cs.clientdoc.get_page_token_dockey).should == nil
     end

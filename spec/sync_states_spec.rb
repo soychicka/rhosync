@@ -16,8 +16,9 @@ describe "Sync Server States" do
       expected = {'1'=>@product1,'2'=>@product2}
       @cs.source_sync.adapter.inject_result @data
       res = @cs.send_cud
-      exp_token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == {'token'=>exp_token,'insert'=>expected}
+      token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
+      res.should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+        {"total_count"=>3}, {"version"=>3},{'insert'=>expected}]
       @s.app.store.get_data(@s.document.get_key).should == @data
       @s.app.store.get_data(@cs.clientdoc.get_page_dockey).should == expected
       @s.app.store.get_data(@cs.clientdoc.get_key).should == expected
@@ -35,7 +36,8 @@ describe "Sync Server States" do
       @s.app.store.get_data(@s.document.get_key).should == result
       res = @cs.send_cud
       token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == {'insert'=>result,'links'=>exp_links,'token'=>token}
+      res.should == [{"token"=>token}, {"count"=>1}, {"progress_count"=>1}, 
+        {"total_count"=>1},{"version"=>3},{'insert'=>result,'links'=>exp_links}]
       @s.app.store.get_data(@cs.clientdoc.get_page_dockey).should == result
     end
   end

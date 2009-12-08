@@ -2,6 +2,8 @@ module RhosyncStore
   class ClientSync
     attr_accessor :source,:client,:p_size,:source_sync,:clientdoc
     
+    VERSION = 3
+    
     def initialize(source,client,p_size=nil)
       @source,@client,@p_size = source,client,p_size ? p_size : 500
       @source_sync = SourceSync.new(@source)
@@ -23,7 +25,7 @@ module RhosyncStore
     
     def send_cud(token=nil,query_params=nil)
       res = resend_page(token)
-      return res unless res.empty?
+      return _format_result(res) unless res.empty?
       @source_sync.process(query_params)
       res['insert'] = compute_page
       res['links'] = @source.app.store.get_data(@clientdoc.get_create_links_dockey)
@@ -33,7 +35,7 @@ module RhosyncStore
       res.reject! {|key,value| value.nil? or value.empty?}
       res['token'] = compute_token unless res.empty?
       res.merge!(_send_errors)
-      res
+      _format_result(res)
     end
     
     # Resend token for a client, also sends exceptions
@@ -132,6 +134,22 @@ module RhosyncStore
       res["source-error"] = @source.app.store.get_data(@source.document.get_source_errors_dockey)
       res.reject! {|key,value| value.nil? or value.empty?}
       res
+    end
+    
+    def _format_result(res)
+      count = 0
+      count += res['insert'].length if res['insert']
+      count += res['delete'].length if res['delete']
+      progress_count = @source.app.store.get_datasize(Document.get_datasize_dockey(@clientdoc.get_key))
+      total_count = @source.app.store.get_datasize(Document.get_datasize_dockey(@source.document.get_key))
+      token = res['token']
+      res.delete('token')
+      [ {'token'=>(token ? token : '')},
+        {'count'=>count},
+        {'progress_count'=>progress_count},
+        {'total_count'=>total_count}, 
+        {'version'=>VERSION}, 
+        res ]
     end
   end
 end

@@ -55,4 +55,8 @@ describe "Document" do
   it "should get_create_links_dockey" do
     @d.get_create_links_dockey.should == "#{@doctype}-create-links:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"    
   end
+  
+  it "should get_datasize_dockey" do
+    Document.get_datasize_dockey('foo').should == "foo-count"    
+  end
 end

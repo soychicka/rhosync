@@ -124,7 +124,8 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+        {"total_count"=>2}, {"version"=>3},{'insert'=>injection}]
     end
     
     it "should get inserts json and confirm token" do
@@ -134,10 +135,12 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+        {"total_count"=>2}, {"version"=>3},{'insert'=>injection}]
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       last_response.should be_ok
-      last_response.body.should == "{}"
+      JSON.parse(last_response.body).should == [{"token"=>''}, {"count"=>0}, {"progress_count"=>2}, 
+        {"total_count"=>2}, {"version"=>3},{}]
     end
     
     it "should get deletes json" do
@@ -148,7 +151,8 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == {'token'=>token.to_s,'insert'=>injection}
+      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
+        {"total_count"=>2}, {"version"=>3},{'insert'=>injection}]
       
       @store.flash_data('test_db_storage')
       @s.refresh_time = Time.now.to_i      
@@ -156,7 +160,8 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == {'token'=>token.to_s,'delete'=>injection}
+      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>0}, 
+        {"total_count"=>2}, {"version"=>3},{'delete'=>injection}]
     end
   end
 end

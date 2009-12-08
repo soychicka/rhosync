@@ -16,9 +16,14 @@ module RhosyncStore
         flash_data("#{dockey}*") unless append
         data.each do |key,value|
           value.each do |attrib,value|
-            @db.sadd(dockey,setelement(key,attrib,value)) unless _is_reserved?(attrib,value)
+            unless _is_reserved?(attrib,value)
+              @db.sadd(dockey,setelement(key,attrib,value))
+            end
           end
         end
+        key = Document.get_datasize_dockey(dockey)
+        current_size = append ? get_datasize(key) : 0
+        @db.set(key,data.size + current_size)
       end
       true
     end
@@ -36,7 +41,7 @@ module RhosyncStore
       @db.get(dockey) if dockey
     end
   
-    # Retrieves set for given doctype,source,user
+    # Retrieves set for given dockey,source,user
     def get_data(dockey)
       res = {}
       if dockey
@@ -47,6 +52,12 @@ module RhosyncStore
         end
         res
       end
+    end
+    
+    # Get the data size for a given key
+    def get_datasize(dockey)
+      res = get_value(dockey)
+      res ? res.to_i : 0
     end
   
     # Retrieves diff data hash between two sets
@@ -70,6 +81,9 @@ module RhosyncStore
             @db.srem(dockey,setelement(key,attrib,val))
           end
         end
+        key = Document.get_datasize_dockey(dockey)
+        new_size = get_datasize(key) - data.size
+        @db.set(key,new_size > 0 ? new_size : 0)
       end
       true
     end
