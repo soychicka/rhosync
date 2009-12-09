@@ -7,6 +7,10 @@ describe "RhosyncStoreHelper", :shared => true do
     @store = RhosyncStore::Store.new
     @store.db.flushdb
   end
+  
+  before(:all) do
+    RhosyncStore.add_adapter_path(File.join(File.dirname(__FILE__),'adapters'))
+  end
 end
 
 describe "RhosyncStoreDataHelper", :shared => true do
@@ -52,16 +56,17 @@ end
 describe "SourceAdapterHelper", :shared => true do
   it_should_behave_like "RhosyncStoreDataHelper"
   
+  ERROR = '0' unless defined? ERROR
+  
   before(:each) do
     @a_fields = { :name => 'testapp' }
     @a = App.create(@a_fields)
-    @c = Client.create({:device_type => 'iPhone'})
-    @u_fields = {
-      :login => 'testuser'
-    }
+    @c_fields = {:device_type => 'iPhone'}
+    @c = Client.create(@c_fields)
+    @u_fields = {:login => 'testuser'}
     @u = User.create(@u_fields) 
     @u.password = 'testpass'
-    @fields = {
+    @s_fields = {
       :name => 'SampleAdapter',
       :url => 'http://example.com',
       :login => 'testuser',
@@ -69,7 +74,28 @@ describe "SourceAdapterHelper", :shared => true do
       :user_id => @u.id,
       :app_id => @a.id
     }
-    @s = Source.create(@fields)
+    @s = Source.create(@s_fields)
+  end
+  
+  def do_post(url,params)
+    post url, params.to_json, {'CONTENT_TYPE'=>'application/json'}
+  end
+  
+  def set_test_data(dockey,data,error_message=nil,error_name='error')
+    if error_message
+      error = {'message'=>error_message,'name'=>error_name} 
+      data.merge!({ERROR=>error})
+    end  
+    data.each { |key,value| value['rhomobile.rhoclient'] = @c.id.to_s }
+    @a.store.put_data(dockey,data)
+    data
+  end
+  
+  def verify_result(result)
+    result.each do |dockey,expected|
+      expected[ERROR].delete('rhomobile.rhoclient') if expected[ERROR]
+      @a.store.get_data(dockey).should == expected
+    end
   end
 end
 

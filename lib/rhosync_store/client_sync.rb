@@ -17,12 +17,6 @@ module RhosyncStore
       @source_sync.process(query_params)
     end
     
-    # def process(cud_params=nil,query_params=nil)
-    #   #TODO handle ack insert and delete pages
-    #   receive_cud(cud_params) if cud_params
-    #   
-    # end
-    
     def send_cud(token=nil,query_params=nil)
       res = resend_page(token)
       return _format_result(res) unless res.empty?

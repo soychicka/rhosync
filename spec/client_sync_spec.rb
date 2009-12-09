@@ -1,45 +1,42 @@
 require File.join(File.dirname(__FILE__),'spec_helper')
-$:.unshift File.join(__FILE__,'..','lib')
-require 'rhosync_store'
 
 describe "ClientSync" do
   it_should_behave_like "SourceAdapterHelper"
   
-  before(:each) do    
-    @path = File.join(File.dirname(__FILE__),'adapters')
-    RhosyncStore.add_adapter_path(@path)
+  before(:each) do
     @cs = ClientSync.new(@s,@c,2)
   end
   
+  #TODO: DRY up setup and verify parts of these specs
   describe "process methods" do
     it "should handle receive cud" do
       params = {'create'=>{'1'=>@product1},'update'=>{'2'=>@product2},'delete'=>{'3'=>@product3}}
       @cs.receive_cud(params)
-      @a.store.get_data(@s.document.get_create_dockey).should == {}
-      @a.store.get_data(@s.document.get_update_dockey).should == {}
-      @a.store.get_data(@s.document.get_delete_dockey).should == {}
+      verify_result(@s.document.get_create_dockey => {},
+        @s.document.get_update_dockey => {},
+        @s.document.get_delete_dockey => {})
     end
   
     it "should handle send cud" do
-      master_doc = Document.new('md',@a.id,@u.id,'0',@s.name)
       data = {'1'=>@product1,'2'=>@product2}
       expected = {'insert'=>data}
-      @a.store.put_data(master_doc.get_key,data)
+      set_test_data('test_db_storage',data)
       res = @cs.send_cud
-      token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == [{'token'=>token},{'count'=>data.size},{'progress_count'=>data.size},
+      res.should == [{'token'=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)},
+        {'count'=>data.size},{'progress_count'=>data.size},
         {'total_count'=>data.size},{'version'=>ClientSync::VERSION},expected]
-      @a.store.get_data(@cs.clientdoc.get_page_dockey).should == data
-      @a.store.get_data(@cs.clientdoc.get_delete_page_dockey).should == {}
-      @a.store.get_data(@cs.clientdoc.get_key).should == data
+      verify_result(@cs.clientdoc.get_page_dockey => data,
+        @cs.clientdoc.get_delete_page_dockey => {},
+        @cs.clientdoc.get_key => data)
     end
     
     it "should return read errors in send cud" do
-      injection = {'1'=>@product1,'2'=>@product2,'3'=>@product3}
-      @cs.source_sync.adapter.inject_result injection
+      msg = "Error during query"
+      injection = {'1'=>@product1,'2'=>@product2}
+      set_test_data('test_db_storage',injection,msg,'query error')
       @cs.send_cud.should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>0}, 
         {"total_count"=>0}, {"version"=>3}, 
-        {"source-error"=>{"read-error"=>{"message"=>"Error during query"}}}]
+        {"source-error"=>{"read-error"=>{"message"=>msg}}}]
     end
     
     it "should return login errors in send cud" do
@@ -50,80 +47,73 @@ describe "ClientSync" do
     end
     
     it "should return logoff errors in send cud" do
-      data = {'1'=>{'name'=>'logoff'}}
-      @cs.source_sync.adapter.inject_result(data)
+      msg = "Error logging off"
+      set_test_data('test_db_storage',{},msg,'logoff error')
       res = @cs.send_cud
-      token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == [{"token"=>token}, {"count"=>1}, {"progress_count"=>1}, 
-        {"total_count"=>1}, {"version"=>3},
-        {'source-error'=>{"logoff-error"=>{"message"=>"Error logging off"}},'insert'=>data}]
+      res.should == [{"token"=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+        {"count"=>1}, {"progress_count"=>1}, 
+        {"total_count"=>1}, {"version"=>3}, 
+        {"source-error"=>{"logoff-error"=>{"message"=>msg}}, 
+        "insert"=>{ERROR=>{"name"=>"logoff error", "message"=>msg, 
+          "rhomobile.rhoclient"=>"1"}}}]
     end
     
     describe "send errors in send_cud" do
       it "should handle create errors" do
-        created_data = {'create'=>{'4'=>@product4,'3'=>@product3}}
-        injection = {'1'=>@product1,'2'=>@product2}
-        @cs.source_sync.adapter.inject_result injection
+        msg = "Error creating record"
+        created_data = {'create'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
         @cs.receive_cud(created_data)
         res = @cs.send_cud
-        @product3.delete('rhomobile.rhoclient')
-        token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-                    {"total_count"=>2}, {"version"=>3},
-                    {'insert'=>injection,
-                     'create-error'=>{"3-error"=>{"message"=>"Error creating record"},'3'=>@product3},
-                     'links'=>{"4"=>{"l"=>"obj4"}}}]
-        res.should == expected
+        created_data['create'][ERROR].delete('rhomobile.rhoclient')
+        res.should == [{"token"=>""}, 
+          {"count"=>0}, {"progress_count"=>0}, 
+          {"total_count"=>0}, {"version"=>3},
+          {'create-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>created_data['create'][ERROR]}}]
       end
       
       it "should handle update errors" do
-        update_data = {'update'=>{'3'=>{'name'=>'Fuze'}}}
-        injection = {'1'=>@product1,'2'=>@product2}
-        @cs.source_sync.adapter.inject_result injection
+        msg = "Error updating record"
+        update_data = {'update'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
         @cs.receive_cud(update_data)
         res = @cs.send_cud
-        token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-                    {"total_count"=>2}, {"version"=>3},
-                    {'insert'=>injection,
-                     'update-error'=>{"3-error"=>{"message"=>"Error updating record"},'3'=>{'name'=>'Fuze'}}}]
-        res.should == expected
+        update_data['update'][ERROR].delete('rhomobile.rhoclient')
+        res.should == [{"token"=>""}, 
+          {"count"=>0}, {"progress_count"=>0}, 
+          {"total_count"=>0}, {"version"=>3},
+          {'update-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>update_data['update'][ERROR]}}]
       end
       
       it "should handle delete errors" do
-        delete_data = {'delete'=>{'3'=>@product3}}
-        injection = {'1'=>@product1,'2'=>@product2}
-        @cs.source_sync.adapter.inject_result injection
+        msg = "Error deleting record"
+        delete_data = {'delete'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
         @cs.receive_cud(delete_data)
         res = @cs.send_cud
-        token = @a.store.get_value(@cs.clientdoc.get_page_token_dockey)
-        @product3.delete('rhomobile.rhoclient')
-        expected = [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-                    {"total_count"=>2}, {"version"=>3},
-                    {'insert'=>injection,
-                     'delete-error'=>{"3-error"=>{"message"=>"Error deleting record"},'3'=>@product3}}]
-        res.should == expected
+        delete_data['delete'][ERROR].delete('rhomobile.rhoclient')
+        res.should == [{"token"=>""}, 
+          {"count"=>0}, {"progress_count"=>0}, 
+          {"total_count"=>0}, {"version"=>3},
+          {'delete-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>delete_data['delete'][ERROR]}}]
       end
     end
   
     it "should handle process" do
       expected = {'1'=>@product1,'2'=>@product2}
-      @cs.source_sync.adapter.inject_result expected
+      set_test_data('test_db_storage',expected)
       params = {'create'=>{'1'=>@product1},'update'=>{'2'=>@product2},'delete'=>{'3'=>@product3}}
       @cs.receive_cud(params)
-      @a.store.get_data(@s.document.get_create_dockey).should == {}
-      @a.store.get_data(@s.document.get_update_dockey).should == {}
-      @a.store.get_data(@s.document.get_delete_dockey).should == {}
-      @a.store.get_data(@s.document.get_key).should == expected
+      verify_result(@s.document.get_create_dockey => {},
+        @s.document.get_update_dockey => {},
+        @s.document.get_delete_dockey => {},
+        @s.document.get_key => expected)
     end
     
     it "should handle process with query_params" do
       expected = {'1'=>@product1}
-      @cs.source_sync.adapter.inject_result({'1'=>@product1,'2'=>@product2,'4'=>@product4})
+      set_test_data('test_db_storage',{'1'=>@product1,'2'=>@product2,'4'=>@product4})
       params = {'name' => 'iPhone'}
       @cs.send_cud(nil,params)
-      @a.store.get_data(@s.document.get_key).should == expected
-      @a.store.get_data(@cs.clientdoc.get_page_dockey).should == expected
+      verify_result(@s.document.get_key => expected,
+        @cs.clientdoc.get_page_dockey => expected)
     end
   
     it "should handle reset" do
@@ -182,7 +172,7 @@ describe "ClientSync" do
     
     it "should resend page if page exists and no token provided" do
       expected = {'1'=>@product1}
-      @cs.source_sync.adapter.inject_result({'1'=>@product1,'2'=>@product2,'4'=>@product4})
+      set_test_data('test_db_storage',{'1'=>@product1,'2'=>@product2,'4'=>@product4})
       params = {'name' => 'iPhone'}
       @cs.send_cud(nil,params)
       token = @store.get_value(@cs.clientdoc.get_page_token_dockey)

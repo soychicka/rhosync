@@ -1,30 +1,27 @@
 require File.join(File.dirname(__FILE__),'spec_helper')
-$:.unshift File.join(__FILE__,'..','lib')
-require 'rhosync_store'
 
 describe "Source" do
   it_should_behave_like "SourceAdapterHelper"
   
-  it "should create source with @fields" do
-    @s1 = Source.create(@fields)
-    @s1.name.should == @fields[:name]
-    @s1.url.should == @fields[:url]
-    @s1.login.should == @fields[:login]
+  it "should create source with @s_fields" do
+    @s.name.should == @s_fields[:name]
+    @s.url.should == @s_fields[:url]
+    @s.login.should == @s_fields[:login]
+    @s.app.name.should == @a_fields[:name]
+    @s.poll_interval.should == 300
+    @s.priority.should == 3
+    @s.callback_url.should be_nil
+    (@s.refresh_time + 1).should >= Time.now.to_i
+    @s.refresh_time.should <= Time.now.to_i + 1 
+
+    @s1 = Source.with_key(@s.id)
+    @s1.name.should == @s_fields[:name]
+    @s1.url.should == @s_fields[:url]
+    @s1.login.should == @s_fields[:login]
     @s1.app.name.should == @a_fields[:name]
     @s1.poll_interval.should == 300
     @s1.priority.should == 3
     @s1.callback_url.should be_nil
-    (@s1.refresh_time + 1).should >= Time.now.to_i
-    @s1.refresh_time.should <= Time.now.to_i + 1 
-
-    @s2 = Source.with_key(@s1.id)
-    @s2.name.should == @s1.name
-    @s2.url.should == @s1.url
-    @s2.login.should == @s1.login
-    @s2.app.name.should == @s1.app.name
-    @s2.poll_interval.should == 300
-    @s2.priority.should == 3
-    @s2.callback_url.should be_nil
   end
   
   it "should create source with user" do
@@ -33,6 +30,6 @@ describe "Source" do
   
   it "should create source with app and document" do
     @s.app.name.should == @a_fields[:name]
-    @s.document.get_key.should == "md:#{@s.app.id}:#{@u.id}:0:#{@fields[:name]}"
+    @s.document.get_key.should == "md:#{@s.app.id}:#{@u.id}:0:#{@s_fields[:name]}"
   end
 end

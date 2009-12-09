@@ -1,13 +1,9 @@
 require File.join(File.dirname(__FILE__),'spec_helper')
-$:.unshift File.join(__FILE__,'..','lib')
-require 'rhosync_store'
 
 describe "Sync Server States" do
   it_should_behave_like "StorageStateHelper"
   
   before(:each) do    
-    @path = File.join(File.dirname(__FILE__),'adapters')
-    RhosyncStore.add_adapter_path(@path)
     @cs = ClientSync.new(@s,@c,2)
   end
   

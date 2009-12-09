@@ -60,6 +60,10 @@ before do
   unless request.env['PATH_INFO'].split('/').last == 'client_login'
     throw :halt, [401, "Not authenticated"] if login_required
   end
+  if request.env['CONTENT_TYPE'] == 'application/json'
+    params.merge!(JSON.parse(request.body.read))
+    request.body.rewind
+  end
 end
 
 get "/" do
@@ -93,6 +97,7 @@ end
 
 # Member routes
 get '/apps/:app_name' do
+  content_type :json
   cs = ClientSync.new(current_source,current_client,params[:p_size])
   cs.send_cud(params[:token],params[:search]).to_json
 end

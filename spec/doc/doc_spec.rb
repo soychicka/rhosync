@@ -44,19 +44,19 @@ describe "Rhosync Protocol" do
   
   describe "unauthenticated routes - client_login" do
     it "end client_login" do
-      post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
     end
   end
   
   describe "unauthenticated routes - client_login with wrong login or password " do
     it "end wrong login or password client_login" do
-      post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'wrongpass'
+      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'wrongpass'
     end
   end
   
   describe "authenticated routes" do
     before(:each) do
-      post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
     end
     
     describe "- clientcreate" do
@@ -67,7 +67,7 @@ describe "Rhosync Protocol" do
     
     describe "- clientregister" do
       it "end clientregister" do
-        post "/apps/#{@a.name}/clientregister", "device_type" => "iPhone", "client_id" => @c.id
+        do_post "/apps/#{@a.name}/clientregister", "device_type" => "iPhone", "client_id" => @c.id
       end
     end
     
@@ -80,21 +80,21 @@ describe "Rhosync Protocol" do
     describe "- client create object(s)" do
       it "end client create object(s)" do
         params = {'create'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        post "/apps/#{@a.name}", params
+        do_post "/apps/#{@a.name}", params
       end
     end
     
     describe "- client update object(s)" do
       it "end client update object(s)" do
         params = {'update'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        post "/apps/#{@a.name}", params        
+        do_post "/apps/#{@a.name}", params        
       end
     end
     
     describe "- client delete object(s)" do
       it "end client delete object(s)" do
         params = {'delete'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        post "/apps/#{@a.name}", params
+        do_post "/apps/#{@a.name}", params
       end
     end 
     
@@ -105,7 +105,7 @@ describe "Rhosync Protocol" do
                   'delete'=>{'3'=>@product3},
                   :client_id => @c.id,
                   :source_name => @s.name}
-        post "/apps/#{@a.name}", params
+        do_post "/apps/#{@a.name}", params
       end
     end
     
