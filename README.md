@@ -25,7 +25,6 @@ This is problem with relevance-rcov.
 
 TODO
 -------------------------------------------------------------
-* Finish protocol documentation (rake doc) - needs errors,links
 * Implement search
 * Finish Sync States (client<->server<->backend)
 * Performance tests (ClientSync, SourceSync)
@@ -36,3 +35,4 @@ TODO
 * Import/Export support
 * Add uniqueness validation to app,client,user models
 * Refactor User.is_exist? method (not very clean)
+* HTML protocol doc format
