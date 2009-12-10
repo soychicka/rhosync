@@ -26,18 +26,6 @@ describe "Rhosync Protocol" do
     @app ||= Sinatra::Application
   end
   
-  before(:each) do
-    @fields = {
-      :name => 'StorageAdapter',
-      :url => 'http://example.com',
-      :login => 'testuser',
-      :password => 'testpass',
-      :user_id => @u.id,
-      :app_id => @a.id
-    }
-    @s = Source.create(@fields)
-  end
-  
   after(:each) do
     _print_messages
   end
@@ -77,26 +65,14 @@ describe "Rhosync Protocol" do
       end
     end
     
-    describe "- client create object(s)" do
-      it "end client create object(s)" do
-        params = {'create'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        do_post "/apps/#{@a.name}", params
+    ['create','update','delete'].each do |operation|
+      describe "- client #{operation} object(s)" do
+        it "end client #{operation} object(s)" do
+          params = {operation=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
+          do_post "/apps/#{@a.name}", params
+        end
       end
     end
-    
-    describe "- client update object(s)" do
-      it "end client update object(s)" do
-        params = {'update'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        do_post "/apps/#{@a.name}", params        
-      end
-    end
-    
-    describe "- client delete object(s)" do
-      it "end client delete object(s)" do
-        params = {'delete'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
-        do_post "/apps/#{@a.name}", params
-      end
-    end 
     
     describe "- client create,update,delete objects" do
       it "end client create,update,delete objects" do
@@ -109,11 +85,55 @@ describe "Rhosync Protocol" do
       end
     end
     
+    describe "- client create object where backend provides object id in adapter.create" do
+      it "end client create object where backend provides object id in adapter.create" do
+        @product4['link'] = 'test link'
+        params = {'create'=>{'4'=>@product4},
+                  :client_id => @c.id,
+                  :source_name => @s.name}
+        do_post "/apps/#{@a.name}", params
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      end
+    end
+    
+    describe "- server send source query error to client" do
+      it "end server send source query error to client" do
+        set_test_data('test_db_storage',{},"Error during query",'query error')
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      end
+    end
+    
+    describe "- server send source login error to client" do
+      it "end server send source login error to client" do
+        @u.login = nil
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      end
+    end
+    
+    describe "- server send source logoff error to client" do
+      it "end server send source logoff error to client" do
+        set_test_data('test_db_storage',{},"Error logging off",'logoff error')
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      end
+    end
+    
+    ['create','update','delete'].each do |operation|
+      describe "- client #{operation} object(s) with error" do
+        it "end client #{operation} object(s) with error" do
+          params = {operation=>{ERROR=>{'an_attribute'=>"error #{operation}",'name'=>'wrongname'}},
+                    :client_id => @c.id,
+                    :source_name => @s.name}
+          do_post "/apps/#{@a.name}", params
+          get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        end
+      end
+    end
+    
     describe "- server send insert objects to client" do
       it "end server send insert objects to client" do
         cs = ClientSync.new(@s,@c,1)
-        injection = {'1'=>@product1,'2'=>@product2}
-        @store.put_data('test_db_storage',injection)
+        data = {'1'=>@product1,'2'=>@product2}
+        set_test_data('test_db_storage',data)
         get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       end
     end
@@ -121,8 +141,8 @@ describe "Rhosync Protocol" do
     describe "- server send delete objects to client" do
       it "end server send delete objects to client" do 
         cs = ClientSync.new(@s,@c,1)
-        injection = {'1'=>@product1,'2'=>@product2}
-        @store.put_data('test_db_storage',injection)
+        data = {'1'=>@product1,'2'=>@product2}
+        set_test_data('test_db_storage',data)
         get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
         token = @store.get_value(cs.clientdoc.get_page_token_dockey)
         @store.flash_data('test_db_storage')
@@ -134,11 +154,11 @@ describe "Rhosync Protocol" do
     describe "- server send insert,delete objects to client" do
       it "end server send insert,delete objects to client" do 
         cs = ClientSync.new(@s,@c,1)
-        injection = {'1'=>@product1,'2'=>@product2}
-        @store.put_data('test_db_storage',injection)
+        data = {'1'=>@product1,'2'=>@product2}
+        set_test_data('test_db_storage',data)
         get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
         token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-        @store.put_data('test_db_storage',{'1'=>@product1,'3'=>@product3})
+        set_test_data('test_db_storage',{'1'=>@product1,'3'=>@product3})
         @s.refresh_time = Time.now.to_i
         get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       end

@@ -10,15 +10,17 @@ describe "Sync Server States" do
   describe "do initial sync" do
     it "should sync with backend, setup masterdoc, clientdoc, and page documents" do
       expected = {'1'=>@product1,'2'=>@product2}
-      @cs.source_sync.adapter.inject_result @data
-      res = @cs.send_cud
-      token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-        {"total_count"=>3}, {"version"=>3},{'insert'=>expected}]
-      @s.app.store.get_data(@s.document.get_key).should == @data
-      @s.app.store.get_data(@cs.clientdoc.get_page_dockey).should == expected
-      @s.app.store.get_data(@cs.clientdoc.get_key).should == expected
+      set_test_data(@s.document.get_key,@data)
+      @cs.send_cud.should == [{"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+        {"count"=>2}, {"progress_count"=>2},{"total_count"=>3}, 
+        {"version"=>3},{'insert'=>expected}]
+      verify_result(@s.document.get_key => @data,
+        @cs.clientdoc.get_page_dockey => expected,
+        @cs.clientdoc.get_key => expected)
     end
+  end
+  
+  def verify_result_hash()
   end
   
   describe "client creates objects" do
@@ -26,15 +28,14 @@ describe "Sync Server States" do
       exp_links = {'temp1'=>{'l'=>'1'}}
       result = {'1'=>@product1}
       params = {'create'=>{'temp1'=>@product1}}
-      @cs.source_sync.adapter.inject_result result
+      set_test_data(@s.document.get_key,result)
       @cs.receive_cud(params)
-      @s.app.store.get_data(@cs.clientdoc.get_create_links_dockey).should == exp_links
-      @s.app.store.get_data(@s.document.get_key).should == result
-      res = @cs.send_cud
-      token = @s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)
-      res.should == [{"token"=>token}, {"count"=>1}, {"progress_count"=>1}, 
-        {"total_count"=>1},{"version"=>3},{'insert'=>result,'links'=>exp_links}]
-      @s.app.store.get_data(@cs.clientdoc.get_page_dockey).should == result
+      verify_result(@cs.clientdoc.get_create_links_dockey => exp_links,
+        @s.document.get_key => result)
+      @cs.send_cud.should == [{"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+        {"count"=>1}, {"progress_count"=>1},{"total_count"=>1},
+        {"version"=>3},{'insert'=>result,'links'=>exp_links}]
+      verify_result(@cs.clientdoc.get_page_dockey => result)
     end
   end
 end

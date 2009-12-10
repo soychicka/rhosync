@@ -1,5 +1,4 @@
 class SampleAdapter < SourceAdapter
-  ERROR = '0'
   def initialize(source,credential)
     super(source,credential)
   end
@@ -11,7 +10,7 @@ class SampleAdapter < SourceAdapter
  
   def query(params=nil)
     @result = @source.app.store.get_data('test_db_storage')
-    raise SourceAdapterServerErrorException.new(@result[ERROR]['message']) if @result[ERROR] and 
+    raise SourceAdapterServerErrorException.new(@result[ERROR]['an_attribute']) if @result[ERROR] and 
       @result[ERROR]['name'] == 'query error'
     @result.reject! {|key,value| value['name'] != params['name']} if params
     @result
@@ -22,6 +21,7 @@ class SampleAdapter < SourceAdapter
   end
  
   def create(name_value_list,blob=nil)
+    @source.app.store.put_data('test_create_storage',{name_value_list['_id']=>name_value_list},true)
     raise SourceAdapterException.new("ID provided in name_value_list") if name_value_list['id']
     _raise_exception(name_value_list) 
     if name_value_list and name_value_list['link']
@@ -30,18 +30,20 @@ class SampleAdapter < SourceAdapter
   end
  
   def update(name_value_list)
+    @source.app.store.put_data('test_update_storage',{name_value_list['id']=>name_value_list},true)
     raise SourceAdapterException.new("No id provided in name_value_list") unless name_value_list['id']
     _raise_exception(name_value_list) 
   end
  
   def delete(name_value_list)
+    @source.app.store.put_data('test_delete_storage',{name_value_list['id']=>name_value_list},true)
     raise SourceAdapterException.new("No id provided in name_value_list") unless name_value_list['id']
     _raise_exception(name_value_list)  
   end
  
   def logoff
     @result = @source.app.store.get_data('test_db_storage')
-    raise SourceAdapterLogoffException.new(@result[ERROR]['message']) if @result[ERROR] and 
+    raise SourceAdapterLogoffException.new(@result[ERROR]['an_attribute']) if @result[ERROR] and 
       @result[ERROR]['name'] == 'logoff error'
   end
   
@@ -51,8 +53,8 @@ class SampleAdapter < SourceAdapter
   end
   
   def _raise_exception(name_value_list)
-    if name_value_list and name_value_list['name'] == 'error' or name_value_list['id'] == 'error'
-      raise SourceAdapterServerErrorException.new(name_value_list['message']) 
+    if name_value_list and name_value_list['name'] == 'wrongname' or name_value_list['id'] == 'error'
+      raise SourceAdapterServerErrorException.new(name_value_list['an_attribute']) 
     end
   end
 end

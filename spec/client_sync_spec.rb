@@ -7,7 +7,6 @@ describe "ClientSync" do
     @cs = ClientSync.new(@s,@c,2)
   end
   
-  #TODO: DRY up setup and verify parts of these specs
   describe "process methods" do
     it "should handle receive cud" do
       params = {'create'=>{'1'=>@product1},'update'=>{'2'=>@product2},'delete'=>{'3'=>@product3}}
@@ -21,8 +20,7 @@ describe "ClientSync" do
       data = {'1'=>@product1,'2'=>@product2}
       expected = {'insert'=>data}
       set_test_data('test_db_storage',data)
-      res = @cs.send_cud
-      res.should == [{'token'=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)},
+      @cs.send_cud.should == [{'token'=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)},
         {'count'=>data.size},{'progress_count'=>data.size},
         {'total_count'=>data.size},{'version'=>ClientSync::VERSION},expected]
       verify_result(@cs.clientdoc.get_page_dockey => data,
@@ -32,8 +30,8 @@ describe "ClientSync" do
     
     it "should return read errors in send cud" do
       msg = "Error during query"
-      injection = {'1'=>@product1,'2'=>@product2}
-      set_test_data('test_db_storage',injection,msg,'query error')
+      data = {'1'=>@product1,'2'=>@product2}
+      set_test_data('test_db_storage',data,msg,'query error')
       @cs.send_cud.should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>0}, 
         {"total_count"=>0}, {"version"=>3}, 
         {"source-error"=>{"read-error"=>{"message"=>msg}}}]
@@ -49,50 +47,36 @@ describe "ClientSync" do
     it "should return logoff errors in send cud" do
       msg = "Error logging off"
       set_test_data('test_db_storage',{},msg,'logoff error')
-      res = @cs.send_cud
-      res.should == [{"token"=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+      @cs.send_cud.should == [{"token"=>@a.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
         {"count"=>1}, {"progress_count"=>1}, 
         {"total_count"=>1}, {"version"=>3}, 
         {"source-error"=>{"logoff-error"=>{"message"=>msg}}, 
-        "insert"=>{ERROR=>{"name"=>"logoff error", "message"=>msg, 
+        "insert"=>{ERROR=>{"name"=>"logoff error", "an_attribute"=>msg, 
           "rhomobile.rhoclient"=>"1"}}}]
     end
     
     describe "send errors in send_cud" do
       it "should handle create errors" do
-        msg = "Error creating record"
-        created_data = {'create'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
-        @cs.receive_cud(created_data)
-        res = @cs.send_cud
-        created_data['create'][ERROR].delete('rhomobile.rhoclient')
-        res.should == [{"token"=>""}, 
-          {"count"=>0}, {"progress_count"=>0}, 
-          {"total_count"=>0}, {"version"=>3},
-          {'create-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>created_data['create'][ERROR]}}]
+        receive_and_send_cud('create')
       end
       
       it "should handle update errors" do
-        msg = "Error updating record"
-        update_data = {'update'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
-        @cs.receive_cud(update_data)
-        res = @cs.send_cud
-        update_data['update'][ERROR].delete('rhomobile.rhoclient')
-        res.should == [{"token"=>""}, 
-          {"count"=>0}, {"progress_count"=>0}, 
-          {"total_count"=>0}, {"version"=>3},
-          {'update-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>update_data['update'][ERROR]}}]
+        receive_and_send_cud('update')
       end
       
       it "should handle delete errors" do
-        msg = "Error deleting record"
-        delete_data = {'delete'=>{ERROR=>{'message'=>msg,'name'=>'error'}}}
-        @cs.receive_cud(delete_data)
-        res = @cs.send_cud
-        delete_data['delete'][ERROR].delete('rhomobile.rhoclient')
-        res.should == [{"token"=>""}, 
+        receive_and_send_cud('delete')
+      end
+      
+      def receive_and_send_cud(operation)
+        msg = "Error #{operation} record"
+        op_data = {operation=>{ERROR=>{'an_attribute'=>msg,'name'=>'wrongname'}}}
+        @cs.receive_cud(op_data)
+        op_data[operation][ERROR].delete('rhomobile.rhoclient')
+        @cs.send_cud.should == [{"token"=>""}, 
           {"count"=>0}, {"progress_count"=>0}, 
           {"total_count"=>0}, {"version"=>3},
-          {'delete-error'=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>delete_data['delete'][ERROR]}}]
+          {"#{operation}-error"=>{"#{ERROR}-error"=>{"message"=>msg},ERROR=>op_data[operation][ERROR]}}]
       end
     end
   
@@ -181,7 +165,7 @@ describe "ClientSync" do
       @cs.send_cud(token).should == [{"token"=>""}, {"count"=>0}, {"progress_count"=>1}, 
         {"total_count"=>1}, {"version"=>3}, {}]
       @store.get_data(@cs.clientdoc.get_page_dockey).should == {}              
-      @store.get_value(@cs.clientdoc.get_page_token_dockey).should == nil
+      @store.get_value(@cs.clientdoc.get_page_token_dockey).should be_nil
     end
   end
 end

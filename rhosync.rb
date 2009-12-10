@@ -5,7 +5,7 @@ require 'erb'
 require 'json'
 require 'rhosync_store'
 
-enable :static, :raise_errors
+enable :raise_errors
 
 include RhosyncStore
 

@@ -25,15 +25,14 @@ This is problem with relevance-rcov.
 
 TODO
 -------------------------------------------------------------
-* Refactor cud payload (c,u,d instead of create,update,delete), accept JSON post body
 * Finish protocol documentation (rake doc) - needs errors,links
-* Add version,count and maybe total_count
 * Implement search
 * Finish Sync States (client<->server<->backend)
-* Add comments & DRYness to specs (refactor sample/storage adapters to run from db)
 * Performance tests (ClientSync, SourceSync)
 * Add queue layer for background adapters
 * Installation scripts/process
-* Management/Testing web console w/ import support
+* Administration web console
+* Testing web console
+* Import/Export support
 * Add uniqueness validation to app,client,user models
 * Refactor User.is_exist? method (not very clean)

@@ -56,7 +56,7 @@ end
 describe "SourceAdapterHelper", :shared => true do
   it_should_behave_like "RhosyncStoreDataHelper"
   
-  ERROR = '0' unless defined? ERROR
+  ERROR = '0_broken_object_id' unless defined? ERROR
   
   before(:each) do
     @a_fields = { :name => 'testapp' }
@@ -81,9 +81,9 @@ describe "SourceAdapterHelper", :shared => true do
     post url, params.to_json, {'CONTENT_TYPE'=>'application/json'}
   end
   
-  def set_test_data(dockey,data,error_message=nil,error_name='error')
+  def set_test_data(dockey,data,error_message=nil,error_name='wrongname')
     if error_message
-      error = {'message'=>error_message,'name'=>error_name} 
+      error = {'an_attribute'=>error_message,'name'=>error_name} 
       data.merge!({ERROR=>error})
     end  
     data.each { |key,value| value['rhomobile.rhoclient'] = @c.id.to_s }

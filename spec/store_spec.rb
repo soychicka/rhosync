@@ -79,7 +79,8 @@ describe "RhosyncStore" do
     end
     
     it "should get_keys" do
-      expected = ["doc1:1:1:1:source1", "doc1:1:1:1:source1-count", "doc1:1:1:1:source2", "doc1:1:1:1:source2-count"]
+      expected = ["doc1:1:1:1:source1", "doc1:1:1:1:source1-count", 
+        "doc1:1:1:1:source2", "doc1:1:1:1:source2-count"]
       @store.put_data(expected[0],@data)
       @store.put_data(expected[2],@data)
       @store.get_keys('doc1:1:1:1:*').sort.should == expected
