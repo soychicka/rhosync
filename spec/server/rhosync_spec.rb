@@ -116,8 +116,8 @@ describe "Rhosync" do
       last_response.should be_ok
       last_response.content_type.should == 'application/json'
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-        {"total_count"=>2}, {"version"=>3},{'insert'=>data}]
+      JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
+        {"count"=>2}, {"progress_count"=>2},{"total_count"=>2},{'insert'=>data}]
     end
     
     it "should get inserts json and confirm token" do
@@ -127,12 +127,12 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-        {"total_count"=>2}, {"version"=>3},{'insert'=>data}]
+      JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
+        {"count"=>2}, {"progress_count"=>2}, {"total_count"=>2},{'insert'=>data}]
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       last_response.should be_ok
-      JSON.parse(last_response.body).should == [{"token"=>''}, {"count"=>0}, {"progress_count"=>2}, 
-        {"total_count"=>2}, {"version"=>3},{}]
+      JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>''}, 
+        {"count"=>0}, {"progress_count"=>2}, {"total_count"=>2},{}]
     end
     
     it "should get deletes json" do
@@ -143,8 +143,8 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>2}, 
-        {"total_count"=>2}, {"version"=>3},{'insert'=>data}]
+      JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
+        {"count"=>2}, {"progress_count"=>2}, {"total_count"=>2},{'insert'=>data}]
       
       @store.flash_data('test_db_storage')
       @s.refresh_time = Time.now.to_i      
@@ -152,8 +152,41 @@ describe "Rhosync" do
       get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
-      JSON.parse(last_response.body).should == [{"token"=>token}, {"count"=>2}, {"progress_count"=>0}, 
-        {"total_count"=>2}, {"version"=>3},{'delete'=>data}]
+      JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
+        {"count"=>2}, {"progress_count"=>0}, {"total_count"=>2},{'delete'=>data}]
+    end
+    
+    it "should get search results" do
+      sources = ['SampleAdapter']
+      @store.put_data('test_db_storage',@data)
+      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+      get "/apps/#{@a.name}/search",params
+      JSON.parse(last_response.body).should == [[{'version'=>ClientSync::VERSION},
+        {'source'=>sources[0]},{'count'=>1},{'insert'=>{'1'=>@product1}}]]
+    end
+    
+    it "should get search results with error" do
+      sources = ['SampleAdapter']
+      msg = "Error during search"
+      error = set_test_data('test_db_storage',@data,msg,'search error')
+      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+      get "/apps/#{@a.name}/search",params
+      JSON.parse(last_response.body).should == [[{'version'=>ClientSync::VERSION},
+        {'source'=>sources[0]},{'search-error'=>{'search-error'=>{'message'=>msg}}}]]
+    end
+    
+    it "should get multiple source search results" do
+      @s_fields[:name] = 'SimpleAdapter'
+      @s1 = Source.create(@s_fields)
+      @store.put_data('test_db_storage',@data)
+      sources = ['SimpleAdapter','SampleAdapter']
+      params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'}}
+      get "/apps/#{@a.name}/search",params
+      JSON.parse(last_response.body).should == [
+        [{"version"=>ClientSync::VERSION}, {"source"=>"SimpleAdapter"}, 
+         {"count"=>1}, {"insert"=>{'obj'=>{'foo'=>'bar'}}}],
+        [{"version"=>ClientSync::VERSION}, {"source"=>"SampleAdapter"}, 
+         {"count"=>1}, {"insert"=>{'1'=>@product1}}]]
     end
   end
 end

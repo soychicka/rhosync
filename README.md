@@ -25,14 +25,12 @@ This is problem with relevance-rcov.
 
 TODO
 -------------------------------------------------------------
-* Implement search
+* Installation scripts/process (REST interface, import/export)
 * Finish Sync States (client<->server<->backend)
 * Performance tests (ClientSync, SourceSync)
 * Add queue layer for background adapters
-* Installation scripts/process
 * Administration web console
 * Testing web console
-* Import/Export support
 * Add uniqueness validation to app,client,user models
 * Refactor User.is_exist? method (not very clean)
 * HTML protocol doc format

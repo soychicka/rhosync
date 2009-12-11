@@ -22,23 +22,20 @@ module RhosyncStore
     end
     
     # Read Operation; params are query arguments
-    def read(params=nil)
-      begin
-        # run query,sync
-        params ? @adapter.query(params) : @adapter.query
-        @adapter.sync
-        # query,sync succeeded, remove errors
-        @source.app.store.flash_data(@source.document.get_source_errors_dockey)
-      rescue Exception => e
-        # store sync,query exceptions to be sent to all clients for this source/user
-        Logger.error "SourceAdapter raised read exception: #{e}"
-        @source.app.store.put_data(@source.document.get_source_errors_dockey,
-                                   {'read-error'=>{'message'=>e.message}},true)
-      end
-      true
+    def read(client_id=nil,params=nil)
+      _read('query',client_id,params)
     end
     
-    def process(params=nil)
+    def search(client_id=nil,params=nil)
+      return if _auth_op('login') == false
+      
+      res = _read('search',client_id,params)
+      
+      _auth_op('logoff')
+      res
+    end
+    
+    def process(client_id=nil,params=nil)
       return if _auth_op('login') == false
       
       self.create
@@ -47,7 +44,7 @@ module RhosyncStore
 
       if @source.poll_interval == 0 or 
         (@source.poll_interval != -1 and @source.refresh_time <= Time.now.to_i)
-        self.read(params)
+        self.read(client_id,params)
         @source.refresh_time = Time.now.to_i + @source.poll_interval
       end
       
@@ -117,6 +114,30 @@ module RhosyncStore
     
     def _op_dockey(doc,operation,suffix='')
       doc.send "get_#{operation}#{suffix}_dockey"
+    end
+    
+    # Read Operation; params are query arguments
+    def _read(operation,client_id,params=nil)
+      errorkey = nil
+      begin
+        if operation == 'search'
+          sdoc = Document.new('cd',@source.app.id,@source.user.id,client_id,@source.name)
+          errorkey = sdoc.get_search_errors_dockey
+          @adapter.search params
+          @adapter.save sdoc.get_search_dockey
+        else
+          errorkey = @source.document.get_source_errors_dockey
+          params ? @adapter.query(params) : @adapter.query
+          @adapter.sync
+        end
+        # operation,sync succeeded, remove errors
+        @source.app.store.flash_data(errorkey)
+      rescue Exception => e
+        # store sync,operation exceptions to be sent to all clients for this source/user
+        Logger.error "SourceAdapter raised #{operation} exception: #{e}"
+        @source.app.store.put_data(errorkey,{"#{operation}-error"=>{'message'=>e.message}},true)
+      end
+      true
     end
   end
 end

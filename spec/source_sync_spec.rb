@@ -143,30 +143,54 @@ describe "SourceSync" do
       end
     end
     
-    describe "read" do
-      it "should do read with no exception" do
-        expected = {'1'=>@product1,'2'=>@product2}
-        @a.store.put_data('test_db_storage',expected)
-        @ss.read.should == true
-        verify_result(@s.document.get_key => expected)
+    describe "query" do
+      it "should do query with no exception" do
+        verify_read_operation('query')
       end
       
-      it "should do read with no exception and remove existing errors" do
-        @s.app.store.put_data(@s.document.get_source_errors_dockey,
-                              {'read-error'=>{'message'=>'failed'}},true)
-        expected = {'1'=>@product1,'2'=>@product2}
-        @a.store.put_data('test_db_storage',expected)
-        @ss.read.should == true
-        verify_result(@s.document.get_key => expected, @s.document.get_source_errors_dockey => {})
+      it "should do query with exception raised" do
+        verify_read_operation_with_error('query')
+      end
+    end
+    
+    describe "search" do
+      it "should do search with no exception" do
+        verify_read_operation('search')
       end
       
-      it "should do read with exception raised" do
-        msg = "Error during query"
-        Logger.should_receive(:error).with("SourceAdapter raised read exception: #{msg}")
-        set_test_data('test_db_storage',{},msg,'query error')
+      it "should do search with exception raised" do
+        verify_read_operation_with_error('search')
+      end
+    end
+    
+    def verify_read_operation(operation)
+      expected = {'1'=>@product1,'2'=>@product2}
+      set_test_data('test_db_storage',expected)
+      @s.app.store.put_data(@s.document.get_source_errors_dockey,
+                            {"#{operation}-error"=>{'message'=>'failed'}},true)
+      if operation == 'query'
+        @ss.read.should == true
+        verify_result(@s.document.get_key => expected, 
+          @s.document.get_source_errors_dockey => {})
+      else
+        @ss.search(@c.id).should == true  
+        verify_result(@clientdoc.get_search_dockey => expected,
+          @clientdoc.get_search_errors_dockey => {})
+      end
+    end
+    
+    def verify_read_operation_with_error(operation)
+      msg = "Error during #{operation}"
+      Logger.should_receive(:error).with("SourceAdapter raised #{operation} exception: #{msg}")
+      set_test_data('test_db_storage',{},msg,"#{operation} error")
+      if operation == 'query'
         @ss.read.should == true
         verify_result(@s.document.get_key => {},
-          @s.document.get_source_errors_dockey => {'read-error'=>{'message'=>msg}})
+          @s.document.get_source_errors_dockey => {'query-error'=>{'message'=>msg}})
+      else
+        @ss.search(@c.id).should == true
+        verify_result(@clientdoc.get_search_dockey => {}, 
+          @clientdoc.get_search_errors_dockey => {'search-error'=>{'message'=>msg}})
       end
     end
   end

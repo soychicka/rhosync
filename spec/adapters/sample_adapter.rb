@@ -9,11 +9,11 @@ class SampleAdapter < SourceAdapter
   end
  
   def query(params=nil)
-    @result = @source.app.store.get_data('test_db_storage')
-    raise SourceAdapterServerErrorException.new(@result[ERROR]['an_attribute']) if @result[ERROR] and 
-      @result[ERROR]['name'] == 'query error'
-    @result.reject! {|key,value| value['name'] != params['name']} if params
-    @result
+    _read('query',params)
+  end
+  
+  def search(params=nil)
+    _read('search',params)
   end
  
   def sync
@@ -56,5 +56,13 @@ class SampleAdapter < SourceAdapter
     if name_value_list and name_value_list['name'] == 'wrongname' or name_value_list['id'] == 'error'
       raise SourceAdapterServerErrorException.new(name_value_list['an_attribute']) 
     end
+  end
+  
+  def _read(operation,params)
+    @result = @source.app.store.get_data('test_db_storage')
+    raise SourceAdapterServerErrorException.new(@result[ERROR]['an_attribute']) if @result[ERROR] and 
+      @result[ERROR]['name'] == "#{operation} error"
+    @result.reject! {|key,value| value['name'] != params['name']} if params
+    @result
   end
 end

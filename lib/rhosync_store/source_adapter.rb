@@ -36,15 +36,11 @@ module RhosyncStore
     def login; end
   
     def query(params=nil); end
-  
-    # this base class sync method expects a hash of hashes, 'object' will be the key
+    
+    def search(params=nil); end
+    
     def sync
-      return if _result_nil?
-      if @result.empty?
-        @source.app.store.flash_data(@source.document.get_key)
-      else
-        @source.app.store.put_data(@source.document.get_key,@result)
-      end  
+      save(@source.document.get_key)
     end
   
     def create(name_value_list); end
@@ -56,6 +52,15 @@ module RhosyncStore
     def ask(params=nil); end
 
     def logoff; end
+    
+    def save(dockey)
+      return if _result_nil?
+      if @result.empty?
+        @source.app.store.flash_data(dockey)
+      else
+        @source.app.store.put_data(dockey,@result)
+      end
+    end
   
     # only implement this if you want RhoSync to install a callback into your backend
     # def set_callback(notify_url)

@@ -163,6 +163,36 @@ describe "Rhosync Protocol" do
         get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
       end
     end
+    
+    describe "- server send search results" do
+      it "end server send search results" do
+        sources = ['SampleAdapter']
+        @store.put_data('test_db_storage',@data)
+        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+        get "/apps/#{@a.name}/search",params
+      end
+    end
+    
+    describe "- should get search results with error" do
+      it "end should get search results with error" do
+        sources = ['SampleAdapter']
+        msg = "Error during search"
+        error = set_test_data('test_db_storage',@data,msg,'search error')
+        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+        get "/apps/#{@a.name}/search",params
+      end
+    end
+    
+    describe "- should get multiple source search results" do
+      it "end should get multiple source search results" do
+        @s_fields[:name] = 'SimpleAdapter'
+        @s1 = Source.create(@s_fields)
+        @store.put_data('test_db_storage',@data)
+        sources = ['SimpleAdapter','SampleAdapter']
+        params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'}}
+        get "/apps/#{@a.name}/search",params
+      end  
+    end
   end
   
   private

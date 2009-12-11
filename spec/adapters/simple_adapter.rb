@@ -14,6 +14,15 @@ class SimpleAdapter < SourceAdapter
   def query(params=nil)
     @result
   end
+  
+  def search(params=nil,txt='')
+    params[:foo] = 'bar'
+    if params['search'] == 'bar'
+      @result = {'obj'=>{'foo'=>'bar'}} 
+      params['name'] = 'iPhone'
+    end
+    @result
+  end
  
   def sync
     super

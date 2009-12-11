@@ -99,11 +99,16 @@ end
 get '/apps/:app_name' do
   content_type :json
   cs = ClientSync.new(current_source,current_client,params[:p_size])
-  cs.send_cud(params[:token],params[:search]).to_json
+  cs.send_cud(params[:token],params[:query]).to_json
 end
 
 post '/apps/:app_name' do
   cs = ClientSync.new(current_source,current_client,params[:p_size]) 
   cs.receive_cud(params)
   status 200
+end
+
+get '/apps/:app_name/search' do
+  content_type :json
+  ClientSync.search_all(current_client,params[:sources],params[:search]).to_json
 end

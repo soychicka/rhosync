@@ -35,6 +35,20 @@ describe "SourceAdapter" do
       @sa.query.should == expected
     end
     
+    it "should execute SourceAdapter query method" do
+      expected = {'1'=>@product1,'2'=>@product2}
+      @sa.inject_result expected
+      @sa.query.should == expected
+    end
+    
+    it "should execute SourceAdapter search method and modify params" do
+      params = {:hello => 'world'}
+      expected = {'1'=>@product1,'2'=>@product2}
+      @sa.inject_result expected
+      @sa.search(params).should == expected
+      params.should == {:hello => 'world', :foo => 'bar'}
+    end
+    
     it "should execute SourceAdapter login with current_user" do
       @sa.should_receive(:current_user).with(no_args()).and_return(@u)
       @sa.login

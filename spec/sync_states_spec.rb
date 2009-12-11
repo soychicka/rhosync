@@ -11,9 +11,9 @@ describe "Sync Server States" do
     it "should sync with backend, setup masterdoc, clientdoc, and page documents" do
       expected = {'1'=>@product1,'2'=>@product2}
       set_test_data(@s.document.get_key,@data)
-      @cs.send_cud.should == [{"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
-        {"count"=>2}, {"progress_count"=>2},{"total_count"=>3}, 
-        {"version"=>3},{'insert'=>expected}]
+      @cs.send_cud.should == [{"version"=>ClientSync::VERSION},
+        {"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+        {"count"=>2}, {"progress_count"=>2},{"total_count"=>3},{'insert'=>expected}]
       verify_result(@s.document.get_key => @data,
         @cs.clientdoc.get_page_dockey => expected,
         @cs.clientdoc.get_key => expected)
@@ -32,9 +32,9 @@ describe "Sync Server States" do
       @cs.receive_cud(params)
       verify_result(@cs.clientdoc.get_create_links_dockey => exp_links,
         @s.document.get_key => result)
-      @cs.send_cud.should == [{"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
-        {"count"=>1}, {"progress_count"=>1},{"total_count"=>1},
-        {"version"=>3},{'insert'=>result,'links'=>exp_links}]
+      @cs.send_cud.should == [{"version"=>ClientSync::VERSION},
+        {"token"=>@s.app.store.get_value(@cs.clientdoc.get_page_token_dockey)}, 
+        {"count"=>1}, {"progress_count"=>1},{"total_count"=>1},{'insert'=>result,'links'=>exp_links}]
       verify_result(@cs.clientdoc.get_page_dockey => result)
     end
   end

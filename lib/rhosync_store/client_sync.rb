@@ -20,7 +20,7 @@ module RhosyncStore
     def send_cud(token=nil,query_params=nil)
       res = resend_page(token)
       return _format_result(res) unless res.empty?
-      @source_sync.process(query_params)
+      @source_sync.process(@client.id,query_params)
       res['insert'] = compute_page
       res['links'] = @source.app.store.get_data(@clientdoc.get_create_links_dockey)
       res['delete'] = compute_deleted_page
@@ -30,6 +30,23 @@ module RhosyncStore
       res['token'] = compute_token unless res.empty?
       res.merge!(_send_errors)
       _format_result(res)
+    end
+    
+    def search(params)
+      @source_sync.search(@client.id,params)
+      error = @source.app.store.get_data(@clientdoc.get_search_errors_dockey)
+      if not error.empty?
+        [ {'version'=>VERSION},
+          {'source'=>@source.name},
+          {'search-error'=>error} ]
+      else  
+        res = compute_search 
+        return if res.empty?
+        [ {'version'=>VERSION},
+          {'source'=>@source.name},
+          {'count'=>res.length},
+          {'insert'=>res} ]
+      end
     end
     
     # Resend token for a client, also sends exceptions
@@ -49,15 +66,14 @@ module RhosyncStore
     # Computes diffs between master doc and client doc, trims it to page size, 
     # stores page, and returns page as hash  
     def compute_page
-      res = {}
-      page_size = @p_size
-      @source.app.store.get_diff_data(@clientdoc.get_key,@source.document.get_key).each do |key,item|
-        res[key] = item
-        page_size -= 1
-        break if page_size <= 0         
-      end
+      res = _compute_diff(@clientdoc.get_key,@source.document.get_key)
       @source.app.store.put_data(@clientdoc.get_page_dockey,res)
       res
+    end
+    
+    # Computes search hash
+    def compute_search
+      _compute_diff(@clientdoc.get_key,@clientdoc.get_search_dockey)
     end
     
     # Computes deleted objects (down to individual attributes) 
@@ -84,15 +100,39 @@ module RhosyncStore
       token.to_s
     end
     
-    # Resets the store for a given app,client
-    def self.reset(app,user,client)
-      doc = Document.new('cd',app.id,user.id,client.id,'*')
-      app.store.get_keys(doc.get_key).each do |key|
-        app.store.flash_data(key)
+    class << self
+      # Resets the store for a given app,client
+      def reset(app,user,client)
+        doc = Document.new('cd',app.id,user.id,client.id,'*')
+        app.store.get_keys(doc.get_key).each do |key|
+          app.store.flash_data(key)
+        end
+      end
+    
+      def search_all(client,sources=[],params=nil)
+        res = []
+        sources.each do |source|
+          s = Source.with_key(source)
+          cs = ClientSync.new(s,client,params[:p_size])
+          search_res = cs.search(params)
+          res << search_res if search_res
+        end
+        res
       end
     end
     
     private
+    def _compute_diff(srckey,dstkey)
+      res = {}
+      page_size = @p_size
+      @source.app.store.get_diff_data(srckey,dstkey).each do |key,item|
+        res[key] = item
+        page_size -= 1
+        break if page_size <= 0         
+      end
+      res
+    end
+    
     def _receive_cud(operation,params)
       return if not ['create','update','delete'].include?(operation)
       dockey = @source.document.send "get_#{operation}_dockey"
@@ -138,11 +178,11 @@ module RhosyncStore
       total_count = @source.app.store.get_datasize(Document.get_datasize_dockey(@source.document.get_key))
       token = res['token']
       res.delete('token')
-      [ {'token'=>(token ? token : '')},
+      [ {'version'=>VERSION},
+        {'token'=>(token ? token : '')},
         {'count'=>count},
         {'progress_count'=>progress_count},
         {'total_count'=>total_count}, 
-        {'version'=>VERSION}, 
         res ]
     end
   end

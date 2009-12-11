@@ -26,6 +26,14 @@ describe "Document" do
     @d.get_page_token_dockey.should == "#{@doctype}-page-token:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
   
+  it "should get_search_dockey" do
+    @d.get_search_dockey.should == "#{@doctype}-search:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  end
+  
+  it "should get_search_errors_dockey" do
+    @d.get_search_errors_dockey.should == "#{@doctype}-search-errors:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
+  end
+  
   it "should get_update_dockey" do
     @d.get_update_dockey.should == "#{@doctype}-update:#{@app.to_s}:#{@user.to_s}:#{@client.to_s}:#{@source}"
   end
