@@ -489,6 +489,7 @@ protected
 
   def handle_show_format
     @refreshtime = @source.refreshtime(@current_user).to_i
+    logger.debug "#{@source.name} refreshtime =#{@refreshtime} (= #{Time.at(@refreshtime)})"
     
     respond_to do |format|
       format.html
