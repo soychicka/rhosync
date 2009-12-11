@@ -28,9 +28,12 @@ TODO
   * yml config (parse and add to database)
   * vendor directory load path
   * zip file upload
-* rake task
-
-
+* create user
+  * input: appname,login,password,email(optional)
+* update user
+  * input: appname,login,password (unless admin) - new password
+* delete user
+  * input: appname,login,password (unless admin)
 * Finish Sync States (client<->server<->backend)
 * Performance tests (ClientSync, SourceSync)
 * Add queue layer for background adapters

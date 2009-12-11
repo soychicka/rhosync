@@ -68,7 +68,9 @@ describe "Rhosync Protocol" do
     ['create','update','delete'].each do |operation|
       describe "- client #{operation} object(s)" do
         it "end client #{operation} object(s)" do
-          params = {operation=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
+          params = {operation=>{'1'=>@product1},
+                    :client_id => @c.id,
+                    :source_name => @s.name}
           do_post "/apps/#{@a.name}", params
         end
       end
@@ -92,28 +94,29 @@ describe "Rhosync Protocol" do
                   :client_id => @c.id,
                   :source_name => @s.name}
         do_post "/apps/#{@a.name}", params
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,
+          :version => ClientSync::VERSION
       end
     end
     
     describe "- server send source query error to client" do
       it "end server send source query error to client" do
         set_test_data('test_db_storage',{},"Error during query",'query error')
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       end
     end
     
     describe "- server send source login error to client" do
       it "end server send source login error to client" do
         @u.login = nil
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       end
     end
     
     describe "- server send source logoff error to client" do
       it "end server send source logoff error to client" do
         set_test_data('test_db_storage',{},"Error logging off",'logoff error')
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       end
     end
     
@@ -124,7 +127,7 @@ describe "Rhosync Protocol" do
                     :client_id => @c.id,
                     :source_name => @s.name}
           do_post "/apps/#{@a.name}", params
-          get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+          get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
         end
       end
     end
@@ -134,7 +137,7 @@ describe "Rhosync Protocol" do
         cs = ClientSync.new(@s,@c,1)
         data = {'1'=>@product1,'2'=>@product2}
         set_test_data('test_db_storage',data)
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       end
     end
     
@@ -143,11 +146,12 @@ describe "Rhosync Protocol" do
         cs = ClientSync.new(@s,@c,1)
         data = {'1'=>@product1,'2'=>@product2}
         set_test_data('test_db_storage',data)
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
         token = @store.get_value(cs.clientdoc.get_page_token_dockey)
         @store.flash_data('test_db_storage')
         @s.refresh_time = Time.now.to_i
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token,
+          :version => ClientSync::VERSION
       end
     end
     
@@ -156,11 +160,12 @@ describe "Rhosync Protocol" do
         cs = ClientSync.new(@s,@c,1)
         data = {'1'=>@product1,'2'=>@product2}
         set_test_data('test_db_storage',data)
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
         token = @store.get_value(cs.clientdoc.get_page_token_dockey)
         set_test_data('test_db_storage',{'1'=>@product1,'3'=>@product3})
         @s.refresh_time = Time.now.to_i
-        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+        get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token,
+          :version => ClientSync::VERSION
       end
     end
     
@@ -168,7 +173,8 @@ describe "Rhosync Protocol" do
       it "end server send search results" do
         sources = ['SampleAdapter']
         @store.put_data('test_db_storage',@data)
-        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'},
+          :version => ClientSync::VERSION}
         get "/apps/#{@a.name}/search",params
       end
     end
@@ -178,7 +184,8 @@ describe "Rhosync Protocol" do
         sources = ['SampleAdapter']
         msg = "Error during search"
         error = set_test_data('test_db_storage',@data,msg,'search error')
-        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+        params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'},
+          :version => ClientSync::VERSION}
         get "/apps/#{@a.name}/search",params
       end
     end
@@ -189,7 +196,8 @@ describe "Rhosync Protocol" do
         @s1 = Source.create(@s_fields)
         @store.put_data('test_db_storage',@data)
         sources = ['SimpleAdapter','SampleAdapter']
-        params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'}}
+        params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'},
+          :version => ClientSync::VERSION}
         get "/apps/#{@a.name}/search",params
       end  
     end

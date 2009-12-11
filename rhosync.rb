@@ -64,6 +64,9 @@ before do
     params.merge!(JSON.parse(request.body.read))
     request.body.rewind
   end
+  if params[:version] and params[:version].to_i < 3
+    throw :halt, [404, "Server supports version 3 or higher of the protocol."]
+  end
 end
 
 get "/" do

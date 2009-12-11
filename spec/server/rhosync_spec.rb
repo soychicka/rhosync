@@ -72,7 +72,7 @@ describe "Rhosync" do
       doc2 = Document.new('cd',@a.id,@u.id,@c.id,'source2')
       @store.put_data(doc1.get_key,@data)
       @store.put_data(doc2.get_key,@data)
-      get "/apps/#{@a.name}/clientreset", :client_id => @c.id
+      get "/apps/#{@a.name}/clientreset", :client_id => @c.id,:version => ClientSync::VERSION
       @store.get_data(doc1.get_key).should == {}
       @store.get_data(doc2.get_key).should == {}
     end
@@ -85,7 +85,8 @@ describe "Rhosync" do
     
     it "should post records for create" do
       @product1['_id'] = '1'
-      params = {'create'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
+      params = {'create'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name,
+        :version => ClientSync::VERSION}
       do_post "/apps/#{@a.name}", params
       last_response.should be_ok
       last_response.body.should == ''
@@ -93,7 +94,8 @@ describe "Rhosync" do
     end
     
     it "should post records for update" do
-      params = {'update'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
+      params = {'update'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name,
+        :version => ClientSync::VERSION}
       do_post "/apps/#{@a.name}", params
       last_response.should be_ok
       last_response.body.should == ''
@@ -101,7 +103,8 @@ describe "Rhosync" do
     end
     
     it "should post records for delete" do
-      params = {'delete'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name}
+      params = {'delete'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name,
+        :version => ClientSync::VERSION}
       do_post "/apps/#{@a.name}", params
       last_response.should be_ok
       last_response.body.should == ''
@@ -112,7 +115,7 @@ describe "Rhosync" do
       cs = ClientSync.new(@s,@c,1)
       data = {'1'=>@product1,'2'=>@product2}
       set_test_data('test_db_storage',data)
-      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       last_response.should be_ok
       last_response.content_type.should == 'application/json'
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
@@ -124,12 +127,13 @@ describe "Rhosync" do
       cs = ClientSync.new(@s,@c,1)
       data = {'1'=>@product1,'2'=>@product2}
       set_test_data('test_db_storage',data)
-      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
       JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
         {"count"=>2}, {"progress_count"=>2}, {"total_count"=>2},{'insert'=>data}]
-      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token,
+        :version => ClientSync::VERSION
       last_response.should be_ok
       JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>''}, 
         {"count"=>0}, {"progress_count"=>2}, {"total_count"=>2},{}]
@@ -140,7 +144,7 @@ describe "Rhosync" do
       data = {'1'=>@product1,'2'=>@product2}
       set_test_data('test_db_storage',data)
       
-      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:version => ClientSync::VERSION
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
       JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
@@ -149,7 +153,8 @@ describe "Rhosync" do
       @store.flash_data('test_db_storage')
       @s.refresh_time = Time.now.to_i      
       
-      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token
+      get "/apps/#{@a.name}",:client_id => @c.id,:source_name => @s.name,:token => token,
+        :version => ClientSync::VERSION
       last_response.should be_ok
       token = @store.get_value(cs.clientdoc.get_page_token_dockey)
       JSON.parse(last_response.body).should == [{"version"=>ClientSync::VERSION},{"token"=>token}, 
@@ -159,7 +164,8 @@ describe "Rhosync" do
     it "should get search results" do
       sources = ['SampleAdapter']
       @store.put_data('test_db_storage',@data)
-      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'},
+        :version => ClientSync::VERSION}
       get "/apps/#{@a.name}/search",params
       JSON.parse(last_response.body).should == [[{'version'=>ClientSync::VERSION},
         {'source'=>sources[0]},{'count'=>1},{'insert'=>{'1'=>@product1}}]]
@@ -169,7 +175,8 @@ describe "Rhosync" do
       sources = ['SampleAdapter']
       msg = "Error during search"
       error = set_test_data('test_db_storage',@data,msg,'search error')
-      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'}}
+      params = {:client_id => @c.id,:sources => sources,:search => {'name' => 'iPhone'},
+        :version => ClientSync::VERSION}
       get "/apps/#{@a.name}/search",params
       JSON.parse(last_response.body).should == [[{'version'=>ClientSync::VERSION},
         {'source'=>sources[0]},{'search-error'=>{'search-error'=>{'message'=>msg}}}]]
@@ -180,7 +187,8 @@ describe "Rhosync" do
       @s1 = Source.create(@s_fields)
       @store.put_data('test_db_storage',@data)
       sources = ['SimpleAdapter','SampleAdapter']
-      params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'}}
+      params = {:client_id => @c.id,:sources => sources,:search => {'search' => 'bar'},
+        :version => ClientSync::VERSION}
       get "/apps/#{@a.name}/search",params
       JSON.parse(last_response.body).should == [
         [{"version"=>ClientSync::VERSION}, {"source"=>"SimpleAdapter"}, 
