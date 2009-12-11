@@ -488,6 +488,8 @@ protected
   end
 
   def handle_show_format
+    @refreshtime = @source.refreshtime(@current_user).to_s
+    
     respond_to do |format|
       format.html
       format.xml  { render :xml => @object_values }
