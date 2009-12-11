@@ -26,6 +26,7 @@ class User < ActiveRecord::Base
   has_many :users
   has_many :source_notifies
   has_many :object_values
+  has_many :refreshes
   has_many :sources, :through => :source_notifies
   
   include Authentication

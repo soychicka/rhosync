@@ -44,7 +44,7 @@ module SourcesHelper
     result=@current_user
   end
 
-  def needs_refresh
+  def needs_refresh(user)
     result=nil
     
     # check to make sure we are not running a paged query in the background
@@ -87,12 +87,28 @@ module SourcesHelper
 
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
-    if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      logger.info "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
+    
+    time=refreshtime(user)
+    if !time or ((Time.now - time)>pollinterval)
+      logger.info "Refreshing source #{name} #{id}  because the data is old: #{time}"
       return true
     end
 
     false  # return true of false (nil)
+  end
+  
+  def refreshtime(user)
+    obj=Refresh.find(:first, :conditions=>{:user_id=>user.id, :source_id=>self.id})
+    obj ? obj.time : nil
+  end
+  
+  def update_refreshtime(user)
+    obj=Refresh.find(:first, :conditions=>{:user_id=>user.id, :source_id=>self.id})
+    if obj
+      obj.update_attribute(:time, Time.now)
+    else
+      Refresh.create!(:user_id=>user.id, :source_id=>self.id, :time=> Time.now)
+    end
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
@@ -155,8 +171,7 @@ module SourcesHelper
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
     end
-    self.refreshtime=Time.new # timestamp
-    save
+    update_refreshtime(credential.user)
   end
 
   # helper function to come up with the string used for the name_value_list
@@ -272,7 +287,7 @@ module SourcesHelper
       @first_request=false
       @resend_token=nil
       
-      if @source.needs_refresh
+      if @source.needs_refresh(current_user)
         if @source.is_paged?
           @object_values=[]
           return
@@ -296,7 +311,7 @@ module SourcesHelper
       @token=@resend_token ? @resend_token : get_new_token
       # get the list of objects
       # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
-      if @source.queuesync and @source.needs_refresh
+      if @source.queuesync and @source.needs_refresh(current_user)
         @object_values=[]
       else
         @object_values=ClientMapper.process_objects_for_client(current_user,@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,by_source)

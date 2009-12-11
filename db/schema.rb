@@ -179,7 +179,6 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
     t.string   "password"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.datetime "refreshtime"
     t.string   "adapter"
     t.integer  "app_id"
     t.integer  "pollinterval"
@@ -188,6 +187,7 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
     t.boolean  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
+    t.datetime "refreshtime"
   end
 
   create_table "users", :force => true do |t|
