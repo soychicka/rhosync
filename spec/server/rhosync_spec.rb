@@ -83,6 +83,12 @@ describe "Rhosync" do
       do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
     end
     
+    it "should return 404 message with version < 3" do
+      get "/apps/#{@a.name}",:source_name => @s.name,:version => 2
+      last_response.status.should == 404
+      last_response.body.should == "Server supports version 3 or higher of the protocol."
+    end
+    
     it "should post records for create" do
       @product1['_id'] = '1'
       params = {'create'=>{'1'=>@product1},:client_id => @c.id,:source_name => @s.name,
