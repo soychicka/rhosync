@@ -16,6 +16,15 @@ require 'rhosync_store/source_sync'
 # Various module utilities for the store
 module RhosyncStore
   class InvalidArgumentError < RuntimeError; end
+  @@app_directory = ''
+  
+  def app_directory=(dir)
+    @@app_directory=dir
+  end
+  
+  def app_directory
+    @@app_directory
+  end
   
   # Adds given path to top of ruby load path
   def add_adapter_path(path)
@@ -42,7 +51,7 @@ module RhosyncStore
     downcase
   end
   
-  module_function :add_adapter_path
+  module_function :add_adapter_path, :app_directory, :app_directory=
   
   # TODO: replace with real logger
   class Logger

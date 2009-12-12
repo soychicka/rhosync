@@ -3,7 +3,11 @@ require 'rubygems'
 require 'sinatra'
 require 'erb'
 require 'json'
+require 'fileutils'
+require 'zip/zip'
+
 require 'rhosync_store'
+require 'helpers/rhosync_helper'
 
 enable :raise_errors
 
@@ -16,48 +20,15 @@ use Rack::Session::Cookie, :key => 'rhosync_session',
 
 configure :test do 
   add_adapter_path(File.join(File.dirname(__FILE__),'spec','adapters'))
+  RhosyncStore.app_directory = File.join('apps')
 end
 
-helpers do
-  def login_required
-    current_user.nil?
-  end
-  
-  def login
-    user = User.authenticate(params[:login], params[:password])
-    if user
-      session[:login] = user.login
-      true
-    else
-      false
-    end
-  end
-  
-  def logout
-    session[:login] = nil
-  end
-  
-  def current_user
-    if User.is_exist?(session[:login])
-      User.with_key(session[:login])
-    end
-  end
-  
-  def current_app
-    App.with_key(params[:app_name]) if params[:app_name]
-  end
-  
-  def current_source
-    Source.with_key(params[:source_name]) if params[:source_name]
-  end
-  
-  def current_client
-    Client.with_key(params[:client_id]) if params[:client_id]
-  end
+configure :development do
+  RhosyncStore.app_directory = File.join('apps')
 end
 
 before do
-  unless request.env['PATH_INFO'].split('/').last == 'client_login'
+  unless request.env['PATH_INFO'].split('/').last == 'clientlogin'
     throw :halt, [401, "Not authenticated"] if login_required
   end
   if request.env['CONTENT_TYPE'] == 'application/json'
@@ -74,7 +45,7 @@ get "/" do
 end
 
 # Collection routes
-post '/apps/:app_name/client_login' do
+post '/apps/:app_name/clientlogin' do
   logout
   if login
     status 200
@@ -115,3 +86,12 @@ get '/apps/:app_name/search' do
   content_type :json
   ClientSync.search_all(current_client,params[:sources],params[:search]).to_json
 end
+
+# Management routes
+def api(name)
+  post '/api/:app_name/:name' do
+    yield params[:app_name],params[:payload]
+  end
+end
+
+Dir["#{File.dirname(__FILE__)}/lib/rhosync_store/api/**/*.rb"].each { |service| load service }

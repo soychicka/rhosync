@@ -30,26 +30,26 @@ describe "Rhosync" do
   end
 
   it "should respond with 200 if logged in" do
-    do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+    do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
     get '/'
     last_response.status.should == 200
   end
 
   describe "auth routes" do
     it "should login user with correct username,password" do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
       last_response.should be_ok
     end
     
     it "should respond 401 for incorrect username or password" do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'wrongpass'
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'wrongpass'
       last_response.status.should == 401
     end
   end
   
   describe "client management routes" do
     before(:each) do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
     end
     
     it "should respond to clientcreate" do
@@ -80,7 +80,7 @@ describe "Rhosync" do
   
   describe "source routes" do
     before(:each) do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
     end
     
     it "should return 404 message with version < 3" do

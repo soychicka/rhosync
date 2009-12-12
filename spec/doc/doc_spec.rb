@@ -30,21 +30,21 @@ describe "Rhosync Protocol" do
     _print_messages
   end
   
-  describe "unauthenticated routes - client_login" do
-    it "end client_login" do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+  describe "unauthenticated routes - clientlogin" do
+    it "end clientlogin" do
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
     end
   end
   
-  describe "unauthenticated routes - client_login with wrong login or password " do
-    it "end wrong login or password client_login" do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'wrongpass'
+  describe "unauthenticated routes - clientlogin with wrong login or password " do
+    it "end wrong login or password clientlogin" do
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'wrongpass'
     end
   end
   
   describe "authenticated routes" do
     before(:each) do
-      do_post "/apps/#{@a.name}/client_login", "login" => @u.login, "password" => 'testpass'
+      do_post "/apps/#{@a.name}/clientlogin", "login" => @u.login, "password" => 'testpass'
     end
     
     describe "- clientcreate" do
