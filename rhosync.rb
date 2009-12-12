@@ -20,10 +20,9 @@ use Rack::Session::Cookie, :key => 'rhosync_session',
 
 configure :test do 
   add_adapter_path(File.join(File.dirname(__FILE__),'spec','adapters'))
-  RhosyncStore.app_directory = File.join('apps')
 end
 
-configure :development do
+configure :development,:test,:production do
   RhosyncStore.app_directory = File.join('apps')
 end
 

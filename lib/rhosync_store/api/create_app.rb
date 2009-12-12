@@ -3,7 +3,7 @@ api :create_app do |app_name,payload|
 end
 
 def upload_file(app_name,payload)
-  appdir = File.join(app_directory,app_name)
+  appdir = File.join(RhosyncStore.app_directory,app_name)
   FileUtils.rm_rf(appdir)
   FileUtils.mkdir_p(appdir)
   uploaded_file = File.join(appdir, payload[:upload_file][:filename])
