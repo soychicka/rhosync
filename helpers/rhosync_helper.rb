@@ -18,9 +18,7 @@ helpers do
   end
   
   def current_user
-    if User.is_exist?(session[:login])
-      User.with_key(session[:login])
-    end
+    User.with_key(session[:login]) if User.is_exist?(session[:login])
   end
   
   def current_app
@@ -33,10 +31,5 @@ helpers do
   
   def current_client
     Client.with_key(params[:client_id]) if params[:client_id]
-  end
-  
-  def upload_file
-    
-    "appdir: #{appdir.inspect}, filename: #{uploaded_file.inspect}"
   end
 end
