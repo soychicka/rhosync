@@ -140,8 +140,10 @@ class SourcesController < ApplicationController
     @client = Client.find_by_client_id(params[:client_id])
     if @client
       @client.reset
+      render :nothing=> true, :status => 200
+    else # if we dont have this client its a serious error
+    	render :nothing=> true, :status => 404
     end
-    render :nothing=> true, :status => 200
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -166,7 +168,17 @@ class SourcesController < ApplicationController
   def createobjects
     check_access(@source.app)
     objects={}
-    @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
+    
+    @client=nil
+    if params[:client_id]
+    	# if client id is specified make sure it is valid
+    	@client = Client.find_by_client_id(params[:client_id]) 
+    	if @client.nil?
+    		logout_killing_session!
+    		render :text => "Unrecognized client", :status => 401
+    		return
+    	end
+  	end
 
     newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
     params[:attrvals].each do |x| # for each hash in the array
@@ -196,7 +208,7 @@ class SourcesController < ApplicationController
       # add the created ID + created_at time to the list
       objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
       
-      ClientMap.create!(:client_id => @client.client_id, :object_value_id => x['id']) if x['id']
+      ClientMap.create!(:client_id => @client.client_id, :object_value_id => x['id']) if x['id'] && @client
     end
     respond_to do |format|
       if params[:no_redirect]
