@@ -198,6 +198,7 @@ module SourcesHelper
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
         if x.object
+          # TODO: should probably limit by user (and client) as well
           objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype) # this has all the attribute value pairs now
           attrvalues={}
           attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
@@ -216,12 +217,18 @@ module SourcesHelper
             tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
             begin
               res = eval(cmd)
-              if res and res.is_a?(String) and tmp_object
+              if res and res.is_a?(String) and tmp_object and utype=='create'
                 tmp_object.update_attributes(:objectid => res, :source_id => id)
               end
-            rescue SourceAdapterException => sae
+            rescue SourceAdapterLoginException => sae
               if tmp_object
                 tmp_object.update_attributes(:error => "#{sae.class}:#{sae}", :source_id => id)
+              end           
+            rescue Exception => e
+              # destroy bad object values
+              ObjectValue.find_all_by_object_and_update_type(x.object,utype).each {|ova| ova.destroy}
+              if tmp_object
+                tmp_object.update_attributes(:error => "#{e.class}:#{e}", :source_id => id)
               end
             end
           end
