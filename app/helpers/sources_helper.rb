@@ -144,6 +144,7 @@ module SourcesHelper
 
   # merge in pending objects created by search
   def update_pendings(credential)
+    # TODO: must update for all sources returned by SEARCH!
     conditions="source_id=#{id}"
     usr_condition=" and user_id=#{credential.user.id}" if credential
     conditions << usr_condition if usr_condition
@@ -171,7 +172,7 @@ module SourcesHelper
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
     end
-    update_refreshtime(credential.user)
+    update_refreshtime(credential.user) if credential
   end
 
   # helper function to come up with the string used for the name_value_list
