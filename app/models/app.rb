@@ -48,7 +48,8 @@ class App < ActiveRecord::Base
       user = User.find_by_login(login)
       if !user
         user = User.create(:login => login, :password => "doesnotmatter", :password_confirmation => "doesnotmatter")
-        self.users << user
+        membership = Membership.create(:user_id => user.id, :app_id => id)
+        Credential.create(:membership_id => membership.id)
       end
       return user
     end
