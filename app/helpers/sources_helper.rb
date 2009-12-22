@@ -143,17 +143,22 @@ module SourcesHelper
   end
 
   # merge in pending objects created by search
-  def update_pendings(credential)
-    # TODO: must update for all sources returned by SEARCH!
-    conditions="source_id=#{id}"
+  def update_pendings(credential, unique_sources)
+    sources=unique_sources.collect {|s| "source_id=#{s.to_s}"}.join(" OR ")
+    conditions="(#{sources})"
     usr_condition=" and user_id=#{credential.user.id}" if credential
     conditions << usr_condition if usr_condition
-    ActiveRecord::Base.transaction do
-      # for each unique object, delete entire old version, and finalize new version
-      objects = ActiveRecord::Base.connection.select_values "select distinct(object) from object_values where update_type is NULL and #{conditions}"
-      objects.each do |obj|
+    # for each unique object, delete entire old version, and finalize new version
+    objects = ActiveRecord::Base.connection.select_values "select distinct(object) from object_values where update_type is NULL and #{conditions}"
+    objects.each do |obj|
+      begin
         ActiveRecord::Base.connection.execute "delete from object_values where object='#{obj}' and update_type='query' and #{conditions}"
         ActiveRecord::Base.connection.execute "update object_values set id=pending_id, update_type='query' where object='#{obj}' and #{conditions}"
+      rescue Exception => e
+        logger.info "Error in update_pendings #{e.inspect.to_s}"
+        # delete bad pending record. this happens usually when there is a duplicate. there should not be duplicates but it does happen
+        # TODO: why do we end up here with duplicates sometimes?  
+        ActiveRecord::Base.connection.execute "delete from object_values where object='#{obj}' and update_type is NULL and #{conditions}"
       end
     end
   end

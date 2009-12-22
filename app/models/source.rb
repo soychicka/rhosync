@@ -91,8 +91,13 @@ class Source < ActiveRecord::Base
     begin  
       logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
+      
+      # we have to do this before sync, because default implementation of sync will strip source_id's out of result
+      unique_sources = source_adapter.result.collect {|x| x[1][:source_id]}.uniq rescue [self.id]
+      
       source_adapter.sync
-      update_pendings(@credential)  # copy over records that arent already in the sandbox
+
+      update_pendings(@credential, unique_sources)  # copy over records that arent already in the sandbox
     rescue SourceAdapterException
       raise
     rescue Exception=>e

@@ -13,6 +13,7 @@ class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
   attr_accessor :session
+  attr_reader   :result   # so we can inspect @result outside of adapter
     
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
