@@ -144,12 +144,16 @@ class AeropriseController < ApplicationController
 
     worklog = []
     workinfo.each do |entry|
+    
       record = {}
       record["submitter"] = entry["submitter"]
       record["type"] = entry["type"]
       record["summary"] = entry["summary"]
       record["notes"] = entry["notes"]
       record["submitdate"] = entry["submitdate"].to_s
+      
+      logger.debug record.inspect.to_s
+          	
       worklog << record
     end
     
