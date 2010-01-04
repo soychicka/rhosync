@@ -93,7 +93,10 @@ class Source < ActiveRecord::Base
       source_adapter.query(conditions,limit,offset)
       
       # we have to do this before sync, because default implementation of sync will strip source_id's out of result
-      unique_sources = source_adapter.result.collect {|x| x[1][:source_id]}.uniq rescue [self.id]
+      unique_sources = source_adapter.result.collect {|x| x[1][:source_id]}.uniq.compact rescue [self.id]
+      if unique_sources.nil? || unique_sources.length == 0
+        unique_sources = [self.id]
+      end
       
       source_adapter.sync
 
