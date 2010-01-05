@@ -18,87 +18,35 @@ class AeropriseController < ApplicationController
   web_service_scaffold :invocation if Rails.env == 'development'
   
   # updates SR and toggle needs attention for it depending on login
-  def sr_needs_attention(login, sr_id)
-  	logger.debug "login = #{login}"
-  	logger.debug "sr_id = #{sr_id}"
-  
-  	source = Source.find_by_name("AeropriseRequest")
-  	    
-  	# find all existing copies of the SR in the rhosync cache, summary is required field so we key off that
-  	# this code assumes it is possible that more than 1 user has visibility and that user is not the login
-  	existing_copies = ObjectValue.find(:all, :conditions => {:source_id=>source.id, :update_type=>'query', :attrib => "summary", :object=>sr_id})
-  	users_with_sr = []
-  	  	
-  	# what if SR is not found?
-  	# login as admin to retrieve it and add to reqby and reqfo users if they are already mobilized
-  	if existing_copies.empty?
-  		api = login
-  		request = api.get_user_requests(sr_id)
-			if request.blank? || api.error
-				logger.fatal "Unable to get SR from remedy #{sr_id}"
-				return "ERROR sr_needs_attention"
-			end
-			
-			# now see if we have mobilized users for req for and by and if so add to list 
-			# the next step will get the SR for the user
-			reqbyid = request["reqbyid"]
-			if user = User.find_by_login(reqbyid)
-				users_with_sr << user
-			end
-			
-    	reqforid = request["reqforid"]
-    	if user = User.find_by_login(reqforid)
-				users_with_sr << user
-			end
-		else
-	  	existing_copies.each do |sr|
-  			users_with_sr << sr.user
-  		end
+  def sr_crud(login, sr_id, modified_by)
+  	logger.debug "login = #{login}, sr_id = #{sr_id}, modified_by = #{modified_by}"
+
+		user = User.find_by_login(login)
+		if user.nil?
+			logger.info "Mobilized user never synced with rhosync, skipping push"
+			return "OK sr_crud"
 		end
-  	
-		# de dup if same user is both reqby and for or admin
-		users_with_sr.uniq!
-  	
-		if users_with_sr.empty?
-			logger.info "No mobilized users found at all for this SR--ignoring"
-		else
-  		# now for each user that has it, process update which will fetch it and push
-  		users_with_sr.each do |user|
-  			process_needs_attention(user, source, login, sr_id)
-			end
-		end
-	
-    "OK sr_needs_attention"
-  rescue =>e
-    logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
-    logger.info e.backtrace.join("\n")
-    "ERROR sr_needs_attention"
-  end
-  
-  def process_needs_attention(user, source, login, sr_id)
-  	logger.info "process_needs_attention for #{user.login}, #{login}, #{sr_id}"
-  	
-    # login as this user, each user might have diferent visibility
-    api = login(user.login)
+			
+    # login as this user
+    api = login(login)
     
 		# get this SR from remedy
 		request = api.get_user_requests(sr_id)
 		if request.blank? || api.error
 			logger.fatal "Unable to get SR from remedy #{sr_id}"
-			return "ERROR sr_needs_attention"
+			return "ERROR sr_crud"
 		end
 				
     responses = api.get_answers_for_request(sr_id)
     
+    source = Source.find_by_name("AeropriseRequest")
+      	
     # destroy old sr 
     ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>sr_id)
-    
-    reqbyid = request["reqbyid"]
-    reqforid = request["reqforid"]
 
-    if (login != user.login && (user.login == reqbyid || user.login == reqforid))
-    	logger.info "Set NEEDS ATTENTION = 1"
-    	request["needsattention"]=1 # flag it so device will know to vibrate
+    if (login != modified_by)
+    	logger.info "Set vibrate = 1"
+    	request["vibrate"] = 1 # flag it so device will know to vibrate
     end
     
     # this function will add as type pending
@@ -120,65 +68,52 @@ class AeropriseController < ApplicationController
   	rescue
 			logger.info "problem with push request"
   	end
+  	
+  	add_worklog_to_db(api, sr_id, user)
+  	
+    "OK sr_crud"
+  rescue =>e
+  	logger.info "exception while responding to WS sr_needs_attention\n #{e.inspect.to_s}"
+  	logger.info e.backtrace.join("\n")
+  	"ERROR sr_crud"
   end
   
   # loginID [Name of the aeroprise user]
   # instanceID [ID for current worklog entry]
   # SRInstanceID [ID for related SR]
-  def sr_work_info(login,instance_id,sr_id)
+  # needs_attention set flag in SR?
+  def sr_work_info(login,instance_id,sr_id,needs_attention)
     @source = Source.find_by_name("AeropriseRequest")
      
-    # find the user for this SR
-    begin
-    	user_id = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqnumber",
-        :source_id=>@source.id}).user_id
-    rescue
-      logger.info "worklog notification for existing SR but #{sr} is not found in sync data. Retrieving SR from remedy."
-      return sr_needs_attention(login,sr_id)
+    # find the SR
+    user = User.find_by_login(login)
+		if user.nil?
+			logger.info "Mobilized user never synced with rhosync, skipping push"
+			return "OK sr_work_info"
+		end
+		
+    ov = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqnumber",
+      :source_id=>@source.id, :user_id => user.id})
+    
+    unless ov
+      logger.info "worklog notification for existing SR but #{sr_id} is not found in sync data for #{login}. Retrieving SR from remedy."
+      return sr_crud(login,sr_id,nil)
     end
+    
     # login as this user
     api = login(login)
     
-    # worklog info
-    workinfo = api.get_work_info(sr_id)
-
-    worklog = []
-    workinfo.each do |entry|
-    
-      record = {}
-      record["submitter"] = entry["submitter"]
-      record["type"] = entry["type"]
-      record["summary"] = entry["summary"]
-      record["notes"] = entry["notes"]
-      record["submitdate"] = entry["submitdate"].to_s
-      
-      logger.debug record.inspect.to_s
-          	
-      worklog << record
-    end
-    
-    # serialize array of hashes and update
-    @wk_source = Source.find_by_name("AeropriseWorklog")
-    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"data",
-      :user_id=>user_id, :source_id=>@wk_source.id, :value => RhomRecord.serialize(worklog))
+    add_worklog_to_db(api, sr_id, user)
       
     # flag it so device will know to vibrate
-    
-    # if login != reqbyid && login != reqforid
-    reqbyid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqbyid",
-        :source_id=>@source.id}).value rescue nil
-    reqforid = ObjectValue.find(:first, :conditions => {:object=>sr_id, :attrib=>"reqforid",
-        :source_id=>@source.id}).value rescue nil
-                
-    if (login != reqbyid && login != reqforid)
+    if needs_attention.to_i > 0
     	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
-      	:user_id=>user_id, :source_id=>@source.id, :value => "1")
+    		:user_id=>user.id, :source_id=>@source.id, :value => "1")
+    	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"vibrate",
+    		:user_id=>user.id, :source_id=>@source.id, :value => "1")
+    		
+    	user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
     end
-    
-    # ping the user
-    user = User.find(user_id)
-    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
-    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
          
     "OK sr_work_info"
   rescue => e
@@ -186,7 +121,7 @@ class AeropriseController < ApplicationController
     logger.info e.backtrace.join("\n")
     "ERROR sr_work_info"
   end
-  
+
   # instanceID [ID for SRD]
   # Status [Current state of SRD two main values 'deployed' and 'expired']
   # activeState [Whether or not the SRD is 'online' or 'offline']
@@ -231,6 +166,34 @@ class AeropriseController < ApplicationController
   end
  
  protected
+ 
+  def add_worklog_to_db(api, sr_id, user)
+    workinfo = api.get_work_info(sr_id)
+
+    worklog = []
+    workinfo.each do |entry|
+    
+      record = {}
+      record["submitter"] = entry["submitter"]
+      record["type"] = entry["type"]
+      record["summary"] = entry["summary"]
+      record["notes"] = entry["notes"]
+      record["submitdate"] = entry["submitdate"].to_s
+      
+      logger.debug record.inspect.to_s
+          	
+      worklog << record
+    end
+    
+    # serialize array of hashes and update
+    wk_source = Source.find_by_name("AeropriseWorklog")
+    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"data",
+      :user_id=>user.id, :source_id=>wk_source.id, :value => RhomRecord.serialize(worklog))
+      
+    # ping the user
+    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
+	end
+	
  
   def login(user_login=nil)
     app = App.find_by_name("Aeroprise")
