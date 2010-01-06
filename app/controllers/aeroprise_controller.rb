@@ -111,7 +111,6 @@ class AeropriseController < ApplicationController
     		:user_id=>user.id, :source_id=>@source.id, :value => "1")
     	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"vibrate",
     		:user_id=>user.id, :source_id=>@source.id, :value => "1")
-    		
     	user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
     end
          
@@ -185,13 +184,15 @@ class AeropriseController < ApplicationController
       worklog << record
     end
     
-    # serialize array of hashes and update
-    wk_source = Source.find_by_name("AeropriseWorklog")
-    ObjectValue.record_object_value(:object=>sr_id, :attrib=>"data",
-      :user_id=>user.id, :source_id=>wk_source.id, :value => RhomRecord.serialize(worklog))
+    if worklog.length > 0
+    	# serialize array of hashes and update
+    	wk_source = Source.find_by_name("AeropriseWorklog")
+    	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"data",
+      	:user_id=>user.id, :source_id=>wk_source.id, :value => RhomRecord.serialize(worklog))
       
-    # ping the user
-    user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
+    	# ping the user
+    	user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
+  	end
 	end
 	
  
