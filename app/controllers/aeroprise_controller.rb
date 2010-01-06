@@ -106,7 +106,7 @@ class AeropriseController < ApplicationController
     add_worklog_to_db(api, sr_id, user)
       
     # flag it so device will know to vibrate
-    if needs_attention.to_i > 0
+    if needs_attention == "TRUE"
     	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"needsattention",
     		:user_id=>user.id, :source_id=>@source.id, :value => "1")
     	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"vibrate",
