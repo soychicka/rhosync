@@ -3,7 +3,7 @@ class DebugController < ApplicationController
   end
   
   def send_file
-    fname = params["fname"]
+    fname = sanitize_filename(params["fname"])
     send_data(IO.read("log/#{fname}"),
       :type => 'text/plain',
       :filename => "#{fname}")
