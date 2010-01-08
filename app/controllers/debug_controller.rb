@@ -9,6 +9,27 @@ class DebugController < ApplicationController
       :filename => "#{fname}")
   end
   
+  def clear_file
+    fname = sanitize_filename(params["fname"])
+    system("echo '' > log/#{fname}")
+    redirect_to :action => :index
+  end
+  
+  def restart
+    system("touch tmp/restart.txt")
+    redirect_to :action => :index    
+  end
+  
+  def git_pull
+    system("git pull")
+    redirect_to :action => :index    
+  end
+  
+  def bj_restart
+    system("ruby script/bj run --forever --rails_env=#{Rails.env} --rails_root=#{RAILS_ROOT} &")
+    redirect_to :action => :index
+  end
+  
   protected
   
   # source http://guides.rubyonrails.org/security.html
