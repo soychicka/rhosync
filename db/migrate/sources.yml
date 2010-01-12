@@ -39,5 +39,5 @@ AeropriseWorklog:
   adapter: AeropriseWorklog
   app_id: 1
   limit: 10000000
-  pollinterval: 0 
+  pollinterval: -1
 
