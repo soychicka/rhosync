@@ -80,11 +80,17 @@ module SourcesHelper
 
     # provided there is data....
     # allow -1 to mean dont ever poll
-    return false if -1==self.pollinterval
-
+		if -1==self.pollinterval
+			logger.info "poll interval -1, never needs refresh"
+			return false
+		end
+		
     # allow 0 to mean always poll
-    return true if 0==self.pollinterval
-
+    if 0==self.pollinterval
+			logger.info "poll interval 0, always needs refresh"
+			return true
+		end
+		
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
     if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
@@ -287,6 +293,8 @@ module SourcesHelper
   end
 
   def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil)
+  	logger.debug "build_object_values(#{utype}, #{client_id}, #{ack_token}, #{p_size}, #{conditions}, #{by_source}"
+  	
     # if client_id is provided, return only relevant objects for that client
     if client_id
 
@@ -337,6 +345,9 @@ module SourcesHelper
       # no client_id, just show everything (optionally based on search conditions)
       @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions,by_source)
     end
+    
+    logger.debug "@object_values = #{@object_values.inspect.to_s}"
+    
     @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
   end
 end
