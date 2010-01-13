@@ -27,6 +27,7 @@ class Source < ActiveRecord::Base
   has_many :object_values
   has_many :client_temp_objects
   has_many :source_logs
+  has_many :refreshes
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
@@ -74,19 +75,34 @@ class Source < ActiveRecord::Base
     logger.debug "dosearch called"
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
+    
     begin
       source_adapter.login  # should set up @session_id
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to login #{e}"      
       logger.debug e.backtrace.join("\n")
       return
     end
+    
     clear_pending_records(self.credential)
+    
     begin  
       logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
+      
+      # we have to do this before sync, because default implementation of sync will strip source_id's out of result
+      unique_sources = source_adapter.result.collect {|x| x[1][:source_id]}.uniq.compact rescue [self.id]
+      if unique_sources.nil? || unique_sources.length == 0
+        unique_sources = [self.id]
+      end
+      
       source_adapter.sync
-      update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+
+      update_pendings(@credential, unique_sources)  # copy over records that arent already in the sandbox
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to sync #{e}"
       logger.debug e.backtrace.join("\n")

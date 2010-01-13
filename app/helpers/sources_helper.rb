@@ -44,7 +44,7 @@ module SourcesHelper
     result=@current_user
   end
 
-  def needs_refresh
+  def needs_refresh(user)
     result=nil
     
     # check to make sure we are not running a paged query in the background
@@ -93,12 +93,28 @@ module SourcesHelper
 		
     # refresh is the data is old
     self.pollinterval||=300 # 5 minute default if there's no pollinterval or its a bad value
-    if !self.refreshtime or ((Time.new - self.refreshtime)>pollinterval)
-      logger.info "Refreshing source #{name} #{id}  because the data is old: #{self.refreshtime}"
+    
+    time=refreshtime(user)
+    if !time or ((Time.now - time)>pollinterval)
+      logger.info "Refreshing source #{name} #{id}  because the data is old: #{time}"
       return true
     end
 
     false  # return true of false (nil)
+  end
+  
+  def refreshtime(user)
+    obj=Refresh.find(:first, :conditions=>{:user_id=>user.id, :source_id=>self.id})
+    obj ? obj.time : nil
+  end
+  
+  def update_refreshtime(user)
+    obj=Refresh.find(:first, :conditions=>{:user_id=>user.id, :source_id=>self.id})
+    if obj
+      obj.update_attribute(:time, Time.now)
+    else
+      Refresh.create!(:user_id=>user.id, :source_id=>self.id, :time=> Time.now)
+    end
   end
 
   # presence or absence of credential determines whether we are using a "per user sandbox" or not
@@ -132,41 +148,24 @@ module SourcesHelper
     end
   end
 
-  # this function performs pending to final convert one at a time and is 
-  # robust to failures to to do a pending to final for a single object
-  def update_pendings(credential,check_existing=false)
-    conditions="source_id=#{id}"
+  # merge in pending objects created by search
+  def update_pendings(credential, unique_sources)
+    sources=unique_sources.collect {|s| "source_id=#{s.to_s}"}.join(" OR ")
+    conditions="(#{sources})"
     usr_condition=" and user_id=#{credential.user.id}" if credential
     conditions << usr_condition if usr_condition
-    if check_existing
-      ActiveRecord::Base.transaction do
-        objs=ObjectValue.find(:all, :conditions=>conditions +" and update_type is NULL" )
-        #current_ids = ActiveRecord::Base.connection.select_values "select id from object_values where update_type='query' #{usr_condition}"
-        objs.each do |obj|
-          begin
-            # if check_existing, look for existing query object-attribute, then update it and delete pending row
-            existing = ObjectValue.find :first, :conditions => "object='#{obj.object}' and attrib='#{obj.attrib}' and 
-                                                                update_type='query' and #{conditions}"
-                                                                
-            if existing
-              update_fields = "pending_id=#{obj.pending_id},id=#{obj.pending_id},value='#{obj.value}'"
-              obj.destroy
-            else
-              update_fields = "id=pending_id,update_type='query'"
-            end
- 
-            ActiveRecord::Base.connection.execute "update object_values set id=pending_id,#{update_fields} where 
-                          object='#{obj.object}' and attrib='#{obj.attrib}' and #{conditions}"
-                          
-          rescue Exception => e
-            slog(e,"Failed to finalize object value for object "+obj.inspect.to_s)
-          end
-        end
+    # for each unique object, delete entire old version, and finalize new version
+    objects = ActiveRecord::Base.connection.select_values "select distinct(object) from object_values where update_type is NULL and #{conditions}"
+    objects.each do |obj|
+      begin
+        ActiveRecord::Base.connection.execute "delete from object_values where object='#{obj}' and update_type='query' and #{conditions}"
+        ActiveRecord::Base.connection.execute "update object_values set id=pending_id, update_type='query' where object='#{obj}' and #{conditions}"
+      rescue Exception => e
+        logger.info "Error in update_pendings #{e.inspect.to_s}"
+        # delete bad pending record. this happens usually when there is a duplicate. there should not be duplicates but it does happen
+        # TODO: why do we end up here with duplicates sometimes?  
+        ActiveRecord::Base.connection.execute "delete from object_values where object='#{obj}' and update_type is NULL and #{conditions}"
       end
-      self.refreshtime=Time.new
-      save
-      # TODO: This is bad... These collided but we can't update them, so we delete for now.
-      ActiveRecord::Base.connection.execute "delete from object_values where update_type is NULL and #{conditions}"
     end
   end
 
@@ -184,8 +183,7 @@ module SourcesHelper
       (pending_to_query << " and user_id=" + credential.user.id.to_s) if credential
       ActiveRecord::Base.connection.execute(pending_to_query)
     end
-    self.refreshtime=Time.new # timestamp
-    save
+    update_refreshtime(credential.user) if credential
   end
 
   # helper function to come up with the string used for the name_value_list
@@ -211,6 +209,7 @@ module SourcesHelper
       objs.each do |x|
         logger.debug "Object returned is: " + x.inspect.to_s
         if x.object
+          # TODO: should probably limit by user (and client) as well
           objvals=ObjectValue.find_all_by_object_and_update_type(x.object,utype) # this has all the attribute value pairs now
           attrvalues={}
           attrvalues["id"]=x.object if utype!='create' # setting the ID allows it be an update or delete
@@ -229,12 +228,18 @@ module SourcesHelper
             tmp_object = ClientTempObject.find_by_temp_objectid(x.object)
             begin
               res = eval(cmd)
-              if res and res.is_a?(String) and tmp_object
+              if res and res.is_a?(String) and tmp_object and utype=='create'
                 tmp_object.update_attributes(:objectid => res, :source_id => id)
               end
-            rescue SourceAdapterException => sae
+            rescue SourceAdapterLoginException => sae
               if tmp_object
                 tmp_object.update_attributes(:error => "#{sae.class}:#{sae}", :source_id => id)
+              end           
+            rescue Exception => e
+              # destroy bad object values
+              ObjectValue.find_all_by_object_and_update_type(x.object,utype).each {|ova| ova.destroy}
+              if tmp_object
+                tmp_object.update_attributes(:error => "#{e.class}:#{e}", :source_id => id)
               end
             end
           end
@@ -292,9 +297,8 @@ module SourcesHelper
     qparms
   end
 
-  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil)
-  	logger.debug "build_object_values(#{utype}, #{client_id}, #{ack_token}, #{p_size}, #{conditions}, #{by_source}"
-  	
+  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil,called_by_search=nil)
+    logger.debug "build_object_values #{utype},#{client_id},#{ack_token},#{p_size},#{conditions},#{by_source},#{called_by_search}"
     # if client_id is provided, return only relevant objects for that client
     if client_id
 
@@ -303,7 +307,8 @@ module SourcesHelper
       @first_request=false
       @resend_token=nil
       
-      if @source.needs_refresh
+      # dont skip if we are being called directly by search
+      if !called_by_search && @source.needs_refresh(current_user)
         if @source.is_paged?
           @object_values=[]
           return
@@ -325,13 +330,9 @@ module SourcesHelper
 
       # generate new token for the next set of data
       @token=@resend_token ? @resend_token : get_new_token
-      # get the list of objects
-      # if this is a queued sync source and we are doing a refresh in the queue then wait for the queued sync to happen
-      if @source.needs_refresh
-        @object_values=[]
-      else
-        @object_values=ClientMapper.process_objects_for_client(current_user,@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,by_source)
-      end
+
+      @object_values=ClientMapper.process_objects_for_client(current_user,@source,@client,@token,@ack_token,@resend_token,p_size,@first_request,by_source)
+        
       # set token depending on records returned
       # if we sent zero records, we need to keep track so the client
       # doesn't receive the last page again

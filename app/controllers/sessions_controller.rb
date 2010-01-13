@@ -25,7 +25,7 @@ class SessionsController < ApplicationController
         if user = @app.authenticate(params[:login], params[:password], session)
           self.current_user = user
         else
-          render(:nothing=> true, :status => 401) and return
+          render(:nothing => true, :status => 401) and return
         end
       rescue => e
         logger.debug "exception @app.authenticate #{e.inspect.to_s}"
@@ -97,6 +97,10 @@ class SessionsController < ApplicationController
     redirect_back_or_default('/')
   end
 
+  def unrecognized?
+    render(:file => "#{RAILS_ROOT}/public/404.html")
+  end
+  
 protected
   # Track failed login attempts
   def note_failed_signin

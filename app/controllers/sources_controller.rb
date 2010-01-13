@@ -68,7 +68,7 @@ class SourcesController < ApplicationController
         @source.credential=usersub.credential  # this variable is available in your source adapter
       end
       
-      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh(@current_user)
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
       
@@ -109,11 +109,15 @@ class SourcesController < ApplicationController
 
       logger.debug "Searching for #{conditions.inspect.to_s}"
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false,true)
       get_wrapped_list(@object_values)
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    logger.debug "e.to_s #{e.to_s}"
+    render :text => e.to_s, :status => 401
   end
 
   # generate a new client for this source
@@ -506,6 +510,9 @@ protected
   end
 
   def handle_show_format
+    @refreshtime = @source.refreshtime(@current_user).to_i
+    logger.debug "#{@source.name} refreshtime =#{@refreshtime} (= #{Time.at(@refreshtime)})"
+    
     respond_to do |format|
       format.html
       format.xml  { render :xml => @object_values }
