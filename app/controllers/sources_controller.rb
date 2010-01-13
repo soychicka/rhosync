@@ -109,7 +109,7 @@ class SourcesController < ApplicationController
 
       logger.debug "Searching for #{conditions.inspect.to_s}"
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false,true)
       get_wrapped_list(@object_values)
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format

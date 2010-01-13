@@ -291,7 +291,7 @@ module SourcesHelper
     qparms
   end
 
-  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil)
+  def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil,called_by_search=nil)
     # if client_id is provided, return only relevant objects for that client
     if client_id
 
@@ -300,7 +300,8 @@ module SourcesHelper
       @first_request=false
       @resend_token=nil
       
-      if @source.needs_refresh(current_user)
+      # dont skip if we are being called directly by search
+      if !called_by_search && @source.needs_refresh(current_user)
         if @source.is_paged?
           @object_values=[]
           return
