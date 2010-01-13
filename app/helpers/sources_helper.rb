@@ -292,6 +292,7 @@ module SourcesHelper
   end
 
   def build_object_values(utype=nil,client_id=nil,ack_token=nil,p_size=nil,conditions=nil,by_source=nil,called_by_search=nil)
+    logger.debug "build_object_values #{utype},#{client_id},#{ack_token},#{p_size},#{conditions},#{by_source},#{called_by_search}"
     # if client_id is provided, return only relevant objects for that client
     if client_id
 

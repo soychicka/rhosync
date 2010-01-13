@@ -4,13 +4,11 @@
 <%= link_to("git pull", url_for(:action => 'git_pull')) %>
 
 <h2>Environment</h2>
-<pre><%= `git status` %></pre>
 <p>Rails: <%= Rails.env %></p>
 <pre><%= `gem environment` %></pre>
 
 <h2>Logs</h2>
 <% output = `ls log` %>
-
 <ul>
 <% output.split.each do |fname| %>
   <li>
@@ -19,9 +17,6 @@
   </li>
 <% end %>
 </ul>
-
-
-
 
 <h2>Background Jobs</h2>
 <%= link_to("Restart Jobs Runner", url_for(:action => 'bj_restart')) %>
