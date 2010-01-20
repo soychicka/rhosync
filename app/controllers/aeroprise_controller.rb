@@ -167,7 +167,16 @@ class AeropriseController < ApplicationController
  protected
  
   def add_worklog_to_db(api, sr_id, user)
+  	logger.debug "add_worklog_to_db(api, #{sr_id}, #{user.inspect.to_s})"
+  	
     workinfo = api.get_work_info(sr_id)
+  	if api.error
+    	api.get_messages.each do |msg|
+        loggger.debug "#{msg["type"]} : #{msg["num"]} : #{msg["text"]} "
+      end
+    end
+    
+    logger.debug workinfo.inspect.to_s
 
     worklog = []
     workinfo.each do |entry|
