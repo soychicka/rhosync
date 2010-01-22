@@ -139,8 +139,8 @@ module SourcesHelper
     prev=nil
     objs.each do |obj| # remove dupes
       if (prev and (obj.pending_id==prev.pending_id))
-        dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value})"
-        dupemsg+=" and OAV: #{prev.object.to_s},#{prev.attrib},#{prev.value}"
+        dupemsg="Deleting a duplicate pending ID: #{obj.pending_id.to_s} for OAV: #{obj.object.to_s},#{obj.attrib},#{obj.value},#{obj.user_id})"
+        dupemsg+=" and OAV: #{prev.object.to_s},#{prev.attrib},#{prev.value},#{prev.user_id}"
         logger.info dupemsg
         ObjectValue.delete(prev.id)
       end
@@ -347,7 +347,7 @@ module SourcesHelper
       @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions,by_source)
     end
     
-    logger.debug "@object_values = #{@object_values.inspect.to_s}"
+   # logger.debug "@object_values = #{@object_values.inspect.to_s}"
     
     @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
   end

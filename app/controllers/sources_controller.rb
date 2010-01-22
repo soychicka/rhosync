@@ -522,6 +522,8 @@ protected
         format.json
       end
     end
+    
+    logger.debug response.body
   end
 
   def get_new_token
