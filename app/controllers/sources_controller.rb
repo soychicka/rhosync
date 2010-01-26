@@ -52,6 +52,28 @@ class SourcesController < ApplicationController
     @result
   end
 
+  # calls from push requests should call in here to avoid an infinite loop
+  # works like show but does NOT query, just dumps out what we have
+	def fetch
+    @app=@source.app
+    if !check_access(@app)
+      respond_to do |wants|
+        wants.html { render :action=>"noaccess" }
+        wants.xml  { render :xml => { :error => "No Access" } }
+      end
+    else    
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],false)
+      get_wrapped_list(@object_values)
+      
+      @count = @count.nil? ? @object_values.length : @count
+      handle_show_format
+    end
+    
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    render :text => e.to_str, :status => 401  
+	end
+	
   # shows ALL data from backend, refreshing data when necessary (if data is empty or "stale")
   # use search method if you wish to request specific data
   # IF you wish to have device pinged when by ping method for important events
@@ -66,16 +88,14 @@ class SourcesController < ApplicationController
     else
       if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
         @source.credential=usersub.credential  # this variable is available in your source adapter
-      end
-      
-      # calls from push requests should pass no_refresh to avoid an infinite loop
-      unless params[:no_refresh]
-        if params[:refresh] || @source.needs_refresh(@current_user)
-          @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) 
-        end
-      end
-      
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
+      end      
+
+			if params[:refresh] || @source.needs_refresh(@current_user)
+  			# avoid infinite loop by directing ping to fetch url
+  	  	@source.refresh(@current_user,session, fetch_app_source_url(:app_id=>@app.name, :id => @source.name)) 
+    	end
+
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],false)
       get_wrapped_list(@object_values)
       
       @count = @count.nil? ? @object_values.length : @count

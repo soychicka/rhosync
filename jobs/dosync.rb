@@ -24,7 +24,7 @@ begin
   if callback_url
     logger.debug "pinging the current_user"
 
-    result = source.current_user.ping(callback_url+"?no_refresh=true")
+    result = source.current_user.ping(callback_url)
     logger.debug result.inspect.to_s  
   end
 rescue => e

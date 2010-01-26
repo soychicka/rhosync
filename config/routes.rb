@@ -26,7 +26,8 @@ ActionController::Routing::Routes.draw do |map|
 
   src_collection = { :clientcreate => :get,
                      :clientregister => :post,
-                     :clientreset => :get }
+                     :clientreset => :get
+                    }
 
   src_member = { :createobjects => :post,
                  :updateobjects => :post,
@@ -37,7 +38,9 @@ ActionController::Routing::Routes.draw do |map|
                  :ping_user => :get,
                  :refresh => :get,
                  :clientcreate => :get,
-                 :clientreset => :get }
+                 :clientreset => :get,
+                 :fetch => :get
+                }
 
   map.resources :sources, :collection => src_collection, :member => src_member
 
