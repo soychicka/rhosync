@@ -29,13 +29,13 @@ class AeropriseController < ApplicationController
 			
     # login as this user
     api = login(login)
-    
-		# get this SR from remedy
-		request = api.get_user_requests(sr_id)
-		if request.blank? || api.error
-			logger.fatal "Unable to get SR from remedy #{sr_id}"
-			return "ERROR sr_crud"
-		end
+
+      # get this SR from remedy
+      request = api.get_user_requests(sr_id)
+      if request.blank? || api.error
+        logger.fatal "Unable to get SR from remedy #{sr_id}"
+        return "ERROR sr_crud"
+      end
 				
     responses = api.get_answers_for_request(sr_id)
     
@@ -52,11 +52,11 @@ class AeropriseController < ApplicationController
     # this function will add as type pending
     hash_values = AeropriseRequestRecord.create(request, responses)
     hash_values.each do |k,v|
-    	ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
+      ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
     end
     
     # flip it to type query
-		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
+	ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
 
     # ping the user
     result = user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest", :no_refresh=>true))
@@ -227,7 +227,7 @@ class AeropriseController < ApplicationController
       
       login,password = Aeroprise.decrypt(admin_user.value,pw.value)
     else
-      login,password = "Demo",""
+      raise "admin user name and password needed, but not found in DB"
     end
 
     api = Rubyarapi.new(login,password,serverip,serverport,login,password)
