@@ -171,11 +171,12 @@ ActiveRecord::Schema.define(:version => 20091210233551) do
   create_table "source_logs", :force => true do |t|
     t.string   "error"
     t.string   "message"
-    t.float    "timing"
+    t.integer  "time"
     t.string   "operation"
     t.integer  "source_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.float    "timing"
   end
 
   create_table "sources", :force => true do |t|
@@ -190,7 +191,7 @@ ActiveRecord::Schema.define(:version => 20091210233551) do
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.boolean  "queuesync"
+    t.integer  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end

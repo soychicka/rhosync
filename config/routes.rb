@@ -38,8 +38,7 @@ ActionController::Routing::Routes.draw do |map|
                  :ping_user => :get,
                  :refresh => :get,
                  :clientcreate => :get,
-                 :clientreset => :get,
-                 :fetch => :get
+                 :clientreset => :get
                 }
 
   map.resources :sources, :collection => src_collection, :member => src_member

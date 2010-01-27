@@ -66,6 +66,8 @@ class ObjectValue < ActiveRecord::Base
     
     ObjectValue.create(:object=>oav[:object], :attrib=>oav[:attrib],
       :user_id=>oav[:user_id], :source_id=>oav[:source_id], :value=> oav[:value], :update_type=>"query")
+      
+    # TODO: swap pending id to id
   end
   
   # Returns the OAV list for a given user/source

@@ -59,7 +59,7 @@ class AeropriseController < ApplicationController
 		ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
 
     # ping the user
-    result = user.ping(fetch_app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest"))
+    result = user.ping(app_source_url(:app_id => "Aeroprise", :id => "AeropriseRequest", :no_refresh=>true))
     begin
     	logger.info result.inspect.to_s
     	logger.info result.code
@@ -111,7 +111,7 @@ class AeropriseController < ApplicationController
     		:user_id=>user.id, :source_id=>@source.id, :value => "1")
     	ObjectValue.record_object_value(:object=>sr_id, :attrib=>"vibrate",
     		:user_id=>user.id, :source_id=>@source.id, :value => "1")
-    	user.ping(fetch_app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest"))
+    	user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseRequest", :no_refresh=>true))
     end
          
     "OK sr_work_info"
@@ -200,7 +200,7 @@ class AeropriseController < ApplicationController
       	:user_id=>user.id, :source_id=>wk_source.id, :value => RhomRecord.serialize(worklog))
       
     	# ping the user
-    	user.ping(fetch_app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog"))
+    	user.ping(app_source_url(:app_id=>"Aeroprise", :id => "AeropriseWorklog", :no_refresh=>true))
   	end
 	end
 	
