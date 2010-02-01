@@ -16,7 +16,7 @@ class AeropriseController < ApplicationController
   
   # updates SR and toggle needs attention for it depending on login
   def sr_crud(login, sr_id, modified_by)	
-  	command = "'ruby script/runner ./jobs/aeroprise_sr_crud.rb #{login} #{sr_id} #{modified_by} #{app_source_url(:app_id => 'Aeroprise', :id => 'AeropriseRequest', :no_refresh=>true)} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseWorklog', :no_refresh=>true)}"
+  	command = "ruby script/runner ./jobs/aeroprise_sr_crud.rb #{login} #{sr_id} #{modified_by} #{app_source_url(:app_id => 'Aeroprise', :id => 'AeropriseRequest', :no_refresh=>true)} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseWorklog', :no_refresh=>true)}"
   	return queue_job(command, "sr_crud")
   end
   
@@ -25,7 +25,7 @@ class AeropriseController < ApplicationController
   # SRInstanceID [ID for related SR]
   # needs_attention set flag in SR?
   def sr_work_info(login,instance_id,sr_id,needs_attention)
-  	command = "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login} #{sr_id} #{needs_attention} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseRequest', :no_refresh=>true)} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseWorklog', :no_refresh=>true)}"
+  	command = "ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login} #{sr_id} #{needs_attention} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseRequest', :no_refresh=>true)} #{app_source_url(:app_id=>'Aeroprise', :id => 'AeropriseWorklog', :no_refresh=>true)}"
   	return queue_job(command, "sr_work_info")
   end
   
@@ -75,7 +75,7 @@ class AeropriseController < ApplicationController
  protected
    # check for existing job in queue, and dont duplicate it
    def queue_job(job_string, job_code)
-    jobs = Bj::Table::Job.find(:all, :conditions => [:command => job_string])
+    jobs = Bj::Table::Job.find(:all, :conditions => {:command => job_string})
 		jobs.each do |job|
 			if job.state == 'running' || job.state == 'pending'
 				logger.info "pending background job detected, skipping"

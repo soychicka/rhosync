@@ -122,4 +122,4 @@ jobs.each do |job|
 end
 	
 # queue new job for work log, but pass "nil" as this callback URL as flag so we dont loop back here if sr cannot be read fgor example
-Bj.submit "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login} #{sr_id} FALSE nil #{worklog_callback_url}'"
+Bj.submit "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login_name} #{sr_id} FALSE nil #{worklog_callback_url}'"
