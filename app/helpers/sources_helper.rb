@@ -53,7 +53,7 @@ module SourcesHelper
     if command
       jobs = Bj::Table::Job.find(:all, :conditions => ["command LIKE ?", command])
   		jobs.each do |job|
-  			if job.state == 'running'
+  			if job.state == 'running' || job.state == 'pending'
   				logger.info "pending background job detected, needs_refresh returning false so it can finish"
   				return false
   			end
