@@ -101,7 +101,7 @@ module Sync
         ClientMap.mark_objs_by_ack_token(ack_token) if ack_token and ack_token.length > 0
 
         # find delete records
-        objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id) )
+        objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id,source.id) )
 
         # process temp objects for this client
         ClientMap.process_create_objs_for_client(client.id,source.id,token)
