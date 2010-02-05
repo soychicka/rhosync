@@ -16,22 +16,12 @@ require File.join(RAILS_ROOT, "config/environment")
 #require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
 logfile = File.open("log/bj-srd_runner.log", "a+")  
-$logger = Logger.new(logfile)
+logger = Logger.new(logfile)
 
 def log_debug(msg)
-  $logger.debug msg
+  logger.debug msg
   #puts msg
 end
-
-log_debug "#{Time.now} starting srd_runner #{ARGV.inspect.to_s}"
-
-# usage: srd_runner.rb remove SRD_XXXXXXXXXXXX http://rhosync.example.com/sources/10/show
-
-action        =ARGV[0]
-srd_id        =ARGV[1]
-callback_url  =ARGV[2]
-
-log_debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 
 def ping(user, url)
   log_debug "pinging #{user.login}"
@@ -50,6 +40,16 @@ def ping(user, url)
   rescue
   log_debug "exception in ping method wrapper"
 end
+
+log_debug "#{Time.now} starting srd_runner #{ARGV.inspect.to_s}"
+
+# usage: srd_runner.rb remove SRD_XXXXXXXXXXXX http://rhosync.example.com/sources/10/show
+
+action        =ARGV[0]
+srd_id        =ARGV[1]
+callback_url  =ARGV[2]
+
+log_debug "action = #{action}, srd_id=#{srd_id}, callback_url = #{callback_url}"
 
 begin
   app = App.find_by_name("Aeroprise")

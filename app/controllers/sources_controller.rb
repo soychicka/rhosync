@@ -129,8 +129,7 @@ class SourcesController < ApplicationController
 
   # generate a new client for this source
   def clientcreate
-    @client = Client.new
-    @client.user = current_user if current_user
+    find_and_register_client
 
     respond_to do |format|
       if @client.save
@@ -148,23 +147,20 @@ class SourcesController < ApplicationController
 
   # start over
   def clientreset
-    @client = Client.find_by_client_id(params[:client_id])
-    if @client
-    	# wipe client maps
-      @client.reset
+    find_and_register_client
+		
+  	# wipe client maps
+    @client.reset
       
-      # force server refresh
-      app_id=params[:app_id]
-      if @app = App.find(:first, :conditions => ["name=? or id=?", app_id, app_id.to_i])
-    		@app.sources.each do |src|
-	      	src.refresh(@current_user, session)
-    		end
+    # force server refresh
+    app_id=params[:app_id]
+    if @app = App.find(:first, :conditions => ["name=? or id=?", app_id, app_id.to_i])
+  		@app.sources.each do |src|
+      	src.refresh(@current_user, session)
   		end
+		end
     
-      render :nothing=> true, :status => 200
-    else # if we dont have this client its a serious error
-    	render :nothing=> true, :status => 404
-    end
+    render :nothing => true, :status => 200
   end
 
   # this creates all of the rows in the object values table corresponding to

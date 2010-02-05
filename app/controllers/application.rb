@@ -47,6 +47,12 @@ class ApplicationController < ActionController::Base
   
   def find_and_register_client
     @client = Client.find_by_client_id(params[:client_id])
-    register_client(@client) if @client
+    if @client.nil?
+    	logger.debug "creating new client"
+    	@client = current_user.clients.build # we have to build first and get UUID generated
+			@client.update_attributes(:client_id => params[:client_id]) # now update to one client is sending
+    end
+    
+    register_client(@client)
   end
 end
