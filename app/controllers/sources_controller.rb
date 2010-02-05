@@ -69,15 +69,16 @@ class SourcesController < ApplicationController
         @source.credential=usersub.credential  # this variable is available in your source adapter
       end      
 
-			if params[:no_refresh].nil?
-				if params[:refresh] || @source.needs_refresh(@current_user)
-  				# avoid infinite loop by recursing here with no_refresh
-  	  		@source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name, :no_refresh=>true)) 
-    		end
-			end
+      if params[:no_refresh].nil?
+        if params[:refresh] || @source.needs_refresh(@current_user)
+          # avoid infinite loop by recursing here with no_refresh
+          @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name, :no_refresh=>true)) 
+        end
+      end
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],false)
+
       get_wrapped_list(@object_values)
-      
+
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end

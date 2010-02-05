@@ -34,11 +34,11 @@ class Product < SourceAdapter
   # ENABLE THIS IF YOU WANT TO TEST BACKGROUND SYNC AKA PAGED QUERY
   # implemented in terms of query
   # for testing only we have hardcoded a page size of 10
-  def page(num)
-    Rails.logger.debug "page %d num class is %s" % [num, num.class.to_s]
-    @result = query(nil, 10, num.to_i * 10)
-    return nil if @result.empty? # nil tells rhosync there are no more pages
-  end
+  # def page(num)
+  #   Rails.logger.debug "page %d num class is %s" % [num, num.class.to_s]
+  #   @result = query(nil, 10, num.to_i * 10)
+  #   return nil if @result.empty? # nil tells rhosync there are no more pages
+  # end
  
   def sync
     # TODO: write code here that converts the data you got back from query into an @result object

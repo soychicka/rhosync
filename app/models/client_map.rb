@@ -50,24 +50,24 @@ class ClientMap < ActiveRecord::Base
   
   # look for changes in the current object_values list, return only records
   # for the current user if required
-  def self.get_delete_objs_for_client(token,page_size,client_id)
+  def self.get_delete_objs_for_client(token,page_size,client_id,source_id)
     objs_to_return = []
     ActiveRecord::Base.transaction do
        if ActiveRecord::Base.connection.adapter_name.downcase == "oracle"
         objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
                                                 cm.object_value_id = ov.id
-                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                where cm.client_id='#{client_id}' and ov.id is NULL and ov.source_id=#{source_id} 
                                                 and cm.dirty=0 and ROWNUM <= #{page_size} order by ov.object"
       elsif ActiveRecord::Base.connection.adapter_name.downcase == "sqlserver"
 	      
         objs_to_delete = ClientMap.find_by_sql "select top #{page_size} * from client_maps cm left join object_values ov on
                                                 cm.object_value_id = ov.id
-                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                where cm.client_id='#{client_id}' and ov.id is NULL and ov.source_id=#{source_id} 
                                                 and cm.dirty=0 order by ov.object"
       else	      
         objs_to_delete = ClientMap.find_by_sql "select * from client_maps cm left join object_values ov on
                                                 cm.object_value_id = ov.id
-                                                where cm.client_id='#{client_id}' and ov.id is NULL
+                                                where cm.client_id='#{client_id}' and ov.id is NULL and ov.source_id=#{source_id} 
                                                 and cm.dirty=0 order by ov.object limit #{page_size}"
       end
       objs_to_delete.each do |map|
