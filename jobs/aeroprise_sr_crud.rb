@@ -88,9 +88,13 @@ end
     
 # this function will add as type pending
 hash_values = AeropriseRequestRecord.create(request, responses)
-hash_values.each do |k,v|
-  ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
-end
+#hash_values.each do |k,v|
+#  ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
+#end
+
+# enter values the same way they are done in source adapter 
+default_sync = Sync::Synchronizer.new({sr_id => hash_values}, source.id, 1000000, user.id)
+default_sync.sync
     
 # flip it to type query
 begin

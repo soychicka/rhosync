@@ -349,6 +349,6 @@ module SourcesHelper
     
    # logger.debug "@object_values = #{@object_values.inspect.to_s}"
     
-    @object_values.delete_if {|o| o.value.nil? || o.value.size<1 } # don't send back blank or nil OAV triples
+    @object_values.delete_if {|o| o.value.blank? } # don't send back blank or nil OAV triples
   end
 end

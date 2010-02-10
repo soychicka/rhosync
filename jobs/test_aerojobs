@@ -1,0 +1,3 @@
+#!/usr/bin/sh
+
+ruby script/runner './jobs/aeroprise_sr_crud.rb' vidal SR000C29EB4182_EpnSwV4fbDwB9oA Demo 'http://192.168.10.60/apps/Aeroprise/sources/AeropriseRequest?no_refresh=true' 'http://192.168.10.60/apps/Aeroprise/sources/AeropriseWorklog?no_refresh=true'
