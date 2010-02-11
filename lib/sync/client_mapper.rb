@@ -26,7 +26,7 @@ module Sync
         obj_sym = ov.object.nil? ? nil : ov.object.to_sym
         obj_sym ||= :rho_del_obj
         old_obj = nil
-        av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value }
+        av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value, :t => ov.attrib_type }
 
         if temp_count > 0
           # find the temp_obj that corresponds to the successful create

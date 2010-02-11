@@ -1,4 +1,4 @@
-class Camera < SourceAdapter
+class Image < SourceAdapter
   PATH = File.join(RAILS_ROOT,'public','images')
   BASEURL = 'http://dev.rhosync.rhohub.com'
   
