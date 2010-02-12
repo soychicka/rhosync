@@ -32,7 +32,8 @@ class ApplicationController < ActionController::Base
   # register this particular device and associated user as interested in queued sync
   def register_client(client)
     logger.debug 'Registering Client: ' + client.inspect
-    if @current_user and not params["device_pin"].blank?
+    if not params["device_pin"].blank?
+      client.user = current_user # we need to set this because the user can change for a client
       client.pin = params["device_pin"]
       logger.debug "Registering device for notification with pin " + client.pin
       client.device_type=params["device_type"] if params["device_type"]  
