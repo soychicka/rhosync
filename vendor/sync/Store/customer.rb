@@ -1,5 +1,6 @@
 require 'json'
 require 'open-uri'
+
 class Customer < SourceAdapter
   def initialize(source,credential)
     super(source,credential)
@@ -9,6 +10,8 @@ class Customer < SourceAdapter
   end
  
   def query(conditions=nil,limit=nil,offset=nil)
+    # backend for this source adapter implements condtions
+    
     logger = Logger.new('log/store.log', File::WRONLY | File::APPEND)
     logger.debug "query called with conditions=#{conditions} limit=#{limit} and offset=#{offset}"
     
@@ -20,11 +23,11 @@ class Customer < SourceAdapter
     open(url) do |f|
       parsed=JSON.parse(f.read)
     end
-      logger.debug parsed.inspect.to_s
+    
+    logger.debug parsed.inspect.to_s
     @result={}
     
     parsed.each { |item|@result[item["customer"]["id"].to_s]=item["customer"] } if parsed
-    
     logger.debug @result.inspect.to_s
     
     @result
@@ -70,26 +73,58 @@ class Customer < SourceAdapter
   end
  
   def create(name_value_list)
-    #TODO: write some code here
-    # the backend application will provide the object hash key and corresponding value
-    raise "Please provide some code to create a single object in the backend application using the hash values in name_value_list"
+    attrvals={}
+    name_value_list.each { |nv| attrvals["customer["+nv["name"]+"]"]=nv["value"]} # convert name-value list to hash
+    res = Net::HTTP.post_form(URI.parse("http://rhostore.heroku.com/customers"),attrvals)
+
+    # after create we are redirected to the new record. We need to get the id of that record and return it as part of create
+    # so rhosync can establish connection from its temporary object on the client to this newly created object on the server
+    case res
+      when Net::HTTPRedirection 
+        parsed = {}
+        open(res['location']+".json") do |f|
+          parsed=JSON.parse(f.read)
+        end
+      return parsed["customer"]["id"] rescue nil
+    end
   end
  
-  def update(name_value_list)
-    #TODO: write some code here
-    # be sure to have a hash key and value for "object"
-    raise "Please provide some code to update a single object in the backend application using the hash values in name_value_list"
+  def update(name_value_list) 
+    obj_id = name_value_list.find { |item| item['name'] == 'id' }
+    name_value_list.delete(obj_id)
+
+    params={}     
+    name_value_list.each {|nv|params[nv["name"]]=nv["value"]}
+
+    uri = URI.parse('http://rhostore.heroku.com')
+    Net::HTTP.start(uri.host) do |http|
+      request = Net::HTTP::Put.new(uri.path + "/customers/#{obj_id['value']}.xml", {'Content-type' => 'application/xml'})
+      request.body = xml_template(params)
+      response = http.request(request)
+    end
   end
  
   def delete(name_value_list)
-    #TODO: write some code here if applicable
-    # be sure to have a hash key and value for "object"
-    # for now, we'll say that its OK to not have a delete operation
-    # raise "Please provide some code to delete a single object in the backend application using the hash values in name_value_list"
+    attrvals={}     
+    name_value_list.each {|nv|attrvals["product["+nv["name"]+"]"]=nv["value"]}
+    http=Net::HTTP.new(‘rhostore.heroku.com’,80)
+    path="/customers/#{attrvals['id']}"
+    resp=http.delete(path)
   end
  
   def logoff
     #TODO: write some code here if applicable
     # no need to do a raise here
   end
+  
+  protected
+  # API is expecting us to send XML content
+  def xml_template(params)
+    xml_str = "<customer>"
+    params.each do |key,value|
+      xml_str += "<#{key}>#{value}</#{key}>"
+     end
+     xml_str += "</customer>"
+     xml_str
+   end
 end

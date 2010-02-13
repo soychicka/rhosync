@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091029002629) do
+ActiveRecord::Schema.define(:version => 20091210233551) do
 
   create_table "administrations", :force => true do |t|
     t.integer  "app_id"
@@ -29,16 +29,14 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
     t.boolean  "stop_subscriptions"
   end
 
-  create_table "bj_config", :id => false, :force => true do |t|
-    t.integer "bj_config_id", :null => false
-    t.text    "hostname"
-    t.text    "key"
-    t.text    "value"
-    t.text    "cast"
+  create_table "bj_config", :primary_key => "bj_config_id", :force => true do |t|
+    t.text "hostname"
+    t.text "key"
+    t.text "value"
+    t.text "cast"
   end
 
-  create_table "bj_job", :id => false, :force => true do |t|
-    t.integer  "bj_job_id",      :null => false
+  create_table "bj_job", :primary_key => "bj_job_id", :force => true do |t|
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -57,8 +55,7 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
     t.integer  "exit_status"
   end
 
-  create_table "bj_job_archive", :id => false, :force => true do |t|
-    t.integer  "bj_job_archive_id", :null => false
+  create_table "bj_job_archive", :primary_key => "bj_job_archive_id", :force => true do |t|
     t.text     "command"
     t.text     "state"
     t.integer  "priority"
@@ -103,7 +100,6 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
 
   create_table "clients", :id => false, :force => true do |t|
     t.string   "client_id",       :limit => 36
-    t.string   "session"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "user_id"
@@ -166,15 +162,20 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
   add_index "object_values", ["update_type"], :name => "by_ut"
   add_index "object_values", ["user_id"], :name => "by_u"
 
+  create_table "refreshes", :force => true do |t|
+    t.integer  "source_id"
+    t.integer  "user_id"
+    t.datetime "time"
+  end
+
   create_table "source_logs", :force => true do |t|
     t.string   "error"
     t.string   "message"
-    t.integer  "time"
+    t.float    "timing"
     t.string   "operation"
     t.integer  "source_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.float    "timing"
   end
 
   create_table "sources", :force => true do |t|
@@ -184,13 +185,12 @@ ActiveRecord::Schema.define(:version => 20091029002629) do
     t.string   "password"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.datetime "refreshtime"
     t.string   "adapter"
     t.integer  "app_id"
     t.integer  "pollinterval"
     t.integer  "priority"
     t.integer  "incremental"
-    t.integer  "queuesync"
+    t.boolean  "queuesync"
     t.string   "limit"
     t.string   "callback_url"
   end

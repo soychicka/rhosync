@@ -23,6 +23,12 @@ class ApplicationController < ActionController::Base
     response.content_type = Mime::HTML
   end
 
+	after_filter :set_content_type
+
+	def set_content_type
+		response.content_type = Mime::HTML
+  end
+
   # register this particular device and associated user as interested in queued sync
   def register_client(client)
     logger.debug 'Registering Client: ' + client.inspect

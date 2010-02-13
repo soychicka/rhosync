@@ -24,6 +24,9 @@ class User < ActiveRecord::Base
   has_many :administrations
   has_many :clients
   has_many :users
+  has_many :source_notifies
+  has_many :object_values
+  has_many :refreshes
   has_many :sources, :through => :source_notifies
   
   include Authentication
@@ -38,6 +41,9 @@ class User < ActiveRecord::Base
 
   validates_format_of       :name,     :with => Authentication.name_regex,  :message => Authentication.bad_name_message, :allow_nil => true
   validates_length_of       :name,     :maximum => 100
+
+  validate :must_not_exceed_license_seats
+
 
   # HACK HACK HACK -- how to do attr_accessible from here?
   # prevents a user from submitting a crafted form that bypasses activation
@@ -58,10 +64,19 @@ class User < ActiveRecord::Base
   
   def ping(callback_url,message=nil,vibrate=500,badge=nil,sound=nil)
     @result=""
-    clients.each do |client|
-      @result=client.ping(callback_url,message,vibrate,badge,sound)
-      p "Result of client ping: #{@result}" if @result
+    if clients # might not have clients?
+      logger.debug "pinging #{clients.size} client devices"
+      clients.each do |client|
+        # will fail if client.device_type is blank or other misconfig
+        # dont die on single bad device ping
+        @result=client.ping(callback_url,message,vibrate,badge,sound) rescue nil
+        logger.debug "Result of client ping: #{@result}" if @result
+      end
     end
     @result
-  end 
+  end
+  def must_not_exceed_license_seats
+    maxusers = License::Reader.new(RHOSYNC_LICENSE).seats
+    errors.add_to_base("Your current license only permits #{maxusers} users.") if self.class.count >= maxusers
+  end
 end

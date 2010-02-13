@@ -32,7 +32,11 @@ class App < ActiveRecord::Base
   end
 
   def self.find_by_permalink(link)
-    App.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
+    if link.is_a? String
+      App.find(:first, :conditions => ["name =:link", {:link=> link}])
+    else
+      App.find(:first, :conditions => ["id =:link", {:link=> link}])
+    end
   end
 
   def authenticates?
@@ -44,7 +48,8 @@ class App < ActiveRecord::Base
       user = User.find_by_login(login)
       if !user
         user = User.create(:login => login, :password => "doesnotmatter", :password_confirmation => "doesnotmatter")
-        self.users << user
+        membership = Membership.create(:user_id => user.id, :app_id => id)
+        Credential.create(:membership_id => membership.id)
       end
       return user
     end

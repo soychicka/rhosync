@@ -2,7 +2,7 @@ SugarCRM:
   id: 1
   name: SugarCRM
   description: sync data sources for SugarCRM
-
+ 
 Siebel:
   id: 2
   name: Siebel
@@ -12,4 +12,4 @@ Store:
   id: 3
   name: Store
   description: test store app based on http://rhostore.heroku.com
-    
+

@@ -4,14 +4,14 @@ SugarAccounts:
   adapter: SugarAccounts
   app_id: 1
   limit: 100
-
+ 
 SugarCases:
   id: 2
   name: SugarCases
   app_id: 1
   adapter: SugarCases
   limit: 100
-
+ 
 SugarEmployees:
   id: 3
   name: SugarEmployees
@@ -53,7 +53,7 @@ SugarCalls:
   app_id: 1
   adapter: SugarCalls
   limit: 100
-
+ 
 SugarCampaigns:
   id: 16
   name: SugarCampaigns
@@ -88,7 +88,7 @@ SugarQuotes:
   app_id: 1
   adapter: SugarQuotes
   limit: 100
-
+ 
 Customer:
   id: 22
   name: Customer
@@ -96,15 +96,12 @@ Customer:
   adapter: Customer
   url: http://rhostore.heroku.com/customers.json
   limit: 100
-
+ 
 Product:
   id: 23
   name: Product
   app_id: 3
-  adapter: ProductAdapter
+  adapter: Product
   url: http://rhostore.heroku.com/products.json
   limit: 100
-
-
-
 

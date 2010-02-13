@@ -67,12 +67,18 @@ class SourcesController < ApplicationController
       if @current_user and usersub=@app.memberships.find_by_user_id(@current_user.id)
         @source.credential=usersub.credential  # this variable is available in your source adapter
       end
-      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh
+      
+      @source.refresh(@current_user,session, app_source_url(:app_id=>@app.name, :id => @source.name)) if params[:refresh] || @source.needs_refresh(@current_user)
       build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],params[:conditions],true)
       get_wrapped_list(@object_values)
+      
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end
+    
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    render :text => e.to_str, :status => 401  
   end
 
   def edit_search
@@ -103,11 +109,15 @@ class SourcesController < ApplicationController
 
       logger.debug "Searching for #{conditions.inspect.to_s}"
       @source.dosearch(@current_user,session,conditions,params[:max_results].to_i,params[:offset].to_i)
-      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false)
+      build_object_values('query',params[:client_id],params[:ack_token],params[:p_size],conditions,false,true)
       get_wrapped_list(@object_values)
       @count = @count.nil? ? @object_values.length : @count
       handle_show_format
     end
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    logger.debug "e.to_s #{e.to_s}"
+    render :text => e.to_s, :status => 401
   end
 
   # generate a new client for this source
@@ -134,8 +144,10 @@ class SourcesController < ApplicationController
     @client = Client.find_by_client_id(params[:client_id])
     if @client
       @client.reset
+      render :nothing=> true, :status => 200
+    else # if we dont have this client its a serious error
+    	render :nothing=> true, :status => 404
     end
-    render :nothing=> true, :status => 200
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -158,11 +170,19 @@ class SourcesController < ApplicationController
   # RETURNS:
   #   a hash of the object_values table ID columns as keys and the updated_at times as values
   def createobjects
-    @app=App.find_by_permalink(params[:app_id]) if params[:app_id]
-    @source=Source.find_by_permalink(params[:id]) if params[:id]
     check_access(@source.app)
     objects={}
-    @client = Client.find_by_client_id(params[:client_id]) if params[:client_id]
+    
+    @client=nil
+    if params[:client_id]
+    	# if client id is specified make sure it is valid
+    	@client = Client.find_by_client_id(params[:client_id]) 
+    	if @client.nil?
+    		logout_killing_session!
+    		render :text => "Unrecognized client", :status => 401
+    		return
+    	end
+  	end
 
     newqparms=1 # flag that tells us that the first time we have an object named qparms we need to change query parameters
     params[:attrvals].each do |x| # for each hash in the array
@@ -185,14 +205,14 @@ class SourcesController < ApplicationController
         o.blob = params[:blob]
         o.blob.instance_write(:file_name, x["value"])
       end
-      unless @client.client_temp_objects.exists?(:temp_objectid => x['object'])
+      unless @client.nil? or @client.client_temp_objects.exists?(:temp_objectid => x['object'])
         @client.client_temp_objects.create!(:temp_objectid => x['object'], :source_id => @source.id) 
       end
       o.save
       # add the created ID + created_at time to the list
       objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
       
-      ClientMap.create!(:client_id => @client.client_id, :object_value_id => x['id']) if x['id']
+      ClientMap.create!(:client_id => @client.client_id, :object_value_id => x['id']) if x['id'] && @client
     end
     respond_to do |format|
       if params[:no_redirect]
@@ -209,9 +229,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
-  rescue SourceAdapterLoginException
-   logout_killing_session!
-   render :nothing=>true, :status => 401
+  rescue SourceAdapterLoginException => e
+    logout_killing_session!
+    render :text => e.to_str, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -253,9 +273,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json  { render :json => objects }
     end
-  rescue SourceAdapterLoginException
+  rescue SourceAdapterLoginException => e
     logout_killing_session!
-    render :nothing=>true, :status => 401
+    render :text => e.to_str, :status => 401
   end
 
   # this creates all of the rows in the object values table corresponding to
@@ -288,10 +308,9 @@ class SourcesController < ApplicationController
       format.xml  { render :xml => objects }
       format.json { render :json => objects }
     end
-
-  rescue SourceAdapterLoginException
+  rescue SourceAdapterLoginException => e
     logout_killing_session!
-    render :nothing=>true, :status => 401
+    render :text => e.to_str, :status => 401
   end
 
   def editobject
@@ -365,12 +384,12 @@ class SourcesController < ApplicationController
     if Source.find_by_name(@source.name)
       error="Source already exists. Please try a different name."
     end
-    @app=App.find_by_permalink(params[:source][:app_id])
+    @app=App.find(params[:source][:app_id])
     @source.app=@app
     respond_to do |format|
       if !error and @source.save
         flash[:notice] = 'Source was successfully created.'
-        format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.id) }
+        format.html { redirect_to(:controller=>"apps",:action=>:edit,:id=>@app.name) }
         format.xml  { render :xml => @source, :status => :created, :location => @source }
       else
         flash[:notice]=error
@@ -481,6 +500,9 @@ protected
   end
 
   def handle_show_format
+    @refreshtime = @source.refreshtime(@current_user).to_i
+    logger.debug "#{@source.name} refreshtime =#{@refreshtime} (= #{Time.at(@refreshtime)})"
+    
     respond_to do |format|
       format.html
       format.xml  { render :xml => @object_values }

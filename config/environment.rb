@@ -26,7 +26,7 @@ Rails::Initializer.run do |config|
   # config.gem "hpricot", :version => '0.6', :source => "http://code.whytheluckystiff.net"
   # config.gem "aws-s3", :lib => "aws/s3"
   config.gem 'rubyist-aasm', :lib => 'aasm', :source => "http://gems.github.com"
-  config.gem "httpclient", :version => "2.1.2"
+  config.gem "httpclient"
   config.gem "soap4r", :lib => "soap/mapping"
   config.gem "uuidtools", :version => ">=2.0.0"
   config.gem "actionmailer",:lib => "actionmailer"
@@ -34,8 +34,9 @@ Rails::Initializer.run do |config|
   config.gem "rspec-rails", :lib => "spec/rake/spectask"
   config.gem "rcov"
   config.gem "libxml-ruby", :lib => "xml/libxml"
+  config.gem "datanoise-actionwebservice", :lib => "actionwebservice", :version => "2.2.2"  
   config.gem "ar-extensions", :version => ">=0.9.2"
-  
+  config.gem "fastercsv"
 
   # Only load the plugins named here, in the order given. By default, all plugins 
   # in vendor/plugins are loaded in alphabetical order.
@@ -96,4 +97,6 @@ module SOAP
     XSDNamespaceTag = 'xsd'
     XSINamespaceTag = 'xsi'
 end
+
+RHOSYNC_LICENSE = IO.read("#{File.dirname(__FILE__)}/license.key").strip unless defined?(RHOSYNC_LICENSE)
 

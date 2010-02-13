@@ -21,12 +21,17 @@ class SessionsController < ApplicationController
     @app=App.find_by_permalink(params[:app_id])
 
     if @app.authenticates? # authentication has been delegated to the application?
-      logger.debug "calling app delegated authentication"
-      user = @app.authenticate(params[:login], params[:password], session)
-      if user
-        self.current_user = user
-      else
-        render(:nothing => true, :status => 401) and return
+      begin
+        if user = @app.authenticate(params[:login], params[:password], session)
+          self.current_user = user
+        else
+          render(:nothing => true, :status => 401) and return
+        end
+      rescue => e
+        logger.debug "exception @app.authenticate #{e.inspect.to_s}"
+        logger.debug e.backtrace.join("\n")
+        
+        render(:text => e.to_str, :status => 401) and return
       end
     else
       user = User.authenticate(params[:login], params[:password])
@@ -92,6 +97,10 @@ class SessionsController < ApplicationController
     redirect_back_or_default('/')
   end
 
+  def unrecognized?
+    render(:file => "#{RAILS_ROOT}/public/404.html")
+  end
+  
 protected
   # Track failed login attempts
   def note_failed_signin

@@ -10,6 +10,7 @@ module Sync
     def wrap_object_values(ovlist)
       @count = 0
       list = {}
+      return [] if @client.nil?
       temp_count = @client.client_temp_objects.count
 
       # process the ovlist (this will also include successful create objects)
@@ -25,7 +26,7 @@ module Sync
         obj_sym = ov.object.nil? ? nil : ov.object.to_sym
         obj_sym ||= :rho_del_obj
         old_obj = nil
-        av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value }
+        av_hash = { :i => ov.id, :d => ov.db_operation, :a => ov.attrib, :v => ov.value, :t => ov.attrib_type }
 
         if temp_count > 0
           # find the temp_obj that corresponds to the successful create
@@ -100,7 +101,7 @@ module Sync
         ClientMap.mark_objs_by_ack_token(ack_token) if ack_token and ack_token.length > 0
 
         # find delete records
-        objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id) )
+        objs_to_return.concat( ClientMap.get_delete_objs_for_client(token,page_size,client.id,source.id) )
 
         # process temp objects for this client
         ClientMap.process_create_objs_for_client(client.id,source.id,token)

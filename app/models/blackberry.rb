@@ -25,14 +25,14 @@ require 'uri'
 class Blackberry < Client
   
   def ping(callback_url,message=nil,vibrate=nil,badge=nil,sound=nil) # notify the BlackBerry device via PAP
-    p "Pinging Blackberry device via BES push: " + pin 
+    logger.debug "Pinging Blackberry device via BES push: " + pin 
     set_ports
     setup_template
     data=build_payload(callback_url,message,vibrate)
     headers={"X-WAP-APPLICATION-ID"=>"/",
              "X-RIM-PUSH-DEST-PORT"=>self.deviceport,
              "CONTENT-TYPE"=>'multipart/related; type="application/xml"; boundary=asdlfkjiurwghasf'}
-    puts "SELF ------- #{self.inspect}"
+    logger.debug "SELF ------- #{self.inspect}"
     begin
       @result=http_post(url,data,headers)   
       Rails.logger.debug "Returning #{@result.inspect}"
@@ -55,7 +55,7 @@ class Blackberry < Client
 
   def http_post(address,data,headers)
     uri=URI.parse(address)
-    p "URI: #{uri}"
+    logger.debug "URI: #{uri}"
     response=Net::HTTP.new(uri.host,uri.port).start do |http|
       request = Net::HTTP::Post.new(uri.path,headers)
       request.body = data

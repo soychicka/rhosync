@@ -127,9 +127,7 @@ class AppsController < ApplicationController
   #   <password>62270767</password>
   #   <url>http://www.pivotaltracker.com</url>
   # </credential>
-  def subscribe
-    @app=App.find_by_permalink(params[:app_id])
-    @app||=App.find(params[:id])
+  def subscribe    
     if @app.stop_subscriptions==true
       logger.info "This application has disallowed subscriptions"
       return
@@ -154,8 +152,6 @@ class AppsController < ApplicationController
 
   # unsubscribe subscriber to specified app ID
   def unsubscribe
-    @app=App.find_by_permalink(params[:app_id])
-    @app||=App.find(params[:id])
     user=@current_user
     if params[:subscriber]
       @current_user=User.find_by_login params[:subscriber]
@@ -173,7 +169,7 @@ class AppsController < ApplicationController
   # add specified user as administrator
   def administer
     user=User.find_by_login params[:administrator]
-    @app=App.find_by_permalink(params[:id])
+
     admin=Administration.new
     admin.user=user
     admin.save
@@ -183,7 +179,7 @@ class AppsController < ApplicationController
 
   def unadminister
     admin=User.find_by_login params[:administrator]
-    @app=App.find_by_permalink params[:id]
+
     administration=Administration.find_by_user_id_and_app_id admin.id,@app.id
     administration.delete
     redirect_to :action=>:edit
@@ -251,6 +247,11 @@ class AppsController < ApplicationController
   protected
 
   def find_app
-    @app = App.find_by_permalink(params[:id]) if params[:id]
+  	# some code passes the name or the id number in as params[:id]
+  	# sometimes we also get id in params[:app_id]
+  	
+  	# TODO: makes all code consistent so we dont need to do this
+  	app_id = params[:app_id] || params[:id]
+    @app = App.find(:first, :conditions => ["name=? or id=?", app_id, app_id.to_i]) if app_id
   end
 end

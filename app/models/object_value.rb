@@ -24,6 +24,7 @@ require 'digest/sha1'
 class ObjectValue < ActiveRecord::Base
   RESERVED_ATTRIB_NAMES = ["attrib_type", "id"] 
   belongs_to :source
+  belongs_to :user
   has_many :clients
   has_many :client_temp_objects
   has_attached_file :blob
@@ -88,6 +89,7 @@ class ObjectValue < ActiveRecord::Base
       sql << "select * from object_values where update_type='#{utype}' and source_id=#{source_id} #{user_str}"
     end
     sql << " order by object,attrib"
+    logger.debug "sql: #{sql.inspect}"
     sql
   end
 end

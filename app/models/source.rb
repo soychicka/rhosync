@@ -27,6 +27,7 @@ class Source < ActiveRecord::Base
   has_many :object_values
   has_many :client_temp_objects
   has_many :source_logs
+  has_many :refreshes
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
   validates_presence_of :name,:adapter
@@ -45,7 +46,7 @@ class Source < ActiveRecord::Base
         @source_adapter.session = session if session
       rescue Exception=>e
         msg="Failure to create adapter from class #{self.adapter}: #{e.inspect.to_s}"
-        p msg
+        logger.debug msg
         slog(nil,msg)
       end
     else # if source_adapter is nil it will
@@ -74,37 +75,60 @@ class Source < ActiveRecord::Base
     logger.debug "dosearch called"
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
+    
     begin
       source_adapter.login  # should set up @session_id
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to login #{e}"      
       logger.debug e.backtrace.join("\n")
       return
     end
+    
     clear_pending_records(self.credential)
+    
     begin  
       logger.debug "Calling query with conditions: #{conditions.inspect.to_s}, limit: #{limit.inspect.to_s}, offset: #{offset.inspect.to_s}"
       source_adapter.query(conditions,limit,offset)
+      
+      # we have to do this before sync, because default implementation of sync will strip source_id's out of result
+      unique_sources = source_adapter.result.collect {|x| x[1][:source_id]}.uniq.compact rescue [self.id]
+      if unique_sources.nil? || unique_sources.length == 0
+        unique_sources = [self.id]
+      end
+      
       source_adapter.sync
-      update_pendings(@credential,true)  # copy over records that arent already in the sandbox (second arg says check for existing)
+
+      update_pendings(@credential, unique_sources)  # copy over records that arent already in the sandbox
+    rescue SourceAdapterException
+      raise
     rescue Exception=>e
       logger.debug "Failed to sync #{e}"
       logger.debug e.backtrace.join("\n")
     end 
   end
-   
+  
+  # url - url to ping when done, nil = dont ping 
   def refresh(current_user, session, url=nil)
-    if queuesync==1 # queue up the sync/refresh task for processing by the daemon with doqueuedsync (below)
-      # Also queue it up for BJ (http://codeforpeople.rubyforge.org/svn/bj/trunk/README)
-      Bj.submit "ruby script/runner ./jobs/sync_and_ping_user.rb #{current_user.id} #{id} #{url}",
-        :tag => current_user.id.to_s
-      logger.debug "Queued up task for user "+current_user.login+ ", source "+ name
-    else # go ahead and do it right now
-      dosync(current_user, session)
-    end
+    # if we have page method then entire dosync will be called in the background
+    source_adapter=setup_credential_adapter(current_user,session)
+  	if self.is_paged?
+    	cmd="ruby script/runner ./jobs/dosync.rb #{current_user.id} #{id} #{url}"
+      logger.info "Executing background job: #{cmd}"
+      begin 
+      	Bj.submit(cmd,:tag => current_user.id.to_s)
+      rescue =>e
+      	logger.error "Failed to execute #{e.to_s}"
+        logger.error e.backtrace.join("\n")
+      end
+    else
+    	dosync(current_user, session, url)
+  	end
   end
   
-  def dosync(current_user,session=nil)
+  # url - url to ping when done, nil = dont ping
+  def dosync(current_user, session=nil, url=nil)
     @current_user=current_user
     source_adapter=setup_credential_adapter(current_user,session)
     # make sure to use @client and @session_id variable in your code that is edited into each source!
@@ -155,70 +179,39 @@ class Source < ActiveRecord::Base
       source_adapter.qparms=qparms if qparms  # note that we must have an attribute called qparms in the source adapter for this to work!
       # look for source adapter page method. if so do paged query 
       # see spec at http://wiki.rhomobile.com/index.php/Writing_RhoSync_Source_Adapters#Paged_Queries
-      if defined? source_adapter.page 
-    
-        # then do the rest in background using the page_query.rb script
-        cmd="ruby script/runner ./jobs/page_query.rb #{current_user.id} #{id} 0"
-        logger.info "Executing background job: #{cmd}"
-        begin 
-          Bj.submit cmd,:tag => current_user.id.to_s
-        rescue =>e
-          logger.error "Failed to execute #{e.to_s}"
-          logger.error e.backtrace.join("\n")
-        end
-        tlog(start,"page",self.id)
-        start=Time.new
+     
+      # if there is a poge method we call that, otherwise the query method
+      if self.is_paged?
+    		pagenum=0      
+    		result=true
+    		while result 
+      		logger.info "Calling page #{pagenum}"      
+      		result=source_adapter.page(pagenum)
+      		logger.info "Syncing #{pagenum}"      
+      		source_adapter.sync
+      		pagenum=pagenum+1
+    		end
+  		else
+  			start=Time.new
+	      source_adapter.query
 
-      else       
-        start=Time.new
-        source_adapter.query
-        tlog(start,"query",self.id)
+  	    tlog(start,"query",self.id)
       
-      	start=Time.new
+    	  start=Time.new
       	source_adapter.sync
       	tlog(start,"sync",self.id)
-      	start=Time.new
-      	finalize_query_records(@credential)
-      	tlog(start,"finalize",self.id)
-      	source_adapter.logoff
-      end  
-    rescue Exception=>e
-      logger.error "Failed to query,sync: #{e.to_s}"
-      slog(e,"Failed to query,sync",self.id)
-      logger.error e.backtrace.join("\n")
-    end 
-
-  end
-  
-  # used by background job for paged query (page_query.rb script)
-  # queries the second (1-th) through last page
-  def backpages(pagenum=1)
-    # first detect if some background (backpages) job is already working against this source and user
-    logger.info "Backpages called"
-    source_adapter=setup_credential_adapter(current_user,nil)
-    # make sure to use @client and @session_id variable in your code that is edited into each source!
-    begin
-      start=Time.new
-      source_adapter.login  # should set up @session_id
-      tlog(start,"login",self.id)  # log how long it takes to do the login
-    rescue Exception=>e
-      logger.info "Failed to login"
-      slog(e,"can't login",self.id,"login")
-      raise e
-    end
+    	end
     
-    result=true
-    @source=self
-    while result 
-      logger.info "Calling page #{pagenum}"      
-      result=source_adapter.page(pagenum)
-      logger.info "Syncing #{pagenum}"      
-      source_adapter.sync
-      pagenum=pagenum+1
-    end
-    finalize_query_records(credential)
+      start=Time.new
+      finalize_query_records(@credential)
+      tlog(start,"finalize",self.id)
+      source_adapter.logoff
+    rescue Exception=>e
+      logger.debug "Failed to query,sync: #{e.to_s}"
+      slog(e,"Failed to query,sync",self.id)
+      logger.debug e.backtrace.join("\n")
+    end 
   end
-  
   
   def ask(current_user,question)
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
@@ -256,7 +249,20 @@ class Source < ActiveRecord::Base
     name.gsub(/[^a-z0-9]+/i, '-') unless new_record?
   end
   
+  def is_paged?
+    self.source_adapter.respond_to?(:page) 
+  end
+
+	# TODO: this is a bit wierd we need to test in this way  
   def self.find_by_permalink(link)
-    Source.find(:first, :conditions => ["id =:link or name =:link", {:link=> link}])
+    if link.is_a? String
+    	if link.length > 2
+      	Source.find(:first, :conditions => ["name = ?", link])
+      else
+      	Source.find(link.to_i)
+      end
+    else
+      Source.find(link)
+    end
   end
 end

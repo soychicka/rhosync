@@ -13,6 +13,7 @@ class SourceAdapter
   attr_accessor :client
   attr_accessor :qparms
   attr_accessor :session
+  attr_reader   :result   # so we can inspect @result outside of adapter
     
   def initialize(source=nil,credential=nil)
     @source = source.nil? ? self : source
@@ -30,7 +31,6 @@ class SourceAdapter
     return if result_nil? or result_empty?
     
     user_id = (usr = @source.current_user) ? usr.id : nil 
-
     default_sync = Sync::Synchronizer.new(@result, @source.id, @source.limit, user_id)
     default_sync.sync
   end

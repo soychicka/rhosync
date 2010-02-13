@@ -1,0 +1,27 @@
+<h1>Server Debug Page</h1>
+
+<%= link_to("restart", url_for(:action => 'restart')) %>
+<%= link_to("git pull", url_for(:action => 'git_pull')) %>
+
+<h2>Environment</h2>
+<p>Rails: <%= Rails.env %></p>
+<pre><%= `gem environment` %></pre>
+
+<h2>Logs</h2>
+<% output = `ls log` %>
+<ul>
+<% output.split.each do |fname| %>
+  <li>
+    <%= link_to(fname, url_for(:action => 'send_file', :fname => fname)) %>&nbsp;
+    <%= link_to("[Clear]", url_for(:action => 'clear_file', :fname => fname)) %>
+  </li>
+<% end %>
+</ul>
+
+<h2>Background Jobs</h2>
+<%= link_to("Restart Jobs Runner", url_for(:action => 'bj_restart')) %>
+
+<% jobs = Bj.table.job.find(:all)  %>
+<% jobs.each do |job| %>
+  <p><%= job.to_yaml %></p>
+<% end %>
