@@ -15,11 +15,11 @@ require File.join(RAILS_ROOT, "config/environment")
 
 #require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
-logfile = File.open("log/bj-srd_runner.log", "a+")  
-logger = Logger.new(logfile)
+$logfile = File.open("log/bj-srd_runner.log", "a+")  
+$logger = Logger.new(logfile)
 
 def log_debug(msg)
-  logger.debug msg
+  $logger.debug msg
   #puts msg
 end
 
