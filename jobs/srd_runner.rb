@@ -15,7 +15,7 @@ require File.join(RAILS_ROOT, "config/environment")
 
 #require File.join(File.dirname(__FILE__), '..', 'lib', 'source_adapter.rb')
 
-$logfile = File.open("log/bj-srd_runner.log", "a+")  
+logfile = File.open("log/bj-srd_runner.log", "a+")  
 $logger = Logger.new(logfile)
 
 def log_debug(msg)
@@ -114,5 +114,6 @@ rescue => e
   log_debug e.inspect.to_s
   log_debug e.backtrace.join("\n")
 end
+
 
 log_debug "... done srd_runner"

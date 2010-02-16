@@ -6,8 +6,6 @@ class SessionsController < ApplicationController
   # TODO: Only do this for json requests!
   protect_from_forgery :except => :client_login
   
-  after_filter :find_and_register_client, :only => :client_login
-
   # render new.rhtml
   def new
   end
@@ -54,6 +52,7 @@ class SessionsController < ApplicationController
         end
       end
     end
+    find_and_register_client
     render(:nothing => true, :status => 200)
   end
 

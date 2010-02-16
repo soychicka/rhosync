@@ -32,7 +32,8 @@ class ApplicationController < ActionController::Base
   # register this particular device and associated user as interested in queued sync
   def register_client(client)
     logger.debug 'Registering Client: ' + client.inspect
-    if @current_user and not params["device_pin"].blank?
+    if not params["device_pin"].blank?
+      client.user = current_user # we need to set this because the user can change for a client
       client.pin = params["device_pin"]
       logger.debug "Registering device for notification with pin " + client.pin
       client.device_type=params["device_type"] if params["device_type"]  
@@ -50,7 +51,11 @@ class ApplicationController < ActionController::Base
     if @client.nil?
     	logger.debug "creating new client"
     	@client = current_user.clients.build # we have to build first and get UUID generated
-			@client.update_attributes(:client_id => params[:client_id]) # now update to one client is sending
+    	# if client is sending a client_id reuse it
+    	if !params[:client_id].blank?
+			  @client.client_id = params[:client_id] 
+			  @client.save
+		  end
     end
     
     register_client(@client)
