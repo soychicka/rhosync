@@ -78,12 +78,10 @@ class Source < ActiveRecord::Base
     
     begin
       source_adapter.login  # should set up @session_id
-    rescue SourceAdapterException
-      raise
     rescue Exception=>e
       logger.debug "Failed to login #{e}"      
       logger.debug e.backtrace.join("\n")
-      return
+      raise SourceAdapterLoginException.new(e.to_s)
     end
     
     clear_pending_records(self.credential)
@@ -101,11 +99,12 @@ class Source < ActiveRecord::Base
       source_adapter.sync
 
       update_pendings(@credential, unique_sources)  # copy over records that arent already in the sandbox
-    rescue SourceAdapterException
+    rescue SourceAdapterLoginException
       raise
     rescue Exception=>e
       logger.debug "Failed to sync #{e}"
       logger.debug e.backtrace.join("\n")
+      raise SourceAdapterException.new(e.to_s)
     end 
   end
   
