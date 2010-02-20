@@ -346,9 +346,6 @@ module SourcesHelper
       # no client_id, just show everything (optionally based on search conditions)
       @object_values=ObjectValue.find_by_sql ObjectValue.get_sql_by_conditions(utype,@source.id,current_user.id,conditions,by_source)
     end
-    
-   # logger.debug "@object_values = #{@object_values.inspect.to_s}"
-    
     @object_values.delete_if {|o| o.value.blank? } # don't send back blank or nil OAV triples
   end
 end

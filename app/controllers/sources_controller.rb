@@ -125,6 +125,9 @@ class SourcesController < ApplicationController
     logout_killing_session!
     logger.debug "e.to_s #{e.to_s}"
     render :text => e.to_s, :status => 401
+  rescue => e
+    logger.debug "e.to_s #{e.to_s}"
+    render :text => e.to_s, :status => 404
   end
 
   # generate a new client for this source
