@@ -59,7 +59,7 @@ class Product < SourceAdapter
         open(res['location']+".json") do |f|
           parsed=JSON.parse(f.read)
         end
-        return parsed["product"]["id"] rescue nil
+        return parsed["product"]["id"].to_s rescue nil
     end
   end
  

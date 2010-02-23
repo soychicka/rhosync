@@ -505,16 +505,19 @@ protected
   def handle_show_format
     @refreshtime = @source.refreshtime(@current_user).to_i
     logger.debug "#{@source.name} refreshtime =#{@refreshtime} (= #{Time.at(@refreshtime)})"
-    
     respond_to do |format|
       format.html
       format.xml  { render :xml => @object_values }
       if @version and @version == 2
-        format.json { render :template => "sources/show.json_v2.erb" }
+        res = format.json { render :template => "sources/show.json_v2.erb" }
+        logger.debug "rendering: " + res.inspect
+        res
       else
         format.json
       end
     end
+    logger.debug "response: " + response.body
+    
   end
 
   def get_new_token
