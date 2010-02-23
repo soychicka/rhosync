@@ -85,7 +85,7 @@ class Customer < SourceAdapter
         open(res['location']+".json") do |f|
           parsed=JSON.parse(f.read)
         end
-      return parsed["customer"]["id"] rescue nil
+      return parsed["customer"]["id"].to_s rescue nil
     end
   end
  
