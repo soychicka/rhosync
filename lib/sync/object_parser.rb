@@ -51,9 +51,9 @@ module Sync
     def create_object_values
       @object_attributes.each_pair do |attribute_key, attribute_value| 
         unless ObjectValue::RESERVED_ATTRIB_NAMES.include? attribute_key 
-          unless attribute_value.blank?
+   #       unless attribute_value.blank?
             @object_values << parse_attributes(attribute_key, attribute_value)
-          end
+   #       end
         else
           Rails.logger.warn "Ignoring key-value pair: #{{attribute_key => attribute_value}.inspect}."
         end
