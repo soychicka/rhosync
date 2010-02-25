@@ -59,8 +59,10 @@ class Product < SourceAdapter
         open(res['location']+".json") do |f|
           parsed=JSON.parse(f.read)
         end
-        return parsed["product"]["id"] rescue nil
+        return parsed["product"]["id"].to_s rescue nil
     end
+
+    # TODO: return error if failed to create!
   end
  
   def update(name_value_list) 
