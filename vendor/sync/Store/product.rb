@@ -47,6 +47,8 @@ class Product < SourceAdapter
   end
  
   def create(name_value_list)
+    Rails.logger.debug "****product.create name_value_list = "+ name_value_list.inspect.to_s
+    
     attrvals={}
     name_value_list.each { |nv| attrvals["product["+nv["name"]+"]"]=nv["value"]} # convert name-value list to hash
     res = Net::HTTP.post_form(URI.parse("http://rhostore.heroku.com/products"),attrvals)
@@ -59,6 +61,7 @@ class Product < SourceAdapter
         open(res['location']+".json") do |f|
           parsed=JSON.parse(f.read)
         end
+        Rails.logger.debug "parsed = "+ parsed.inspect.to_s
         return parsed["product"]["id"].to_s rescue nil
     end
 
@@ -81,11 +84,16 @@ class Product < SourceAdapter
   end
  
   def delete(name_value_list)
+    Rails.logger.debug "****product.delete name_value_list = "+ name_value_list.inspect.to_s
+    
     attrvals={}     
-    name_value_list.each {|nv|attrvals["product["+nv["name"]+"]"]=nv["value"]}
-    http=Net::HTTP.new(‘rhostore.heroku.com’,80)
+    name_value_list.each {|nv|attrvals[nv["name"]]=nv["value"]}
+    http=Net::HTTP.new('rhostore.heroku.com',80)
     path="/products/#{attrvals['id']}"
+    Rails.logger.debug "path = #{path}"
     resp=http.delete(path)
+    
+    Rails.logger.debug "resp= " +resp.inspect.to_s
   end
  
   def logoff
