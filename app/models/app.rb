@@ -32,10 +32,10 @@ class App < ActiveRecord::Base
   end
 
   def self.find_by_permalink(link)
-    if link.is_a? String
-      App.find(:first, :conditions => ["name =:link", {:link=> link}])
+    if link.to_i > 0 or (link.to_i == 0 and link[0].chr == '0')
+      App.find(:first, :conditions => ["id =:link", {:link=> link.to_i}])
     else
-      App.find(:first, :conditions => ["id =:link", {:link=> link}])
+      App.find(:first, :conditions => ["name =:link", {:link=> link}])
     end
   end
 
