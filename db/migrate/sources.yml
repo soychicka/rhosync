@@ -92,7 +92,7 @@ SugarQuotes:
 Customer:
   id: 22
   name: Customer
-  app_id: 3
+  app_id: 2
   adapter: Customer
   url: http://rhostore.heroku.com/customers.json
   limit: 100
@@ -100,7 +100,7 @@ Customer:
 Product:
   id: 23
   name: Product
-  app_id: 3
+  app_id: 2
   adapter: Product
   url: http://rhostore.heroku.com/products.json
   limit: 100
