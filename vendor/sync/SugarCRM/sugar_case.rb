@@ -1,29 +1,29 @@
-class SugarOpportunities < SugarAdapter
+class SugarCase < SugarAdapter
 
   def initialize(source,credential)
     super(source,credential)
     
-    @module_name = 'Opportunities'
+    @module_name = 'Cases'
     @select_fields = %w(
       name
       date_entered
       date_modified
+      modified_user_id
       modified_by_name
       created_by
       created_by_name
       description
+      assigned_user_id
       assigned_user_name
-      opportunity_type
+      case_number
+      type
+      status
+      priority
+      resolution
+      work_log
       account_name
-      campaign_name
-      lead_source
-      amount
-      amount_usdollar
-      date_closed
-      next_step
-      sales_stage
-      probability
+      account_id
     )
-    @order_by = ''
+    @order_by = 'case_number'
   end
 end

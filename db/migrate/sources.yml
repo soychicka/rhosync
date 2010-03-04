@@ -1,92 +1,92 @@
-SugarAccounts:
+SugarAccount:
   id: 1
-  name: SugarAccounts
-  adapter: SugarAccounts
+  name: SugarAccount
+  adapter: SugarAccount
   app_id: 1
   limit: 100
  
-SugarCases:
+SugarCase:
   id: 2
-  name: SugarCases
+  name: SugarCase
   app_id: 1
-  adapter: SugarCases
+  adapter: SugarCase
   limit: 100
  
-SugarEmployees:
+SugarEmployee:
   id: 3
-  name: SugarEmployees
+  name: SugarEmployee
   app_id: 1
-  adapter: SugarEmployees
+  adapter: SugarEmployee
   limit: 100
   
-SugarContacts:
+SugarContact:
   id: 11
-  name: SugarContacts
+  name: SugarContact
   app_id: 1
-  adapter: SugarContacts
+  adapter: SugarContact
   limit: 100
   
-SugarLeads:
+SugarLead:
   id: 12
-  name: SugarLeads
+  name: SugarLead
   app_id: 1
-  adapter: SugarLeads
+  adapter: SugarLead
   limit: 100
   
-SugarOpportunities:
+SugarOpportunity:
   id: 13
-  name: SugarOpportunities
+  name: SugarOpportunity
   app_id: 1
-  adapter: SugarOpportunities
+  adapter: SugarOpportunity
   limit: 100
     
-SugarMeetings:
+SugarMeeting:
   id: 14
-  name: SugarMeetings
+  name: SugarMeeting
   app_id: 1
-  adapter: SugarMeetings
+  adapter: SugarMeeting
   limit: 100
     
-SugarCalls:
+SugarCall:
   id: 15
-  name: SugarCalls
+  name: SugarCall
   app_id: 1
-  adapter: SugarCalls
+  adapter: SugarCall
   limit: 100
  
-SugarCampaigns:
+SugarCampaign:
   id: 16
-  name: SugarCampaigns
+  name: SugarCampaign
   app_id: 1
-  adapter: SugarCampaigns
+  adapter: SugarCampaign
   limit: 100
     
-SugarProducts:
+SugarProduct:
   id: 17
-  name: SugarProducts
+  name: SugarProduct
   app_id: 1
-  adapter: SugarProducts
+  adapter: SugarProduct
   limit: 100
       
-SugarTeams:
+SugarTeam:
   id: 18
-  name: SugarTeams
+  name: SugarTeam
   app_id: 1
-  adapter: SugarTeams
+  adapter: SugarTeam
   limit: 100
   
-SugarUsers:
+SugarUser:
   id: 19
-  name: SugarUsers
+  name: SugarUser
   app_id: 1
-  adapter: SugarUsers
+  adapter: SugarUser
   limit: 100
   
-SugarQuotes:
+SugarQuote:
   id: 21
-  name: SugarQuotes
+  name: SugarQuote
   app_id: 1
-  adapter: SugarQuotes
+  adapter: SugarQuote
   limit: 100
  
 Customer:

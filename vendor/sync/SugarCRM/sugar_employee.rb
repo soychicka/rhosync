@@ -1,9 +1,9 @@
-class SugarUsers < SugarAdapter
+class SugarEmployee < SugarAdapter
 
   def initialize(source,credential)
     super(source,credential)
     
-    @module_name = 'Users'
+    @module_name = 'Employees'
     @select_fields = %w(
       user_name
       sugar_login
@@ -32,14 +32,17 @@ class SugarUsers < SugarAdapter
       address_country
       address_postalcode
       user_preferences
-      default_team
-      portal_only
       employee_status
       messenger_id
       messenger_type
-      email1    
+      email1
+      is_group
+      c_accept_status_fields
+      m_accept_status_fields
+      modified_by_name
+      created_by_name
     )
-    @order_by = ''
-    @query_filter = "(users.user_name is not null)"
+    @order_by = 'last_name'
+    @query_filter = "(users.employee_status='Active')"
   end
 end

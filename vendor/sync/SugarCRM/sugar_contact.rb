@@ -1,15 +1,17 @@
-class SugarLeads < SugarAdapter
+class SugarContact < SugarAdapter
 
   def initialize(source,credential)
     super(source,credential)
     
-    @module_name = 'Leads'
+    @module_name = 'Contacts'
     @select_fields = %w(
       date_entered
       date_modified
       description
       assigned_user_id
       assigned_user_name
+      team_id
+      team_name
       salutation
       first_name
       last_name
@@ -33,16 +35,18 @@ class SugarLeads < SugarAdapter
       alt_address_state
       alt_address_postalcode
       alt_address_country
-      refered_by
+      assistant
+      assistant_phone
       lead_source
-      lead_source_description
-      status
-      status_description
       account_name
       account_id
+      reports_to_id
+      report_to_name
+      birthdate
       campaign_id
       campaign_name
     )
-    @order_by = ''
+    @order_by = 'last_name'
   end
 end
+

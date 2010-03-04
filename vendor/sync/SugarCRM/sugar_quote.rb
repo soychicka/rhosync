@@ -1,4 +1,4 @@
-class SugarQuotes < SugarAdapter
+class SugarQuote < SugarAdapter
 
   def initialize(source,credential)
     super(source,credential)
