@@ -81,27 +81,32 @@ source = Source.find_by_name("AeropriseRequest")
 # destroy old sr 
 ObjectValue.destroy_all(:source_id=>source.id, :update_type=>'query', :user_id => user.id, :object=>sr_id)
 
-if (login_name != modified_by)
-	logger.info "Set vibrate = 1"
-	request["vibrate"] = 1 # flag it so device will know to vibrate
-end
+request_cancelled = (request["appreqstatus"] == "Canceled") || (request["status"].to_i==8000)
+  	  
+# if request is now cancelled we dont add back but just leave deleted and let normal sync handle it
+if !request_cancelled
+  if (login_name != modified_by)
+	  logger.info "Set vibrate = 1"
+	  request["vibrate"] = 1 # flag it so device will know to vibrate
+  end
     
-# this function will add as type pending
-hash_values = AeropriseRequestRecord.create(request, responses)
-#hash_values.each do |k,v|
-#  ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
-#end
+  # this function will add as type pending
+  hash_values = AeropriseRequestRecord.create(request, responses)
+  #hash_values.each do |k,v|
+  #  ObjectValue.create(:source_id=>source.id, :attrib=>k.to_s, :value=>v.to_s, :user_id => user.id, :object=>sr_id)
+  #end
 
-# enter values the same way they are done in source adapter 
-default_sync = Sync::Synchronizer.new({sr_id => hash_values}, source.id, 1000000, user.id)
-default_sync.sync
+  # enter values the same way they are done in source adapter 
+  default_sync = Sync::Synchronizer.new({sr_id => hash_values}, source.id, 1000000, user.id)
+  default_sync.sync
     
-# flip it to type query
-begin
-	ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
-rescue
-	logger.info "WARNING: problem flipping request to type query... assuming record already exists and continuing..."
-end
+  # flip it to type query
+  begin
+	  ActiveRecord::Base.connection.execute "update object_values set update_type='query',id=pending_id where source_id=#{source.id} and object='#{sr_id}' and user_id=#{user.id}"
+  rescue
+	  logger.info "WARNING: problem flipping request to type query... assuming record already exists and continuing..."
+  end
+end # request cancelled
 
 # ping the user
 result = user.ping(req_callback_url)
@@ -113,17 +118,20 @@ begin
 rescue
 	logger.info "problem with push request, response was nil"
 end
-  	
-# now queue request to get worklog unless there is already one queued
-command = "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login} #{sr_id}'%"
+  
+# same thing, dont bother if request is cancelled	
+if !request_cancelled
+  # now queue request to get worklog unless there is already one queued
+  command = "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login} #{sr_id}'%"
 
-jobs = Bj::Table::Job.find(:all, :conditions => ["command LIKE ?", command])
-jobs.each do |job|
-	if job.state == 'running' || job.state == 'pending'
-		logger.info "found pending job to get workinfo so skipping and returning"
-		return
-	end
-end
+  jobs = Bj::Table::Job.find(:all, :conditions => ["command LIKE ?", command])
+  jobs.each do |job|
+	  if job.state == 'running' || job.state == 'pending'
+	  	logger.info "found pending job to get workinfo so skipping and returning"
+	  	return
+	  end
+  end
 	
-# queue new job for work log, but pass "nil" as this callback URL as flag so we dont loop back here if sr cannot be read fgor example
-Bj.submit "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login_name} #{sr_id} FALSE nil #{worklog_callback_url}'"
+  # queue new job for work log, but pass "nil" as this callback URL as flag so we dont loop back here if sr cannot be read fgor example
+  Bj.submit "'ruby script/runner ./jobs/aeroprise_sr_work_info.rb #{login_name} #{sr_id} FALSE nil #{worklog_callback_url}'"
+end
