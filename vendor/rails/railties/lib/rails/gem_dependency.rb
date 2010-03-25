@@ -221,7 +221,7 @@ module Rails
                   "can't activate #{@dep}, already activated #{existing_spec.full_name}"
           end
           # we're stuck with it, so change to match
-          @dep.version_requirements = Gem::Requirement.create("=#{existing_spec.version}")
+          @dep.version_requirements = Gem::Requirement.create("=#{existing_spec.version}") unless Gem::VERSION == "1.3.6"
           existing_spec
         else
           # new load
